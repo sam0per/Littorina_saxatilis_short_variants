@@ -1,2 +1,5 @@
-# Littorina_saxatilis
-Bioinformatic analyses on the evolution of reproductive isolation between locally adapted populations of the rough periwinkle
+# _Littorina saxatilis_
+
+Bioinformatic analyses on the evolution of reproductive isolation between locally adapted populations of the rough periwinkle.
+
+The content of this reporsitory includes the research projects based on the excellent marine snails _Littorina saxatilis_.
