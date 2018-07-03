@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+
+import os, glob
+
+
+WDIR = "/proj/data9/samuel/2016_CZA_capture/Littorina_saxatilis/short_genetic_variants"
+
+workdir: "/proj/data9/samuel/2016_CZA_capture/Littorina_saxatilis/short_genetic_variants"
+
+FQ_DIR = WDIR + "/raw"
+MQC_DIR = WDIR + "/mqc"
+RES_DIR = WDIR + "/results"
+
+
+WC = glob_wildcards(os.path.join(FQ_DIR, "{sample}_{pair}.fastq.gz"))
+SAMPLES = set(WC.sample)
+PAIR1, PAIR2 = set(WC.pair)
+
+
+ALB_TRIM_DIR = "/usr/local/packages/Trimmomatic-0.36/trimmomatic-0.36.jar"
+
+ALB_BED_DIR = "/usr/local/packages/anaconda2-2.5.0/bin/bedtools"
+
+ALB_BWA_DIR = "/usr/local/packages/anaconda2-4.4.0/bin/bwa"
+
+ALB_SAMT_DIR = "/usr/local/packages/anaconda2-5.0.0/bin/samtools"
+
+ALB_SAMB_DIR = "/proj/data9/samuel/modules/sambamba_v0.6.6"
+
+ALB_PIC_DIR = "/proj/data9/samuel/modules/picard/build/libs/picard.jar"
+
+ALB_STA_DIR = "/proj/data9/samuel/modules/stampy-1.0.32/stampy.py"
+
+ALB_STK_DIR = "/proj/data9/samuel/modules/seqtk/seqtk"
+
+ALB_GATK_DIR = "/proj/data9/samuel/modules/gatk-4.0.2.0/gatk-package-4.0.2.0-local.jar"
+
+ALB_CLIP_DIR = "/proj/data9/samuel/modules/bamUtil/bin/bam"
+
+
+
+ADAPT = "/proj/data9/samuel/2016_CZA_capture/adapters/adapt_cont.fa:2:30:10"
+WINDOW = "10:20"
+
+REF = "/proj/data9/samuel/2016_CZA_capture/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta"
+RED_REF = "/proj/data9/samuel/2016_CZA_capture/red_ref/NEW_superscaffold_REF.fasta"
+
+
+
+rule all:
+	input:
+		"genome/tmp_target.fasta",
+		"genome/NONtarget.fasta",
+		"red_ref/NEW_superscaffold_REF.fasta",
+		"Target_contigs.bed",
+		expand("results/gVCF/{S}.g.vcf.gz", S=SAMPLES),
+		"results/VCF/CZA_raw_all.vcf.gz"
+
+
+
+rule targets:
+	input: 
+		gen="genome/genome_contigs.txt",
+		cov="genome/cov_blast_conts.txt",
+		ref=REF
+	output: 
+		tar="genome/tmp_target.fasta",
+		ntar="genome/NONtarget.fasta",
+	message: "--- Generating fastas for target and nontarget contigs with SEQTK."
+	priority: 90
+	threads: 2
+	shell:
+		"""
+		cut -f 1 {input.gen} | grep -Fwf {input.cov} - | {ALB_STK_DIR} subseq {input.ref} - > {output.tar}
+		cut -f 1 {input.gen} | grep -v -Fwf {input.cov} - | {ALB_STK_DIR} subseq {input.ref} - > {output.ntar}
+		"""
+
+
+rule merge_fasta:
+	input:	rules.targets.output.ntar
+	output: "genome/NONtarget.fa"
+	message:
+		"""--- Merging non-target contigs of {input}."""
+	priority: 90
+	threads: 4
+	shell:
+		"""
+		/usr/local/packages/anaconda2/bin/python scripts/merge_superfasta.py
+		/usr/local/packages/anaconda2/bin/python scripts/edit_superfasta.py
+		"""
+
+
+rule cat_fasta:
+	input:
+		tar=rules.targets.output.tar,
+		ntar=rules.merge_fasta.output
+	output:
+		"red_ref/NEW_superscaffold_REF.fasta"
+	message:
+		"""--- Concatenating target and non-target contigs into {output}."""
+	priority: 90
+	threads: 2
+	shell:
+		"""
+		cat {input.tar} {input.ntar} > {output}
+		"""
+
+
+
+rule red_prep:
+	input: rules.cat_fasta.output
+	output: "red_ref/NEW_superscaffold_REF.fasta.fai"
+	message:
+		"""--- Preparation {input} with BWA index, samtools faidx, and Picard dict."""
+	priority: 90
+	threads: 5
+	shell:
+		"""
+		/bin/sh scripts/red_prep.sh {input} {output}
+		"""
+
+
+rule int_list:
+	input: rules.red_prep.output
+	output: "Target_contigs.bed"
+	message: """--- Generating {output} from {input}."""
+	priority: 90
+	shell:
+		"""
+		/bin/sh scripts/int_list.sh {input} {output}
+		"""
+
+
+rule var_call:
+	input: 
+		bam="clip2red/{S}_clip.bam",
+		ref="red_ref/NEW_superscaffold_REF.fasta",
+		tar="Target_contigs.bed"
+	output: "results/gVCF/{S}.g.vcf.gz"
+	message: """--- Calling SNPs and indels in {input} with HaplotypeCaller"""
+	priority: 70
+	threads: 5
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} HaplotypeCaller -R {input.ref} -I {input.bam} \
+		-O {output} -ERC GVCF --heterozygosity 0.05 --pcr-indel-model NONE -L {input.tar}
+		"""
+
+
+def findGVCF ():
+	gvcfs = open("samplesGVCF.list", "w")
+	gvcfList = glob.glob(RES_DIR + '/*')
+	for sample in gvcfList:
+		if sample.endswith(".g.vcf.gz"):
+			print>>gvcfs, sample
+	gvcfs.close()
+	return ["samplesGVCF.list"];
+
+
+rule CombineGVCFs:
+	input:
+		#gvcf=findGVCF,
+		gvcf="samplesGVCF_all.list",
+		ref="red_ref/NEW_superscaffold_REF.fasta"
+	output:
+		"results/CZA_all.g.vcf.gz"
+	message: """--- Combine per-sample gVCFs into a multi-sample gVCF file with CombineGVCFs."""
+	priority: 70
+	threads: 7
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} CombineGVCFs -R {input.ref} -V {input.gvcf} -O {output}
+		"""
+
+
+
+#rule CombineGVCFall:
+#	input:
+#		#gvcf=findGVCF,
+#		gvcf1="results/CZA.g.vcf.gz",
+#		gvcf2="results/CZA_02.g.vcf.gz",
+#		ref="red_ref/NEW_superscaffold_REF.fasta"
+#	output:
+#		"results/CZA_all.g.vcf.gz"
+#	message: """--- Combine combined gVCFs into the final multi-sample gVCF file with CombineGVCFs."""
+#	priority: 70
+#	threads: 7
+#	shell:
+#		"""
+#		java -Xmx34g -jar {ALB_GATK_DIR} CombineGVCFs -R {input.ref} -V {input.gvcf1} -V {input.gvcf2} -O {output}
+#		"""
+
+
+rule GenotypeGVCFs:
+	input:
+		ref="red_ref/NEW_superscaffold_REF.fasta",
+		gvcf=rules.CombineGVCFs.output,
+		tar="Target_contigs.bed"
+	output:
+		"results/VCF/CZA_raw_all.vcf.gz"
+	message: """--- Perform joint genotyping on all samples with GenotypeGVCFs."""
+	priority: 70
+	threads: 7
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output} \
+		--heterozygosity 0.05 --only-output-calls-starting-in-intervals TRUE -L {input.tar}
+		"""
