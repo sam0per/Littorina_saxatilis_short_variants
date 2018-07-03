@@ -58,6 +58,100 @@ rule all:
 
 
 
+
+rule ref_prep:
+	input: rules.cat_fasta.output
+	output:
+		"/proj/data9/samuel/2016_CZA_capture/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.dict"
+	message:
+		"""--- Preparation {input} with BWA index, samtools faidx, and Picard dict."""
+	priority: 90
+	threads: 10
+	shell:
+		"""
+		/bin/sh scripts/ref_prep.sh {input} {output}
+		"""
+
+		
+rule trimmomatic:
+	input:
+		fwd=expand("{fq_dir}/{{S}}_{pair}.fastq.gz", fq_dir=FQ_DIR, pair=PAIR1), 
+		rev=expand("{fq_dir}/{{S}}_{pair}.fastq.gz", fq_dir=FQ_DIR, pair=PAIR2)
+	output:
+		fwd_pa=temp(expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR1)),
+		fwd_un=temp(expand("trimmed/{{S}}_{pair}_unpaired.fastq.gz", pair=PAIR1)),
+		rev_pa=temp(expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR2)),
+		rev_un=temp(expand("trimmed/{{S}}_{pair}_unpaired.fastq.gz", pair=PAIR2))
+	message: """--- Trimming Illumina adapters and PhiX from {input.fwd} and {input.rev} with Trimmomatic-0.36."""
+	log:
+		"logs/trimmomatic/{S}.log"
+	params:
+		leading=3,
+		trailing=3,
+		minlen=70
+	threads: 8
+	priority: 60
+	shell:
+		"""
+		java -Xmx16g -jar {ALB_TRIM_DIR} PE -threads {threads} -phred33 -trimlog {log} {input.fwd} {input.rev} \
+		{output.fwd_pa} {output.fwd_un} {output.rev_pa} {output.rev_un} ILLUMINACLIP:{ADAPT} LEADING:{params.leading} TRAILING:{params.trailing} \
+		SLIDINGWINDOW:{WINDOW} MINLEN:{params.minlen}
+		"""		
+
+
+rule bwa:
+	input:
+		ref=REF,
+		fwd=rules.trimmomatic.output.fwd_pa,
+		rev=rules.trimmomatic.output.rev_pa
+	output:
+		temp("mapped/{S}.bam")
+	message: """--- Mapping {input.fwd} {input.rev} onto {input.ref} with BWA MEM."""
+	params:
+		rg="@RG\tID:{S}\tSM:{S}"
+	priority: 70
+	threads: 10
+	shell:
+		"""
+		{ALB_BWA_DIR} mem -M -R '{params.rg}' -t {threads} {input.ref} {input.fwd} {input.rev} | {ALB_SAMT_DIR} view -Sb - > {output}
+		"""
+
+
+rule flagstat:
+	input:
+		rules.bwa.output
+	output:
+		"stats/{S}.flagstat.txt"
+	message:
+		"""--- Calculating metrics of {input} with Samtools flagstat."""
+	shell:
+		"{ALB_SAMT_DIR} flagstat {input} > {output}"
+		
+		
+rule stats:
+	input:
+		rules.bwa.output
+	output:
+		"stats/{S}.stats.txt"
+	message:
+		"""--- Calculating metrics of {input} with Samtools flagstat."""
+	shell:
+		"{ALB_SAMT_DIR} flagstat {input} > {output}"
+
+
+rule mq20:
+	input:
+		rules.bwa.output
+	output:
+		temp("sorted/{S}_sorted20.bam")
+	message:
+		"""--- Applying MQ20 filter and sorting {input} with Samtools"""
+	priority: 80
+	threads: 6
+	shell:
+		"{ALB_SAMT_DIR} view -u -h -F 0x04 -q 20 {input} | {ALB_SAMT_DIR} sort -@ {threads} - sorted/{wildcards.S}_sorted20"
+
+
 rule targets:
 	input: 
 		gen="genome/genome_contigs.txt",
