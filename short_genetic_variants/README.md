@@ -46,5 +46,5 @@ The selected population for this study was sampled on the Swedish west coast and
 	
 	This command will install the Snakemake package:
 
-	`$ conda install -c bioconda snakemake`
+	`$ conda install -c bioconda -c conda-forge snakemake`
 	
