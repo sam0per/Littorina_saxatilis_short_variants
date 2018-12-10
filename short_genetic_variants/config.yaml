@@ -1,0 +1,55 @@
+samples: CZA_samples.tsv
+units: CZA_units.tsv
+
+modules:
+  gatk: /proj/data9/samuel/modules/gatk-4.0.11.0/gatk-package-4.0.11.0-local.jar
+  py3: /home/samuel/miniconda3/bin/python3.6
+  samt: /home/samuel/miniconda3/bin/samtools
+  bedt: /proj/data9/samuel/modules/bedtools2/bin/bedtools
+  bwa: /usr/local/packages/anaconda2-4.4.0/bin/bwa
+  pic: /proj/data9/samuel/modules/picard/build/libs/picard.jar
+
+# the sequencing adapter
+#adapter: ACGGATCGATCGATCGATCGAT
+
+# whether to remove PCR/optical duplicates
+rmdup: true
+
+ref:
+  #name: GRCh38.86
+  genome: reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta
+  chr_len: genome/genome_contigs_len.txt
+  subref: subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta
+  intervals: sum_tot_coverage_supercontigs_windows.bed
+# known variants (e.g. DBSNP)
+  #known-variants: path/to/dbsnp.vcf
+
+filtering:
+  # Set to true in order to apply machine learning based recalibration of
+  # quality scores instead of hard filtering.
+  vqsr: false
+  hard:
+    # hard filtering as outlined in GATK docs
+    # (https://gatkforums.broadinstitute.org/gatk/discussion/2806/howto-apply-hard-filters-to-a-call-set)
+    snvs:
+      "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    indels:
+      "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
+
+params:
+  subref:
+    Scontigs: 400
+    Sscaffold: 400000
+    Sep: 900
+    TargetID: Supercontig
+    NntargetID: Superscaffold
+  gatk:
+    HaplotypeCaller: ""
+    BaseRecalibrator: ""
+    GenotypeGVCFs: ""
+    VariantRecalibrator: ""
+  picard:
+    MarkDuplicates: "REMOVE_DUPLICATES=true"
+  cutadapt:
+    pe: ""
+    se: ""

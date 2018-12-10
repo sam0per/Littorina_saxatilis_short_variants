@@ -1,0 +1,139 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: snakemake configuration file
+
+type: object
+
+properties:
+  samples:
+    type: string
+  units:
+    type: string
+  #adapter:
+    #type: string
+    #pattern: "^[ACGT]+$"
+
+  modules:
+    type: object
+    properties:
+      gatk:
+        type: string
+      py3:
+        type: string
+      samt:
+        type: string
+      bedt:
+        type: string
+      bwa:
+        type: string
+      pic:
+        type: string
+      required:
+        - gatk
+        - py3
+        - samt
+        - bedt
+        - bwa
+        - pic
+
+
+  ref:
+    type: object
+    properties:
+      genome:
+        type: string
+      chr_len:
+        type: string
+      subref:
+        type: string
+      intervals:
+        type: string
+      #known-variants:
+        #type: string
+    required:
+      - genome
+      - chr_len
+      - subref
+      #- known-variants
+
+  filtering:
+    type: object
+    properties:
+      vqsr:
+        type: boolean
+      hard:
+        type: object
+        properties:
+          snvs:
+            type: string
+          indels:
+            type: string
+        required:
+          - snvs
+          - indels
+    required:
+      - vqsr
+      - hard
+
+  params:
+    type: object
+    properties:
+      subref:
+        type: object
+        properties:
+          Scontigs:
+            type: integer
+          Sscaffold:
+            type: integer
+          Sep:
+            type: integer
+          TargetID:
+            type: string
+          NntargetID:
+            type: string
+      gatk:
+        type: object
+        properties:
+          HaplotypeCaller:
+            type: string
+          BaseRecalibrator:
+            type: string
+          GenotypeGVCFs:
+            type: string
+          VariantRecalibrator:
+            type: string
+        required:
+          - HaplotypeCaller
+          - BaseRecalibrator
+          - GenotypeGVCFs
+          - VariantRecalibrator
+      cutadapt:
+        type: object
+        properties:
+          se:
+            type: string
+          pe:
+            type: string
+        required:
+          - pe
+          - se
+      picard:
+        type: object
+        properties:
+          MarkDuplicates:
+            type: string
+        required:
+          - MarkDuplicates
+    required:
+      - gatk
+      - cutadapt
+      - picard
+
+required:
+  - samples
+  - units
+  - modules
+  #- adapter
+  - ref
+  - filtering
+  - params
