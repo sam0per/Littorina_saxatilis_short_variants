@@ -1,0 +1,463 @@
+#!/usr/bin/env python3
+
+import os, glob
+
+WDIR = "/proj/data9/samuel/2016_CZA_capture/Littorina_saxatilis/short_genetic_variants"
+workdir: "/proj/data9/samuel/2016_CZA_capture/Littorina_saxatilis/short_genetic_variants"
+
+FQ_DIR = WDIR + "/raw"
+MQC_DIR = WDIR + "/mqc"
+RES_DIR = WDIR + "/results"
+
+WC = glob_wildcards(os.path.join(FQ_DIR, "{sample}_{pair}.fastq.gz"))
+SAMPLES = set(WC.sample)
+PAIR1, PAIR2 = set(WC.pair)
+
+ALB_TRIM_DIR = "/usr/local/packages/Trimmomatic-0.36/trimmomatic-0.36.jar"
+ALB_BED_DIR = "/usr/local/packages/anaconda2-2.5.0/bin/bedtools"
+ALB_BWA_DIR = "/usr/local/packages/anaconda2-4.4.0/bin/bwa"
+ALB_SAMT_DIR = "/usr/local/packages/anaconda2-5.0.0/bin/samtools"
+ALB_SAMB_DIR = "/proj/data9/samuel/modules/sambamba_v0.6.6"
+ALB_PIC_DIR = "/proj/data9/samuel/modules/picard/build/libs/picard.jar"
+ALB_STA_DIR = "/proj/data9/samuel/modules/stampy-1.0.32/stampy.py"
+ALB_STK_DIR = "/proj/data9/samuel/modules/seqtk/seqtk"
+ALB_GATK_DIR = "/proj/data9/samuel/modules/gatk-4.0.2.0/gatk-package-4.0.2.0-local.jar"
+ALB_CLIP_DIR = "/proj/data9/samuel/modules/bamUtil/bin/bam"
+
+ADAPT = "/proj/data9/samuel/2016_CZA_capture/adapters/adapt_cont.fa:2:30:10"
+WINDOW = "10:20"
+
+REF = "/proj/data9/samuel/2016_CZA_capture/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked"
+RED_REF = "/proj/data9/samuel/2016_CZA_capture/red_ref/NEW_superscaffold_REF"
+
+rule all:
+	input:
+		REF + ".dict",
+		expand("mqc/{S}.flagstat.txt", S=SAMPLES),
+		expand("mqc/{S}_flagstat20.txt", S=SAMPLES),
+		expand("mqc/{S}_DupMetx.txt", S=SAMPLES),
+		expand("clipped/{S}_clip.bam.bai", S=SAMPLES),
+		"results/mapped_mqc.html",
+		"Target_contigs.bed",
+		expand("mqc/stats2red/{S}_flagstat.txt", S=SAMPLES),
+		expand("mqc/stats2red/{S}_flagstat20.txt", S=SAMPLES),
+		expand("mqc/stats2red/{S}_sort20dupmetx.txt", S=SAMPLES),
+		"results/map2red_mqc.html",
+		expand("clip2red/{S}_clip.bam.bai", S=SAMPLES),
+		"results/indels/indel_bi_maf_AD.table"
+
+rule ref_prep:
+	input: REF + ".fasta"
+	output: REF + ".dict"
+	message:
+		"""--- Preparation {input} with BWA index, samtools faidx, and Picard dict."""
+	priority: 90
+	threads: 10
+	shell:
+		"""
+		/bin/sh scripts/ref_prep.sh {input} {output}
+		"""
+
+rule trimmomatic:
+	input:
+		fwd=expand("{fq_dir}/{{S}}_{pair}.fastq.gz", fq_dir=FQ_DIR, pair=PAIR1), 
+		rev=expand("{fq_dir}/{{S}}_{pair}.fastq.gz", fq_dir=FQ_DIR, pair=PAIR2)
+	output:
+		fwd_pa=temp(expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR1)),
+		fwd_un=temp(expand("trimmed/{{S}}_{pair}_unpaired.fastq.gz", pair=PAIR1)),
+		rev_pa=temp(expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR2)),
+		rev_un=temp(expand("trimmed/{{S}}_{pair}_unpaired.fastq.gz", pair=PAIR2))
+	message: """--- Trimming Illumina adapters and PhiX from {input.fwd} and {input.rev} with Trimmomatic-0.36."""
+	log:
+		"logs/trimmomatic/{S}.log"
+	params:
+		leading=3,
+		trailing=3,
+		minlen=70
+	threads: 8
+	priority: 60
+	shell:
+		"""
+		java -Xmx16g -jar {ALB_TRIM_DIR} PE -threads {threads} -phred33 -trimlog {log} {input.fwd} {input.rev} \
+		{output.fwd_pa} {output.fwd_un} {output.rev_pa} {output.rev_un} ILLUMINACLIP:{ADAPT} LEADING:{params.leading} TRAILING:{params.trailing} \
+		SLIDINGWINDOW:{WINDOW} MINLEN:{params.minlen}
+		"""		
+
+rule bwa:
+	input:
+		ref=REF + ".fasta",
+		fwd=rules.trimmomatic.output.fwd_pa,
+		rev=rules.trimmomatic.output.rev_pa
+	output:
+		temp("mapped/{S}.bam")
+	message: """--- Mapping {input.fwd} {input.rev} onto {input.ref} with BWA MEM."""
+	params:
+		rg="@RG\tID:{S}\tSM:{S}"
+	priority: 70
+	threads: 10
+	shell:
+		"""
+		{ALB_BWA_DIR} mem -M -R '{params.rg}' -t {threads} {input.ref} {input.fwd} {input.rev} | {ALB_SAMT_DIR} view -Sb - > {output}
+		"""
+
+rule flagstat:
+	input:
+		rules.bwa.output
+	output:
+		"mqc/{S}.flagstat.txt"
+	message:
+		"""--- Calculating metrics of {input} with Samtools flagstat."""
+	shell:
+		"{ALB_SAMT_DIR} flagstat {input} > {output}"
+
+rule mq20:
+	input:
+		rules.bwa.output
+	output:
+		temp("sorted/{S}_sorted20.bam")
+	message:
+		"""--- Applying MQ20 filter and sorting {input} with Samtools"""
+	priority: 80
+	threads: 6
+	shell:
+		"{ALB_SAMT_DIR} view -u -h -F 0x04 -q 20 {input} | {ALB_SAMT_DIR} sort -@ {threads} - sorted/{wildcards.S}_sorted20"
+
+rule mark_dup:
+	input:
+		rules.mq20.output	
+	output:
+		bam=temp("sorted/{S}_sorted20dup.bam"),
+		txt="mqc/{S}_DupMetx.txt"
+	message:
+		"""--- Marking potential PCR duplicates in {input} with Picard."""
+	priority: 80
+	threads: 4
+	shell:
+		"""
+		java -Xmx16g -jar {ALB_PIC_DIR} MarkDuplicates I={input} O={output.bam} M={output.txt} \ 
+		REMOVE_DUPLICATES=True READ_NAME_REGEX=null MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \ 
+		QUIET=true VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=True
+		"""
+
+rule clip:
+	input: rules.mark_dup.output.bam
+	output: "clipped/{S}_clip.bam"
+	message: """--- Clip overlapping read pairs {input} sorted by coordinate with clipOverlap"""
+	log: "logs/clipOverlap/{S}_clip.log"
+	priority: 70
+	threads: 2
+	shell: "{ALB_CLIP_DIR} clipOverlap --in {input} --out {output} --stats"
+
+rule flagstat20:
+	input: rules.clip.output
+	output: "mqc/{S}_flagstat20.txt"
+	message: """--- Calculating flagstat metrics of {input} with SAMTOOLS."""
+	priority: 40
+	shell: "{ALB_SAMT_DIR} flagstat {input} > {output}"
+
+rule multiqc:
+	input: MQC_DIR
+	output: "results/mapped_mqc.html"
+	message: """--- Aggregating results from the mapping steps with MULTIQC."""
+	priority: 5
+	shell:
+		"""
+		/home/samuel/miniconda/bin/multiqc -f {input} -o {output}
+		"""
+
+rule bamidx:
+	input: rules.clip.output
+	output: "clipped/{S}_clip.bam.bai"
+	message: """--- Indexing filtered bams with SAMBAMBA."""
+	priority: 150
+	threads: 4
+	shell: "{ALB_SAMB_DIR} index {input} {output}"
+
+rule window:
+	input:
+		"genome/FASTA_genomeFile.txt"
+	output:
+		"coverage/GENOME_window.bed"
+	message:
+		"""--- Creating {output} for 1kb window size with bedtools."""
+	priority: 60
+	params:
+		size=1000
+	shell:
+		"""
+		{ALB_BED_DIR} makewindows -g {input} -w {params.size} -s {params.size} > {output}
+		"""
+
+rule coverage:
+	input:
+		bed=rules.window.output,
+		bam=rules.clip.output
+	output:
+		"coverage/{S}_coverage.txt"
+	message:
+		"""--- Computing depth and breadth of coverage of {input.bam} on the features in {input.bed} with bedtools."""
+	priority: 60
+	shell:
+		"""
+		{ALB_BED_DIR} coverage -a {input.bed} -b {input.bam} > {output}
+		"""
+
+rule contigs:
+	input: rules.coverage.output
+	output: "Coverage_contigList.txt"
+	message: """--- Retain contigs covered by at least 5 reads in at least 50% of individuals."""
+	priority: 60
+	threads: 5
+	shell:
+		"""
+		/bin/sh scripts/cov_contig_list.sh {input} {output}
+		"""
+		
+rule targets:
+	input: 
+		gen="genome/FASTA_genomeFile.txt",
+		cov=rules.contigs.output,
+		ref=REF + ".fasta"
+	output: 
+		tar="genome/tmp_target.fasta",
+		ntar="genome/NONtarget.fasta",
+	message: "--- Generating fastas for target and nontarget contigs with SEQTK."
+	priority: 90
+	threads: 2
+	shell:
+		"""
+		cut -f 1 {input.gen} | grep -Fwf {input.cov} - | {ALB_STK_DIR} subseq {input.ref} - > {output.tar}
+		cut -f 1 {input.gen} | grep -v -Fwf {input.cov} - | {ALB_STK_DIR} subseq {input.ref} - > {output.ntar}
+		"""
+
+rule merge_fasta:
+	input:	rules.targets.output.ntar
+	output: "genome/NONtarget.fa"
+	message:
+		"""--- Merging non-target contigs of {input}."""
+	priority: 90
+	threads: 4
+	shell:
+		"""
+		/usr/local/packages/anaconda2/bin/python scripts/merge_superfasta.py
+		/usr/local/packages/anaconda2/bin/python scripts/edit_superfasta.py
+		"""
+
+rule cat_fasta:
+	input:
+		tar=rules.targets.output.tar,
+		ntar=rules.merge_fasta.output
+	output:
+		"red_ref/NEW_superscaffold_REF.fasta"
+	message:
+		"""--- Concatenating target and non-target contigs into {output}."""
+	priority: 90
+	threads: 2
+	shell:
+		"""
+		cat {input.tar} {input.ntar} > {output}
+		"""
+
+rule red_prep:
+	input: rules.cat_fasta.output
+	output: "red_ref/NEW_superscaffold_REF.fasta.fai"
+	message:
+		"""--- Preparation {input} with BWA index, samtools faidx, and Picard dict."""
+	priority: 90
+	threads: 5
+	shell:
+		"""
+		/bin/sh scripts/red_prep.sh {input} {output}
+		"""
+
+rule int_list:
+	input: rules.red_prep.output
+	output: "Target_contigs.bed"
+	message: """--- Generating {output} from {input}."""
+	priority: 90
+	shell:
+		"""
+		/bin/sh scripts/int_list.sh {input} {output}
+		"""
+
+rule red_bwa:
+	input:
+		ref=rules.cat_fasta.output,
+		fwd=expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR1),
+		rev=expand("trimmed/{{S}}_{pair}_paired.fastq.gz", pair=PAIR2)
+	output:
+		temp("map2red/{S}.bam")
+	message: """--- Mapping {input.fwd} {input.rev} onto {input.ref} with BWA MEM."""
+	params:
+		rg="@RG\tID:{S}\tSM:{S}"
+	priority: 70
+	threads: 10
+	shell:
+		"""
+		{ALB_BWA_DIR} mem -M -R '{params.rg}' -t {threads} {input.ref} {input.fwd} {input.rev} | {ALB_SAMT_DIR} view -Sb - > {output}
+		"""
+
+rule red_flagstat:
+	input: rules.red_bwa.output
+	output: "mqc/stats2red/{S}_flagstat.txt"
+	message: """--- Calculating flagstat metrics of {input} with SAMTOOLS."""
+	priority: 60
+	shell: "{ALB_SAMT_DIR} flagstat {input} > {output}"
+
+rule red_mq20:
+	input: rules.red_bwa.output
+	output: temp("sort2red/{S}_sort20.bam")
+	message: """--- Applying MQ20 filter and sorting {input} with SAMTOOLS."""
+	priority: 70
+	threads: 8
+	shell:
+		"{ALB_SAMT_DIR} view -u -h -F 0x04 -q 20 {input} | {ALB_SAMT_DIR} sort -@ {threads} -o {output} -"
+
+rule red_markdup:
+	input: rules.red_mq20.output
+	output:
+		bam=protected("rmdup2red/{S}_sort20dup.bam"),
+		txt="mqc/stats2red/{S}_sort20dupmetx.txt"
+	message: """--- Marking and removing potential PCR duplicates with PICARD."""
+	priority: 70
+	threads: 5
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_PIC_DIR} MarkDuplicates I={input} O={output.bam} M={output.txt} \
+		REMOVE_DUPLICATES=true MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
+		ASSUME_SORTED=true QUIET=true VALIDATION_STRINGENCY=SILENT
+		"""
+
+rule red_20flagstat:
+	input: rules.red_markdup.output.bam
+	output: "mqc/stats2red/{S}_flagstat20.txt"
+	message: """--- Calculating flagstat metrics of {input} with SAMTOOLS."""
+	priority: 60
+	shell: "{ALB_SAMT_DIR} flagstat {input} > {output}"
+
+rule red_multiqc:
+	input: "mqc/stats2red"
+	output: "results/map2red_mqc.html"
+	message: """--- Aggregating results from the mapping steps with MULTIQC."""
+	priority: 5
+	shell:
+		"""
+		/home/samuel/miniconda/bin/multiqc -f {input} -o {output}
+		"""
+
+rule red_clip:
+	input: rules.red_markdup.output.bam
+	output: "clip2red/{S}_clip.bam"
+	message: """--- Clip overlapping read pairs {input} sorted by coordinate with clipOverlap"""
+	log: "logs/clipOverlap/{S}_clip.log"
+	priority: 70
+	threads: 2
+	shell: "{ALB_CLIP_DIR} clipOverlap --in {input} --out {output} --stats"
+
+rule red_bamidx:
+	input: rules.red_clip.output
+	output: "clip2red/{S}_clip.bam.bai"
+	message: """--- Indexing filtered bams with SAMBAMBA."""
+	priority: 150
+	threads: 4
+	shell: "{ALB_SAMB_DIR} index {input} {output}"
+		
+rule var_call:
+	input: 
+		bam=rules.red_clip.output,
+		ref=RED_REF + ".fasta",
+		tar=rules.int_list.output
+	output: "results/gVCF/{S}.g.vcf.gz"
+	message: """--- Calling SNPs and indels in {input} with HaplotypeCaller"""
+	priority: 70
+	threads: 5
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} HaplotypeCaller -R {input.ref} -I {input.bam} \
+		-O {output} -ERC GVCF --heterozygosity 0.05 --pcr-indel-model NONE -L {input.tar}
+		"""
+
+def findGVCF ():
+	gvcfs = open("samplesGVCF.list", "w")
+	gvcfList = glob.glob(RES_DIR + '/*')
+	for sample in gvcfList:
+		if sample.endswith(".g.vcf.gz"):
+			print>>gvcfs, sample
+	gvcfs.close()
+	return ["samplesGVCF.list"];
+
+rule CombineGVCFs:
+	input:
+		#gvcf=findGVCF,
+		gvcf="samplesGVCF_all.list",
+		ref="red_ref/NEW_superscaffold_REF.fasta"
+	output:
+		"results/CZA_all.g.vcf.gz"
+	message: """--- Combine per-sample gVCFs into a multi-sample gVCF file with CombineGVCFs."""
+	priority: 70
+	threads: 7
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} CombineGVCFs -R {input.ref} -V {input.gvcf} -O {output}
+		"""
+
+rule GenotypeGVCFs:
+	input:
+		ref="red_ref/NEW_superscaffold_REF.fasta",
+		gvcf=rules.CombineGVCFs.output,
+		tar="Target_contigs.bed"
+	output:
+		"results/VCF/CZA_raw_all.vcf.gz"
+	message: """--- Perform joint genotyping on all samples with GenotypeGVCFs."""
+	priority: 70
+	threads: 7
+	shell:
+		"""
+		java -Xmx34g -jar {ALB_GATK_DIR} GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output} \
+		--heterozygosity 0.05 --only-output-calls-starting-in-intervals TRUE -L {input.tar}
+		"""
+
+rule sel_indel:
+	input:
+		var=rules.GenotypeGVCFs.output,
+		ref=rules.cat_fasta.output
+	output: "results/indels/indel_bi_raw.vcf.gz"
+	message: """--- Select biallelic indels from {input} with SelectVariants."""
+	priority: 70
+	threads: 5
+	shell:
+		"""
+		java -Xmx8g -jar {ALB_GATK_DIR} SelectVariants \
+		-R {input.ref} \
+		-V {input.var} \
+		-select-type INDEL \
+		-O {output} \
+		--restrict-alleles-to BIALLELIC
+		"""
+
+rule var_filters:
+	input:
+		var=rules.sel_indel.output,
+		ref=rules.cat_fasta.output
+	output: "results/indels/indel_bi_maf.recode.vcf"
+	message: """--- Apply hard filters with GATK and VCFTOOLS.""" 
+	priority: 70
+	threads: 7
+	shell:
+		"""
+		/bin/sh scripts/variant_filters.sh {input} {output}
+		"""
+
+rule ad_table:
+	input: rules.var_filters.output
+	output: "results/indels/indel_bi_maf_AD.table"
+	message: """--- Create table of allelic depth for each allele with VariantsToTable."""
+	priority: 70
+	threads: 5
+	shell:
+		"""
+		java -Xmx8g -jar {ALB_GATK_DIR} VariantsToTable \
+		-V {input} \
+		-F CHROM -F POS -GF AD \
+		-O {output}
+		"""
