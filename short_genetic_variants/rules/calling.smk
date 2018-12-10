@@ -21,7 +21,7 @@ rule DBImport:
         gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index),
         int="sum_tot_coverage_supercontigs_windows.bed"
     output:
-        "database"
+        directory("database")
     #log:
         #"logs/gatk/dbimport/{sample}.log"
     params:
@@ -36,7 +36,7 @@ rule DBImport:
 rule genotype_variants:
     input:
         ref=config["ref"]["subref"],
-        dbi="database"
+        dbi=directory("database")
     output:
         vcf="genotyped/all.vcf.gz"
     params:
@@ -45,6 +45,6 @@ rule genotype_variants:
         "logs/gatk/genotypegvcfs.log"
     shell:
         """
-        java -Xmx18g -jar {params.gatk} GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation -newQual \
+        java -Xmx18g -jar {params.gatk} GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation \
         -O {output.vcf}
         """
