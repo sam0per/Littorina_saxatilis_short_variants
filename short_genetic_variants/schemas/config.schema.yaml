@@ -68,9 +68,12 @@ properties:
             type: string
           indels:
             type: string
+          vcftools:
+            type: string
         required:
           - snvs
           - indels
+          - vcftools
     required:
       - vqsr
       - hard
