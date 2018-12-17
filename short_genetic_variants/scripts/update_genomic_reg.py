@@ -1,184 +1,92 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import os
-import glob
+## Description: Update chromosome name and chromosome position of variants in VCF for a single large interval (e.g., Supercontig0)
+## using coordinates of smaller genomic regions (e.g., Contig0, Contig1, Contg2, ...).
+# Example: python3 update_genomic_reg.py -len CONTIGS_LENGTH_IN_SUPERCONTIG.txt -vcf GENOTYPES.vcf.gz -scaf Supercontig0
+
 import argparse
-import pandas as pd
+import re
 import gzip
+import copy
 
 # arguments
-parser = argparse.ArgumentParser(description='Cumulative sum of contig length for each supercontig.')
+parser = argparse.ArgumentParser(description='Update genomic coordinates in VCF.')
 parser.add_argument('-len', help='FILE to read original contig length from.', required=True)
-parser.add_argument('-dir', help='PATH to directory containing supercontigs.', required=True)
 parser.add_argument('-vcf', help='VCF with chromosome and position to edit.', required=True)
+parser.add_argument('-scaf', help='Supercontig to update, must be consistent with VCF', required=True)
 args = parser.parse_args()
 
-# Defining variables
-contigs = args.len
-folder = args.dir
+# Defining input and output variables
+length_file = args.len
 vcf_file = args.vcf
+scaf = args.scaf
+contig_num = re.split('(\d+)', scaf)[1]
+if not contig_num == 0:
+    contig_num = int(int(contig_num)/2)
 
-path, filename = os.path.split(contigs)
-basename, ext = os.path.splitext(filename)
-out_txt = os.path.join(path, basename + "_cumsum.txt")
-
-out_vcf = vcf_file.replace(".vcf", ".reg.updated.vcf")
-
-# Reading contig length and sorting by contig
-fai = pd.read_csv(contigs, names=['contig', 'length'], sep='\t')
-fai['newindex'] = pd.Series(range(1, len(fai)+1))
-fai = fai.sort_values(by=['contig'])
-
-# Reading superconting files and sorting by contig
-scontigs = glob.glob(folder + "Littorina_[0-9]*")
-dfs = []
-for file in scontigs:
-    path, header = os.path.split(file)
-    header = header.replace('Littorina_', 'Supercontig')
-    contig = pd.read_csv(file, names=['contig'])
-    contig['supercontig'], contig['start'] = header, 0
-    dfs.append(contig)
-
-# Concatenating supercontig files
-frame = pd.concat(dfs, axis=0, ignore_index=True).sort_values(by=['contig'])
-
-# Merging concatenated supercontig file with conting length file
-frame = pd.merge(frame, fai, on='contig').sort_values(by=['newindex']).reset_index()
-frame = frame.loc[:, ['contig', 'supercontig', 'start', 'length']]
-
-# Editing start and end of contings within the corresponding supercontig
-#frame.loc[1:, frame.columns == 'length'] = frame.loc[1:, frame.columns == 'length'] + 900
-#frame['length'] = frame['length'] + 900
-#grouped = frame.groupby(['supercontig'])
-#grouped['end'] = grouped['length'].transform(pd.Series.cumsum)
-#frame['end'] = frame.groupby('supercontig')['length'].transform(pd.Series.cumsum)
-#grouped.loc[1:, grouped.columns == 'length'] = grouped.loc[1:, grouped.columns == 'length'] + 900
-#frame.loc[1:, 'start'] = frame.loc[1:, 'end'] - frame.loc[1:, 'length'] + 900
-#frame.at[0, 'start'] = 0
-
-# Writing to output
-#previous_line = ''
-range_list = []
-contig_list = []
-scontig_list = []
-line_list = []
-
-with open(out_txt,'w') as outfile:
-    #with open(out_vcf, 'w') as updated_vcf:
-        for scontig, group in frame.groupby('supercontig'):
-            grouped = group.reset_index()
-            grouped.loc[1:, grouped.columns == 'length'] = grouped.loc[1:, grouped.columns == 'length'] + 900
-            grouped['end'] = grouped['length'].transform(pd.Series.cumsum)
-            grouped.loc[1:, 'start'] = grouped.loc[1:, 'end'] - grouped.loc[1:, 'length'] + 900
-            grouped.loc[1:, grouped.columns == 'length'] = grouped.loc[1:, grouped.columns == 'length'] - 900
-            #print(grouped)
-            grouped.to_csv(outfile, header=False, index=False, sep='\t')
-            sub = grouped.loc[0:2, :]
-            sub_list = sub.values.tolist()
-            line_list.append(sub_list)
-print(line_list)
-vcf_list = [line.split() for line in gzip.open(vcf_file) if not line.startswith(b'#')]
-chr_pos_list = [[ x.decode("utf-8") for x in l] for l in vcf_list ]
-vcf_chr = [ x[0] for x in chr_pos_list ]
-vcf_pos = [ x[1] for x in chr_pos_list ]
-print(vcf_chr)
-
-chr_pos_dic = {}
-for i in range(len(vcf_chr)):
-    chr_pos_dic[vcf_chr[i]] = vcf_pos[i]
-
-print(chr_pos_dic)
-
-# if 'Supercontig800' in line_list[1][1]:
-#     print("yes")
-# else:
-#     print('no')
-
-for i, ival in enumerate(line_list):
-    for j, jval in enumerate(ival):
-        for k, kval in enumerate(jval):
-            if kval in chr_pos_dic:
-                print(kval + '\t' + jval[1] + '\t' + chr_pos_dic[kval])
-
-#print(vcf_list[0][0])
-#             sub_start = sub['start'].tolist()
-#             sub_end = sub['end'].tolist()
-#             sub_contig = sub['contig'].tolist()
-#             scontig_list.append(scontig)
-#             #print(sub_start)
-#             for i, val in enumerate(sub_contig):
-#                 contig_range = list(range(sub_start[i], sub_end[i]))
-#                 range_list.append(contig_range)
-#                 contig_list.append(val)
-#                 #print(contig_range[100])
-# #print(contig_list)
-# #print(len(range_list[0]))
-# #print(range_list[0][78038])
-# #print(range_list[1][0])
-#
-# #if 78018 in range_list:
-# #    print('yes')
-#
-# print(scontig_list)
-# print(contig_list + scontig_list)
-
-# scontig_pos = []
-# with gzip.open(vcf_file) as vcf:
-#     for j, line in enumerate(vcf):
-#         if not line.startswith(b'#'):
-#             vcf_schr = line.split(b'\t')[0].decode("utf-8")
-#             vcf_spos = line.split(b'\t')[1].decode("utf-8")
-#             print(vcf_schr + '\t' + vcf_spos)
-
-# for j, num in enumerate(range_list):
-#     print(str(num[0]) + '\t' + str(contig_list[0]))
-            #print(scontig)
-            # with gzip.open(vcf_file) as vcf:
-    #print(grouped)
-    #range_list = []
-    #contig_list = []
-            # for i, row in enumerate(grouped.itertuples(), 1):
-            #     #contig_list.append(row[2])
-            #     contig_range = list(range(row[4], row[6]))
-            #     #print(contig_range[1])
-            #     #print(row[1])
-            #     for line in gzip.open(vcf_file):
-            #         if not line.startswith(b'#'):
-            #             vcf_schr = line.split(b'\t')[0].decode("utf-8")
-            #             #vcf_spos = line.split(b'\t')[1].decode("utf-8")
-            #             if vcf_schr in scontig:
-            #                 vcf_spos = line.split(b'\t')[1].decode("utf-8")
-            #                 if vcf_spos in contig_range:
-            #                     print("true")
-            #                 else:
-            #                     continue
+out_vcf = vcf_file.replace(".vcf", '_' + scaf + ".updated.vcf")
 
 
-        # scontig_list = frame["supercontig"].tolist()
-        # uni_scontigs = list(set(scontig_list))
-        # contig_list = frame["contig"].tolist()
-        # uni_contigs = list(set(contig_list))
-        #print(uni_contigs)
+# Make coord sets.
+contig_length = []
+contig_range = []
+for line in open(length_file):
+    line = line.split()
+    if line[2] == scaf:
+        up_scaf, up_contigs, contig_start, contig_end, contig_len = line[2], line[1], int(line[3]), int(line[5]), int(line[4])
+        if scaf == up_scaf:
+            contig_range += [list(range(contig_start, contig_end))]
+            contig_length.append(contig_len)
+        else:
+            continue
 
-        # loop through original contigs and vcf, update the genomic coordinates
+# Export info lines from vcf.
+vcf_list = []
+info_list = []
+id_list = []
+head_list = []
+source_list = []
+for line in gzip.open(vcf_file):
+    if not line.startswith(b'#'):
+        if line.split(b'\t')[0].decode("utf-8") == scaf:
+            vcf_list.append(line.split())
+    elif line.startswith(b'##contig'):
+        id = line.split(b',')[0]
+        id_line = id.split(b'=')[2].decode("utf-8")
+        if id_line == scaf:
+            id_list.append(id_line)
+    elif line.startswith(b'#CHROM'):
+        head_list.append(line)
+    elif line.startswith(b'##source'):
+        source_list.append(line)
+    else:
+        info_list.append(line)
 
-        # for contig in uni_contigs:
-        #     for line in gzip.open(vcf_file):
-        #         if not line.startswith(b'#'):
-        #             #print(line)
-        #             vcf_schr = line.split(b'\t')[0].decode("utf-8")
-        #             vcf_spos = line.split(b'\t')[1].decode("utf-8")
-                # if vcf_schr in uni_scontigs:
-                #     print(line)
-                #print(grouped)
-                #if line.startswith(b'##contig'):
-                    #print(line)
+# Export CHR and POS field of vcf.
+chr_pos_vcf = [[ x.decode("utf-8") for x in l] for l in vcf_list ]
 
-            #         new_info = '##INFO=<ID=ANNO,Number=1,Type=String,Description="Annotation of genomic region">\n'
-            #         annotated_vcf.write(new_info)
-            #     previous_line = line
-            #     annotated_vcf.write(line)
-            # elif line.split('\t')[0] == chromo:
-            #     all_variants += 1
-            #     split_line = line.split('\t')
-            #     chromo, start, end = split_line[0], int(split_line[1])-1, int(split_line[1]) + len(split_line[3])
+vcf_pos = []
+for sublist in vcf_list:
+    vcf_pos.append(int(sublist[1].decode("utf-8")))
+
+# Edit CHR and POS with original names and coordinates.
+with open(out_vcf, mode='wt') as updated_vcf:
+    info = b''.join(info_list).decode('utf-8')
+    contig_line = ''.join(id_list)
+    source_line = b''.join(source_list).decode('utf-8')
+    head = b'\t'.join(head_list).decode('utf-8')
+    updated_vcf.write(info)
+    chr_pos_list = []
+    for sub_list in contig_range:
+        for i, pos in enumerate(vcf_pos):
+            if pos in sub_list:
+                idx = contig_range.index(sub_list)
+                chr_pos = copy.deepcopy(chr_pos_vcf[i])
+                chr_pos[0] = "Contig" + str(contig_num + contig_range.index(sub_list))
+                chr_pos[1] = str(sub_list.index(pos))
+                chr_pos_list.append(chr_pos)
+                updated_vcf.write('##contig=<ID=Contig' + str(contig_num + contig_range.index(sub_list)) + ',length=' + str(contig_length[idx]) + '>' + '\n')
+
+    updated_vcf.write(source_line + head)
+    for line in chr_pos_list:
+        updated_vcf.write("\t".join(line) + '\n')
