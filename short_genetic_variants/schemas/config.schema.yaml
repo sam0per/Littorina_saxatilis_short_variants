@@ -59,6 +59,8 @@ properties:
   filtering:
     type: object
     properties:
+      clines:
+        type: string
       vqsr:
         type: boolean
       hard:
@@ -68,13 +70,16 @@ properties:
             type: string
           indels:
             type: string
-          vcftools:
-            type: string
+      #vcftools:
+        #type: object
+        #properties:
+          #clines:
+            #type: string
         required:
           - snvs
           - indels
-          - vcftools
     required:
+      - clines
       - vqsr
       - hard
 

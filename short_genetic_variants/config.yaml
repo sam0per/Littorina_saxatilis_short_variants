@@ -25,6 +25,7 @@ ref:
   #known-variants: path/to/dbsnp.vcf
 
 filtering:
+  clines: --maf 0.1 --minQ 20 --max-missing-count 150
   # Set to true in order to apply machine learning based recalibration of
   # quality scores instead of hard filtering.
   vqsr: false
@@ -35,8 +36,9 @@ filtering:
       "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
     indels:
       "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0 || InbreedingCoeff < -0.8 || SOR > 10.0"
-    vcftools:
-      --maf 0.1 --minQ 20 --max-missing-count 150
+  #vcftools:
+    #clines:
+      #--maf 0.1 --minQ 20 --max-missing-count 150
 
 
 

@@ -17,7 +17,7 @@ rule select_calls:
         java -Xmx18g -jar {params.gatk} SelectVariants \
         -R {input.ref} \
         -V {input.vcf} \
-        -select-type {params.extra} \
+        {params.extra} \
         -O {output.vcf} \
         --restrict-alleles-to BIALLELIC
 		"""
@@ -25,9 +25,7 @@ rule select_calls:
 
 
 def get_filter(wildcards):
-    return {
-        "snv-hard-filter":
-        config["filtering"]["hard"][wildcards.vartype]}
+    return "{varmode}".format(varmode = config["filtering"]["hard"][wildcards.vartype])
 
 
 rule hard_filter_calls:
@@ -36,9 +34,10 @@ rule hard_filter_calls:
         vcf="filtered/all.{vartype}.vcf.gz"
     output:
         gz=temp("filtered/all.{vartype}.hardfiltered.vcf.gz")
-        vcf=temp("filtered/all.{vartype}.hardfiltered.vcf")
+        #vcf=temp("filtered/all.{vartype}.hardfiltered.vcf")
     params:
         filters=get_filter,
+        names="hard_{vartype}",
         gatk=config["modules"]["gatk"]
     shell:
         """
@@ -46,38 +45,56 @@ rule hard_filter_calls:
         -R {input.ref} \
         -V {input.vcf} \
         -O {output.gz} \
-        -filter {params.filters}
-        --filter-name "hardfilters" | /bin/gunzip > {output.vcf}
+        -filter "{params.filters}" \
+        --filter-name "{params.names}"
         """
 
 
 rule vcftools:
     input:
-        "filtered/all.{vartype}.hardfiltered.vcf"
+        "filtered/all.{vartype}.hardfiltered.vcf.gz"
     output:
-        prefix="filtered/all.{vartype}.hardfiltered.maf",
-        gz="filtered/all.{vartype}.hardfiltered.maf.recode.vcf.gz"
+        #prefix="filtered/all.{vartype}.hardfiltered.maf"
+        gz="filtered/all.{vartype}.hardfiltered.clines.vcf.gz"
     params:
-        filters=config["filtering"]["hard"]["vcftools"]
+        filters=config["filtering"]["clines"]
+        #prefix=output.gz.replace(".recode.vcf.gz", "")
     shell:
         """
-        vcftools --vcf {input} {params.filters} --out {output.prefix} --recode | gzip > {output.gz}
+        vcftools --gzvcf {input} {params.filters} --recode --stdout | gzip > {output.gz}
         """
 
 
-rule merge_calls:
+rule sortvcf:
     input:
-        vcf=expand("filtered/all.{vartype}.{filtertype}.maf.recode.vcf.gz",
+        vcf=expand("filtered/all.{vartype}.{filtertype}.clines.vcf.gz",
                    vartype=["snvs", "indels"],
                    filtertype="recalibrated"
                               if config["filtering"]["vqsr"]
                               else "hardfiltered")
     output:
-        vcf="filtered/all.vcf.gz"
+        vcf="filtered/all.sorted.vcf.gz"
     params:
         pic=config["modules"]["pic"],
         inputs=lambda wildcards, input: " ".join("INPUT={}".format(f) for f in input.vcf)
     shell:
         """
-        java -Xmx16g -jar {params.pic} MergeVcfs {params.inputs} OUTPUT={output.vcf}
+        java -Xmx16g -jar {params.pic} SortVcf {params.inputs} OUTPUT={output.vcf}
         """
+
+# rule merge_calls:
+#     input:
+#         vcf=expand("filtered/all.{vartype}.{filtertype}.clines.vcf.gz",
+#                    vartype=["snvs", "indels"],
+#                    filtertype="recalibrated"
+#                               if config["filtering"]["vqsr"]
+#                               else "hardfiltered")
+#     output:
+#         vcf="filtered/all.vcf.gz"
+#     params:
+#         pic=config["modules"]["pic"],
+#         inputs=lambda wildcards, input: " ".join("INPUT={}".format(f) for f in input.vcf)
+#     shell:
+#         """
+#         java -Xmx16g -jar {params.pic} MergeVcfs {params.inputs} OUTPUT={output.vcf}
+#         """

@@ -10,7 +10,8 @@ rule all:
         #"qc/multiqc.html",
         #"sum_tot_coverage_supercontigs_windows.bed"
         expand("dedup/{sample}.bam.bai", sample=samples.index),
-        "genotyped/all.vcf.gz"
+        "genotyped/all.vcf.gz",
+        "filtered/all.sorted.vcf.gz"
 
 
 ##### Modules #####
@@ -21,3 +22,4 @@ include: "rules/mapping.smk"
 #include: "rules/qc.smk"
 #include: "rules/intervals.smk"
 include: "rules/calling.smk"
+include: "rules/filtering.smk"
