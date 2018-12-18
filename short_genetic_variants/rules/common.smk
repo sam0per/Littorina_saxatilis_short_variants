@@ -18,15 +18,14 @@ validate(units, schema="../schemas/units.schema.yaml")
 contigs = pd.read_table(config["ref"]["intervals"],
                         header=None, usecols=[0], squeeze=True, dtype=str)
 
-#num = list(range(0, 16+1, 4))
 
 ##### Wildcard constraints #####
 wildcard_constraints:
     vartype="snvs|indels",
     sample="|".join(samples.index),
     #unit="|".join(units["unit"]),
-    contig="|".join(contigs),
-    supercontig=r"[Supercontig]+[\d]+"
+    contig="|".join(contigs)
+    #supercontig=r"[Supercontig]+[\d]+"
 
 
 ##### Helper functions #####
@@ -63,12 +62,6 @@ def get_sample_bams(wildcards):
     return expand("dedup/{sample}.bam",
                   sample=wildcards.sample)
                   #unit=units.loc[wildcards.sample].unit)
-
-
-def get_supercontigs(wildcards):
-    """Get all target supercontigs."""
-    return expand("subreference/{supercontig}_tmp_target.fasta",
-                  supercontig=wildcards.supercontig)
 
 
 def get_sample_cov(wildcards):
