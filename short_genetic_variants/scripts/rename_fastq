@@ -1,10 +1,43 @@
 #!/usr/bin/env python3
 
+# Description: It adds directory name to the beginning of the file and creates two tables tab separated with filenames
+#
+# Example: python3.7 scripts/rename_fastq -dir data/fastq
+
+import argparse
 import os
 
-for root, dirs, files in os.walk("fastq"):
+parser = argparse.ArgumentParser()
+parser.add_argument('-dir', help='DIRECTORY name to add to its files.', required=True)
+args = parser.parse_args()
+
+dir = args.dir
+cwd = os.getcwd()
+
+out_tsv = os.path.join(cwd, "samples.tsv")
+unit_tsv = os.path.join(cwd, "units.tsv")
+
+samps = []
+unit_1 = []
+unit_2 = []
+for root, dirs, files in os.walk(dir):
     if not files:
         continue
     prefix = os.path.basename(root)
     for f in files:
         os.rename(os.path.join(root, f), os.path.join(root, "{}_{}".format(prefix, f)))
+        if prefix.startswith("CZ"):
+            samps.append(prefix)
+        if f.endswith("1.fastq.gz"):
+            unit_1.append(f)
+        if f.endswith("2.fastq.gz"):
+            unit_2.append(f)
+
+samp = sorted(set(samps))
+with open(out_tsv, "w") as outfile:
+    outfile.write("sample\n" + "\n".join(samp) + "\n")
+
+with open(unit_tsv, "w") as outunit:
+    outunit.write("sample\tfq1\tfq2\n")
+    for i, name in enumerate(samp):
+        outunit.write(name + "\t" + "{}_{}".format(name, unit_1[i]) + "\t" + "{}_{}".format(name, unit_2[i]) + "\n")
