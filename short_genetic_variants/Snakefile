@@ -11,7 +11,7 @@ rule all:
         #"sum_tot_coverage_supercontigs_windows.bed"
         expand("dedup/{sample}.bam.bai", sample=samples.index),
         "genotyped/all.vcf.gz",
-        "filtered/all.sorted.vcf.gz"
+        "filtered/all.vcf.gz"
 
 
 ##### Modules #####
