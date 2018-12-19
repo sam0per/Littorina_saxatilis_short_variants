@@ -15,8 +15,8 @@ rule genomic_ranges:
 
 import os, glob
 
-def get_scontigs_names(wildcards, ref_dir):
-    scontigs = glob.glob(os.path.join(ref_dir, "Supercontig*"))
+def get_scontigs_names(wildcards):
+    scontigs = glob.glob(os.path.join("reference", "Supercontig*"))
     files = [os.path.basename(s) for s in scontigs]
     name = [i.split('_')[0] for i in files]
     return expand("{supercontig}", supercontig=wildcards.name)
@@ -26,7 +26,7 @@ rule update_vcf:
     input:
         len="genome/genome_contigs_len_cumsum.txt",
         vcf="filtered/all.vcf.gz",
-        scaf=get_scontigs_names("reference")
+        scaf=get_scontigs_names
     output:
         "updated/all_supercontigs.updated.list"
     params:
