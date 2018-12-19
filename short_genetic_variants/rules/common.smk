@@ -18,13 +18,17 @@ validate(units, schema="../schemas/units.schema.yaml")
 contigs = pd.read_table(config["ref"]["intervals"],
                         header=None, usecols=[0], squeeze=True, dtype=str)
 
+# supercontigs in subreference genome
+supercontigs = pd.read_table(config["ref"]["subref"] + ".fai",
+                        header=None, usecols=[0], squeeze=True, dtype=str)
 
 ##### Wildcard constraints #####
 wildcard_constraints:
     vartype="snvs|indels",
     sample="|".join(samples.index),
-    #unit="|".join(units["unit"]),
+    supercontig="|".join(supercontigs),
     contig="|".join(contigs)
+    #unit="|".join(units["unit"]),
     #supercontig=r"[Supercontig]+[\d]+"
 
 
