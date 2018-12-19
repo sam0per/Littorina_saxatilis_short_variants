@@ -19,21 +19,23 @@ def get_scontigs_names(wildcards):
     scontigs = glob.glob(os.path.join("reference", "Supercontig*"))
     files = [os.path.basename(s) for s in scontigs]
     name = [i.split('_')[0] for i in files]
-    return expand("{supercontig}", supercontig=wildcards.name)
+    #name = wildcards.name
+    return name
 
 
 rule update_vcf:
     input:
         len="genome/genome_contigs_len_cumsum.txt",
-        vcf="filtered/all.vcf.gz",
-        scaf=get_scontigs_names
+        vcf="filtered/all.vcf.gz"
+        #scaf=get_scontigs_names
     output:
         "updated/all_supercontigs.updated.list"
     params:
-        py3=config["modules"]["py3"]
+        py3=config["modules"]["py3"],
+        scaf=get_scontigs_names
     shell:
         """
-        {params.py3} scripts/update_genomic_reg.py -len {input.len} -vcf {input.vcf} -scaf {input.scaf}
+        {params.py3} scripts/update_genomic_reg.py -len {input.len} -vcf {input.vcf} -scaf {params.scaf}
         ls updated/*.updated.vcf.gz > {output}
         """
 
