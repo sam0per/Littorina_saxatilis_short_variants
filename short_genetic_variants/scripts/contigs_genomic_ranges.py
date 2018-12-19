@@ -32,7 +32,7 @@ fai = fai.sort_values(by=['contig'])
 
 # Reading superconting files and sorting by contig.
 # NOTE the name of the files where to read the contig names from! Change it accordingly.
-scontigs = glob.glob(folder + "Littorina_[0-9]*")
+scontigs = glob.glob(os.path.join(folder, "Littorina_[0-9]*"))
 dfs = []
 for file in scontigs:
     path, header = os.path.split(file)
