@@ -11,7 +11,8 @@ rule all:
         #"sum_tot_coverage_supercontigs_windows.bed"
         expand("dedup/{sample}.bam.bai", sample=samples.index),
         "genotyped/all.vcf.gz",
-        "filtered/all.vcf.gz"
+        "filtered/all.vcf.gz",
+        "updated/all_supercontigs.sorted.vcf.gz"
 
 
 ##### Modules #####
@@ -23,3 +24,4 @@ include: "rules/mapping.smk"
 #include: "rules/intervals.smk"
 include: "rules/calling.smk"
 include: "rules/filtering.smk"
+include: "rules/update_coords.smk"
