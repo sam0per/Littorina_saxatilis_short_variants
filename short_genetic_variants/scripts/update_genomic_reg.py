@@ -4,6 +4,7 @@
 ## using coordinates of smaller genomic regions (e.g., Contig0, Contig1, Contg2, ...).
 # Example: python3 update_genomic_reg.py -len CONTIGS_LENGTH_IN_SUPERCONTIG.txt -vcf GENOTYPES.vcf.gz -scaf Supercontig0
 
+import os
 import argparse
 import re
 import gzip
@@ -24,7 +25,8 @@ contig_num = re.split('(\d+)', scaf)[1]
 if not contig_num == 0:
     contig_num = int(int(contig_num)/2)
 
-out_vcf = vcf_file.replace(".vcf", '_' + scaf + ".updated.vcf")
+base_vcf = os.path.basename(vcf_file)
+out_vcf = "updated/" + base_vcf.replace(".vcf", '_' + scaf + ".updated.vcf")
 
 
 # Make coord sets.
