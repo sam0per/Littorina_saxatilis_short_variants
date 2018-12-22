@@ -6,7 +6,7 @@ rule all:
     input:
         "subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
         "subreference/Lsax_subref_supercontigs_len.txt",
-        expand("dedup/{sample}-{unit}.bam.bai", sample=samples.index, unit=units.index),
+        expand("dedup/{sample}-{unit}.bam.bai", sample=samples.index, unit=units["unit"]),
         "sum_tot_coverage_supercontigs_windows.bed",
         "qc/multiqc.html"
         #"genotyped/all.vcf.gz",
