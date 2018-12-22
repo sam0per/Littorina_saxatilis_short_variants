@@ -19,38 +19,40 @@ rule trim_reads_pe:
 
 rule map_reads:
     input:
-        ref="subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
+        #ref="subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
         reads=get_trimmed_reads
     output:
-        temp("mapped/{sample}.sorted.bam")
+        temp("mapped/{sample}-{unit}.sorted.bam")
+        #temp("mapped/{sample}.sorted.bam")
     log:
-        "logs/bwa_mem/{sample}.log"
+        "logs/bwa_mem/{sample}-{unit}.log"
     params:
+        index=config["ref"]["subref"],
         #index="subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
-        bwa=config["modules"]["bwa"],
-        samt=config["modules"]["samt"],
-        rg=get_read_group
-        #sort="samtools",
-        #sort_order="coordinate"
+        #bwa=config["modules"]["bwa"],
+        #samt=config["modules"]["samt"],
+        extra=get_read_group,
+        sort="samtools",
+        sort_order="coordinate"
     threads: 8
     #priority: 1
-    shell:
-        """
-        {params.bwa} mem -M {params.rg} -t {threads} {input.ref} {input.reads} | \
-        {params.samt} sort -@ {threads} -o {output} -
-        """
-    # wrapper:
-    #     "0.27.1/bio/bwa/mem"
+    # shell:
+    #     """
+    #     {params.bwa} mem -M {params.rg} -t {threads} {input.ref} {input.reads} | \
+    #     {params.samt} sort -@ {threads} -o {output} -
+    #     """
+    wrapper:
+        "0.30.0/bio/bwa/mem"
 
 
 rule mark_duplicates:
     input:
-        "mapped/{sample}.sorted.bam"
+        "mapped/{sample}-{unit}.sorted.bam"
     output:
-        bam=temp("dedup/{sample}.bam"),
-        metrics="qc/dedup/{sample}.metrics.txt"
+        bam=temp("dedup/{sample}-{unit}.bam"),
+        metrics="qc/dedup/{sample}-{unit}.metrics.txt"
     log:
-        "logs/picard/dedup/{sample}.log"
+        "logs/picard/dedup/{sample}-{unit}.log"
     params:
         #pic=config["params"]["picard"]["MarkDuplicates"]
         pic=config["modules"]["pic"]
@@ -64,8 +66,8 @@ rule mark_duplicates:
         #"0.27.1/bio/picard/markduplicates"
 
 rule bamidx:
-    input: "dedup/{sample}.bam"
-    output: "dedup/{sample}.bam.bai"
+    input: "dedup/{sample}-{unit}.bam"
+    output: "dedup/{sample}-{unit}.bam.bai"
     priority: 150
     threads: 4
     params:

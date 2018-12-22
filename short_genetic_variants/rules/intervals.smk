@@ -3,8 +3,8 @@ rule window:
 		"subreference/Lsax_subref_supercontigs_len.txt"
 	output:
 		"subreference/Lsax_subref_windows.bed"
-	message:
-		"""--- Creating {output} for 1kb window size with Bedtools."""
+	# message:
+	# 	"""--- Creating {output} for 1kb window size with Bedtools."""
 	params:
 		size=1000,
 		bedt=config["modules"]["bedt"]
@@ -15,12 +15,12 @@ rule window:
 
 rule coverage:
 	input:
-		bed=rules.window.output,
+		bed="subreference/Lsax_subref_windows.bed",
 		bam=get_sample_bams
 	output:
-		"coverage/{sample}_coverage.txt"
-	message:
-		"""--- Computing depth and breadth of coverage of {input.bam} on the features in {input.bed} with Bedtools."""
+		"coverage/{sample}-{unit}_coverage.txt"
+	# message:
+	# 	"""--- Computing depth and breadth of coverage of {input.bam} on the features in {input.bed} with Bedtools."""
 	params:
 		bedt=config["modules"]["bedt"]
 	shell:
