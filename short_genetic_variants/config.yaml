@@ -1,5 +1,5 @@
-samples: CZA_samples.tsv
-units: CZA_units.tsv
+samples: samples.tsv
+units: units.tsv
 
 modules:
   gatk: /proj/data9/samuel/modules/gatk-4.0.11.0/gatk-package-4.0.11.0-local.jar
@@ -41,10 +41,19 @@ filtering:
       #--maf 0.1 --minQ 20 --max-missing-count 150
 
 
+processing:
+  remove-duplicates: false
+  # point to a bed file with e.g. captured regions if necessary,
+  # see https://gatkforums.broadinstitute.org/gatk/discussion/4133/when-should-i-use-l-to-pass-in-a-list-of-intervals
+  restrict-regions: sum_tot_coverage_supercontigs_windows.bed
+  # If regions are restricted, use this to enlarge them in order to include
+  # flanking areas.
+  region-padding: 100
+
 
 params:
   subref:
-    Scontigs: 400
+    Scontigs: 1000
     Sscaffold: 400000
     Sep: 900
     TargetID: Supercontig
@@ -56,6 +65,18 @@ params:
     VariantRecalibrator: ""
   picard:
     MarkDuplicates: "REMOVE_DUPLICATES=true"
-  cutadapt:
-    pe: ""
-    se: ""
+  trimmomatic:
+    pe:
+      trimmer:
+        - "ILLUMINACLIP:adapters/adapt_cont.fa:2:30:10"
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:15"
+        - "MINLEN:36"
+    se:
+      trimmer:
+        - "ILLUMINACLIP:../raw/primers_adapters.fasta:2:30:10"
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:15"
+        - "MINLEN:36"

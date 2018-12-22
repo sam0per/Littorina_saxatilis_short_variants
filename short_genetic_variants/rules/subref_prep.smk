@@ -4,7 +4,7 @@ rule subref_prep:
 	message:
 		"""--- Preparing {input} with BWA index, samtools faidx, Picard dict and supercontig length."""
 	threads: 10
-	priority: 100
+	#priority: 100
 	shell:
 		"""
 		/bin/sh scripts/subref_prep.sh {input} {output}

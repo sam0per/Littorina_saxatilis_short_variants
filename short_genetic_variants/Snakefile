@@ -4,24 +4,24 @@ include: "rules/common.smk"
 
 rule all:
     input:
-        #"subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
-        #"subreference/Lsax_subref_supercontigs_len.txt",
+        "subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
+        "subreference/Lsax_subref_supercontigs_len.txt"
         #"subreference/Lsax_subref_windows.bed",
         #"qc/multiqc.html",
         #"sum_tot_coverage_supercontigs_windows.bed"
-        expand("dedup/{sample}.bam.bai", sample=samples.index),
-        "genotyped/all.vcf.gz",
-        "filtered/all.vcf.gz",
-        "updated/all_supercontigs.sorted.vcf.gz"
+        #expand("dedup/{sample}.bam.bai", sample=samples.index),
+        #"genotyped/all.vcf.gz",
+        #"filtered/all.vcf.gz",
+        #"updated/all_supercontigs.sorted.vcf.gz"
 
 
 ##### Modules #####
 
-#include: "rules/subset_ref.smk"
-#include: "rules/subref_prep.smk"
-include: "rules/mapping.smk"
+include: "rules/subset_ref.smk"
+include: "rules/subref_prep.smk"
+#include: "rules/mapping.smk"
 #include: "rules/qc.smk"
 #include: "rules/intervals.smk"
-include: "rules/calling.smk"
-include: "rules/filtering.smk"
-include: "rules/update_coords.smk"
+#include: "rules/calling.smk"
+#include: "rules/filtering.smk"
+#include: "rules/update_coords.smk"
