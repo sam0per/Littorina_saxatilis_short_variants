@@ -49,7 +49,7 @@ rule mark_duplicates:
     input:
         "mapped/{sample}-{unit}.sorted.bam"
     output:
-        bam=temp("dedup/{sample}-{unit}.bam"),
+        bam="dedup/{sample}-{unit}.bam",
         metrics="qc/dedup/{sample}-{unit}.metrics.txt"
     log:
         "logs/picard/dedup/{sample}-{unit}.log"
