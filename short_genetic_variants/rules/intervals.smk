@@ -38,5 +38,5 @@ rule contigs:
 	threads: 5
 	shell:
 		"""
-		/bin/sh scripts/cov_scontigs_windows.sh {output}
+		/bin/sh scripts/cov_scontigs_windows.sh {input} {output}
 		"""
