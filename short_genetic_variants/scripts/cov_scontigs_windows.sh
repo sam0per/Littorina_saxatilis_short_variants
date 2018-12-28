@@ -5,7 +5,7 @@
 #$ -pe mpich 20
 
 
-for a in coverage/CZA*; do cat -n "$a" >> tot_coverage_supercontigs_windows.txt; done
+for a in coverage/CZ*; do cat -n "$a" >> tot_coverage_supercontigs_windows.txt; done
 
 #awk '{a[$1"\t"$2]+= $8;b[$1"\t"$2]+= $5}END{for(i in a){if (a[i]>30 || b[i]>60)print i"\t"a[i]"\t"b[i]}}' tot_cov.txt > sum_cov.txt
 

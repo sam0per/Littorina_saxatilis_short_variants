@@ -29,8 +29,8 @@ rule multiqc:
     input:
         expand(["qc/samtools-stats/{u.sample}-{u.unit}.txt",
                 "qc/fastqc/{u.sample}-{u.unit}.zip",
-                "qc/dedup/{u.sample}-{u.unit}.metrics.txt"],
-                #"coverage/{u.sample}-{u.unit}_coverage.txt"],
+                "qc/dedup/{u.sample}-{u.unit}.metrics.txt",
+                "coverage/{u.sample}-{u.unit}_coverage.txt"],
                u=units.itertuples())
         #"snpeff/all.csv"
     output:
