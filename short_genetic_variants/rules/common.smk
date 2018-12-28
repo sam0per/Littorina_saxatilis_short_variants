@@ -113,5 +113,5 @@ def get_regions_param(regions=config["processing"].get("restrict-regions"), defa
 def get_sample_cov(wildcards):
     """Get coverage per window supercontigs of given sample."""
     return expand("coverage/{sample}-{unit}_coverage.txt",
-                  sample=wildcards.sample,
+                  sample=samples.index,
                   unit=units.loc[wildcards.sample].unit)
