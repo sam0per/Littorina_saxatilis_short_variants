@@ -5,7 +5,7 @@
 #$ -pe mpich 25
 
 
-for i in dedup/*.bam; do /proj/data9/samuel/modules/bedtools2/bin/bedtools coverage -a subreference/Lsax_subref_windows.bed -b $i > coverage/$i_coverage.txt; done
+#for i in dedup/*.bam; do /proj/data9/samuel/modules/bedtools2/bin/bedtools coverage -a subreference/Lsax_subref_windows.bed -b $i > coverage/$i_coverage.txt; done
 
 for a in coverage/CZ*; do cat -n "$a" >> tot_coverage_supercontigs_windows.txt; done
 

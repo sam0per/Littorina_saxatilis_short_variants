@@ -16,7 +16,8 @@ rule window:
 rule coverage:
 	input:
 		bed="subreference/Lsax_subref_windows.bed",
-		bam=get_sample_bams
+		bam="dedup/{sample}-{unit}.bam"
+		#bam=get_sample_bams
 	output:
 		"coverage/{sample}-{unit}_coverage.txt"
 	# message:
@@ -34,9 +35,9 @@ rule contigs:
 		cov=get_sample_cov
 	output: "sum_tot_coverage_supercontigs_windows.bed"
 	#message: """--- Retain contigs covered by at least 5 reads in at least 50% of individuals."""
-	priority: 1
+	#priority: 1
 	threads: 5
 	shell:
 		"""
-		/bin/sh scripts/cov_scontigs_windows.sh {input} {output}
+		/bin/sh scripts/cov_scontigs_windows.sh {input.cov} {output}
 		"""
