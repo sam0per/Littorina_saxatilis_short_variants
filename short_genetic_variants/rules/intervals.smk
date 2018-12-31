@@ -36,8 +36,8 @@ rule contigs:
 	output: "sum_tot_coverage_supercontigs_windows.bed"
 	#message: """--- Retain contigs covered by at least 5 reads in at least 50% of individuals."""
 	#priority: 1
-	threads: 5
+	threads: 10
 	shell:
 		"""
-		/bin/sh scripts/cov_scontigs_windows.sh {input.cov} {output}
+		/bin/sh scripts/cov_scontigs_windows.sh {output}
 		"""
