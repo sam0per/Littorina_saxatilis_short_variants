@@ -29,15 +29,28 @@ rule coverage:
 		{params.bedt} coverage -a {input.bed} -b {input.bam} > {output}
 		"""
 
-rule contigs:
+rule cov_filters:
 	input:
+		"coverage/{sample}-{unit}_coverage.txt"
+	output:
+		"coverage/non_zero/{sample}-{unit}_cov_filtered.txt"
+	shell:
+		"./scripts/filter_cov_windows.py -cov {input} -bases 500 -out {output}"
+
+rule supercontigs:
+	input:
+		cov="coverage/non_zero/{sample}-{unit}_cov_filtered.txt"
         #"coverage/CZA624_coverage.txt",
-		cov=get_sample_cov
-	output: "sum_tot_coverage_supercontigs_windows.bed"
+		#cov=get_sample_cov
+	output:
+		"captured_supercontigs.bed"
+	params:
+		files = lambda wildcards, input: " ".join(input.cov)
+		#"sum_tot_coverage_supercontigs_windows.bed"
 	#message: """--- Retain contigs covered by at least 5 reads in at least 50% of individuals."""
 	#priority: 1
-	threads: 10
+	threads: 4
 	shell:
 		"""
-		/bin/sh scripts/cov_scontigs_windows.sh {output}
+		awk '{if (!a[$1"\t"$2]++) print}' {params.files} | cut -f 1,2,3 > {output}
 		"""

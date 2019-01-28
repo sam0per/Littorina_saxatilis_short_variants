@@ -35,7 +35,7 @@ rule call_variants:
     input:
         bam=get_sample_bams,
         ref=config["ref"]["subref"],
-        int="sum_tot_coverage_supercontigs_windows.bed"
+        int="captured_supercontigs.bed"
     output:
         gvcf=protected("called/{sample}.g.vcf.gz")
     priority: 1
@@ -52,7 +52,7 @@ rule call_variants:
 rule DBImport:
     input:
         gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index),
-        int="sum_tot_coverage_supercontigs_windows.bed"
+        int="captured_supercontigs.bed"
     output:
         directory("database")
     #log:
