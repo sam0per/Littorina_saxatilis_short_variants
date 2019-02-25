@@ -35,6 +35,13 @@ wildcard_constraints:
 
 ##### Helper functions #####
 
+def get_zones_names(wildcards):
+    space = glob.glob(os.path.join("data", "*spatial*"))
+    files = [os.path.basename(s) for s in space]
+    name = [i.split('_')[0] for i in files]
+    # name = wildcards.supercontigs
+    return name
+
 # def get_fastq(wildcards):
 #     """Get fastq files of given sample-unit."""
 #     return "raw/" + units.loc[wildcards.sample, ["fq1", "fq2"]].dropna()

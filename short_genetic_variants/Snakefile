@@ -11,7 +11,8 @@ rule all:
         # "genotyped/all.vcf.gz"
         "filtered/all.vcf.gz",
         "updated/all_supercontigs.sorted.vcf.gz",
-        expand("tables/all.vcf.{tabtype}.table", tabtype=['depth', 'coverage'])
+        expand("tables/all.vcf.{tabtype}.table", tabtype=['depth', 'coverage']),
+        expand("clines/CZCLI003_{vartype}_{zone}.txt", vartype=['SNP', 'INDEL'], zone=['CZA', 'CZB', 'CZD'])
 
 
 ##### Modules #####
