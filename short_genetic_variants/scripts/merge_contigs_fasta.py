@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Description: Merge an user-defined number of contigs in FASTA file using N characters as separators and a new header line
 # Example: python3 merge_contigs_fasta.py --fasta sequence.fasta --contigs 5 --Ns 5 --identifier Supercontig
 

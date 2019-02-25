@@ -26,7 +26,7 @@ basename, ext = os.path.splitext(filename)
 out_txt = os.path.join(path, basename + "_cumsum.txt")
 
 # Reading contig length and sorting by contig
-fai = pd.read_csv(contigs, names=['contig', 'length'], sep='\t')
+fai = pd.read_csv(contigs, names=['contig', 'length'], usecols=[0, 1], sep='\t')
 fai['newindex'] = pd.Series(range(1, len(fai)+1))
 fai = fai.sort_values(by=['contig'])
 

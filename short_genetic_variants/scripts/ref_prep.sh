@@ -14,11 +14,11 @@ module load apps/python/anaconda3-4.2.0
 source activate short-variants
 
 picard CreateSequenceDictionary \
-	REFERENCE=subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta \
-	OUTPUT=subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.dict
+	REFERENCE=reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta \
+	OUTPUT=reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.dict
 
-bwa index subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta
+bwa index reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta
 
-samtools faidx subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta
+samtools faidx reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta
 
 source deactivate

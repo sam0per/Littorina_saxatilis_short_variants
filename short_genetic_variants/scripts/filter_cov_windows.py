@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 import argparse
 import pandas as pd
@@ -21,12 +19,12 @@ filtered_out = args.out
 
 print("--- Opening coverage input file ...")
 
-df = pd.read_table(files, usecols=[0,1,2,3,4,6], names=['contig', 'start', 'end', 'n_elems', 'bases', 'fraction'])
+df = pd.read_csv(files, usecols=[0,1,2,3,4,6], names=['contig', 'start', 'end', 'n_elems', 'bases', 'fraction'], sep='\t')
 
 print("--- Filtering sample by elements and bases...")
 
 with open(filtered_out, 'w') as outfile:
-    non_zero = df.loc[(df['n_elems'] > 0) & (df['bases'] >= bases)]
+    non_zero = df.loc[(df['n_elems'] > 400) & (df['bases'] >= bases)]
     non_zero.to_csv(outfile, header=False, index=False, sep='\t')
 
     # with open(out_int,'w') as outbed:
@@ -37,4 +35,4 @@ with open(filtered_out, 'w') as outfile:
     #     int_bed = filtered.loc[:, ['contig', 'start', 'end']]
     #     int_bed.to_csv(outbed, header=False, index=False, sep='\t')
 
-# print("--- Non-zero coverage windows saved to " + filtered_out + "\n")
+print("Job completed!\nNon-zero coverage windows saved to " + filtered_out + "\n")
