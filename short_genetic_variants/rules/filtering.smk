@@ -14,7 +14,7 @@ rule select_calls:
         gatk=config["modules"]["gatk"]
     shell:
         """
-        java -Xmx18g -jar {params.gatk} SelectVariants \
+        {params.gatk} --java-options '-Xmx36G' SelectVariants \
         -R {input.ref} \
         -V {input.vcf} \
         {params.extra} \
@@ -34,14 +34,13 @@ rule hard_filter_calls:
         vcf="filtered/all.{vartype}.vcf.gz"
     output:
         gz=temp("filtered/all.{vartype}.hardfiltered.vcf.gz")
-        #vcf=temp("filtered/all.{vartype}.hardfiltered.vcf")
     params:
         filters=get_filter,
         names="hard_{vartype}",
         gatk=config["modules"]["gatk"]
     shell:
         """
-        java -Xmx18g -jar {params.gatk} VariantFiltration \
+        {params.gatk} --java-options '-Xmx18G' VariantFiltration \
         -R {input.ref} \
         -V {input.vcf} \
         -O {output.gz} \
@@ -54,11 +53,9 @@ rule vcftools:
     input:
         "filtered/all.{vartype}.hardfiltered.vcf.gz"
     output:
-        #prefix="filtered/all.{vartype}.hardfiltered.maf"
         gz=temp("filtered/all.{vartype}.hardfiltered.clines.vcf.gz")
     params:
         filters=config["filtering"]["clines"]
-        #prefix=output.gz.replace(".recode.vcf.gz", "")
     shell:
         """
         vcftools --gzvcf {input} {params.filters} --recode --stdout | gzip > {output.gz}
@@ -74,7 +71,7 @@ rule sortvcf:
         pic=config["modules"]["pic"]
     shell:
         """
-        java -Xmx16g -jar {params.pic} SortVcf INPUT={input} OUTPUT={output}
+        java -Xmx36g -jar {params.pic} SortVcf INPUT={input} OUTPUT={output} TMP_DIR=tmp/
         """
 
 rule merge_calls:
@@ -91,5 +88,5 @@ rule merge_calls:
         inputs=lambda wildcards, input: " ".join("INPUT={}".format(f) for f in input.vcf)
     shell:
         """
-        java -Xmx16g -jar {params.pic} MergeVcfs {params.inputs} OUTPUT={output.vcf}
+        java -Xmx36g -jar {params.pic} MergeVcfs {params.inputs} OUTPUT={output.vcf} TMP_DIR=tmp/
         """

@@ -1,15 +1,12 @@
 rule genomic_ranges:
     input:
-        len=config["ref"]["chr_len"],
+        len=config["ref"]["genome"] + ".fai",
         dir=directory("reference")
     output:
-        "genome/genome_contigs_len_cumsum.txt"
-    params:
-        py3=config["modules"]["py3"]
-    threads: 4
+        config["ref"]["genome"] + "_cumsum.txt"
     shell:
         """
-        {params.py3} scripts/contigs_genomic_ranges.py -len {input.len} -dir {input.dir}
+        ./scripts/contigs_genomic_ranges.py -len {input.len} -dir {input.dir}
         """
 
 
@@ -22,22 +19,21 @@ def get_scontigs_names(wildcards):
     #name = wildcards.supercontigs
     return name
 
-#supercontigs = get_scontigs_names(wildcards)
+# supercontigs = get_scontigs_names(wildcards)
 
 rule update_vcf:
     input:
-        len="genome/genome_contigs_len_cumsum.txt",
+        len=config["ref"]["genome"] + "_cumsum.txt",
         vcf="filtered/all.vcf.gz"
         #scaf=get_scontigs_names
     output:
         vcf="updated/all_{supercontig}.updated.vcf.gz"
         #cat="updated/all_supercontigs.updated.list"
     params:
-        py3=config["modules"]["py3"],
         scaf=get_scontigs_names
     shell:
         """
-        {params.py3} scripts/update_genomic_reg.py -len {input.len} -vcf {input.vcf} -scaf {wildcards.supercontig}
+        ./scripts/update_genomic_reg.py -len {input.len} -vcf {input.vcf} -scaf {wildcards.supercontig}
         """
 
 
@@ -57,11 +53,9 @@ rule cat_vcfs:
     output:
         cat="updated/all_supercontigs.updated.vcf.gz",
         sort="updated/all_supercontigs.sorted.vcf.gz"
-    params:
-        py3=config["modules"]["py3"]
     shell:
         """
-        {params.py3} scripts/catVCFs.py -vcf {input} -out_vcf {output.cat}
+        ./scripts/catVCFs.py -vcf {input} -out_vcf {output.cat}
         tail -n +2 {output.cat} | sort - -o {output.sort}
         sed -i '1 i\##fileformat=VCFv4.2' {output.sort}
         """

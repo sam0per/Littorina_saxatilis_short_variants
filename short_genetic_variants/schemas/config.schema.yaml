@@ -18,23 +18,8 @@ properties:
     properties:
       gatk:
         type: string
-      py3:
-        type: string
-      samt:
-        type: string
-      bedt:
-        type: string
-      bwa:
-        type: string
-      pic:
-        type: string
       required:
         - gatk
-        - py3
-        - samt
-        - bedt
-        - bwa
-        - pic
 
 
   ref:
@@ -42,19 +27,8 @@ properties:
     properties:
       genome:
         type: string
-      chr_len:
-        type: string
-      subref:
-        type: string
-      intervals:
-        type: string
-      #known-variants:
-        #type: string
     required:
       - genome
-      - chr_len
-      - subref
-      #- known-variants
 
   filtering:
     type: object
@@ -70,11 +44,6 @@ properties:
             type: string
           indels:
             type: string
-      #vcftools:
-        #type: object
-        #properties:
-          #clines:
-            #type: string
         required:
           - snvs
           - indels
@@ -142,7 +111,6 @@ required:
   - samples
   - units
   - modules
-  #- adapter
   - ref
   - filtering
   - processing

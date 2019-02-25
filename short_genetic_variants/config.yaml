@@ -2,27 +2,15 @@ samples: samples.tsv
 units: units.tsv
 
 modules:
-  gatk: /proj/data9/samuel/modules/gatk-4.0.11.0/gatk-package-4.0.11.0-local.jar
-  py3: /home/samuel/miniconda3/bin/python3.6
-  samt: /home/samuel/miniconda3/bin/samtools
-  bedt: /proj/data9/samuel/modules/bedtools2/bin/bedtools
-  bwa: /usr/local/packages/anaconda2-4.4.0/bin/bwa
-  pic: /proj/data9/samuel/modules/picard/build/libs/picard.jar
+  gatk: /home/bo4spe/modules/gatk-4.1.0.0/gatk
+  bedt: /home/bo4spe/.conda/envs/short-variants/bin/bedtools
+  pic: /home/bo4spe/.conda/envs/short-variants/share/picard-2.18.7-0/picard.jar
 
-# the sequencing adapter
-#adapter: ACGGATCGATCGATCGATCGAT
-
-# whether to remove PCR/optical duplicates
 rmdup: true
 
 ref:
-  #name: GRCh38.86
   genome: reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta
-  chr_len: genome/genome_contigs_len.txt
   subref: subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta
-  intervals: sum_tot_coverage_supercontigs_windows.bed
-# known variants (e.g. DBSNP)
-  #known-variants: path/to/dbsnp.vcf
 
 filtering:
   clines: --maf 0.1 --minQ 20 --max-missing-count 150
@@ -36,16 +24,12 @@ filtering:
       "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
     indels:
       "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0 || InbreedingCoeff < -0.8 || SOR > 10.0"
-  #vcftools:
-    #clines:
-      #--maf 0.1 --minQ 20 --max-missing-count 150
-
 
 processing:
   remove-duplicates: false
   # point to a bed file with e.g. captured regions if necessary,
   # see https://gatkforums.broadinstitute.org/gatk/discussion/4133/when-should-i-use-l-to-pass-in-a-list-of-intervals
-  restrict-regions: captured_supercontigs.bed
+  restrict-regions: joined_captured_supercontigs.bed
   # If regions are restricted, use this to enlarge them in order to include
   # flanking areas.
   region-padding: 100
@@ -63,6 +47,7 @@ params:
     BaseRecalibrator: ""
     GenotypeGVCFs: ""
     VariantRecalibrator: ""
+    VariantsToTable: "depth,coverage"
   picard:
     MarkDuplicates: "REMOVE_DUPLICATES=true"
   trimmomatic:
