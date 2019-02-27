@@ -2,7 +2,7 @@ rule snpeff:
     input:
         "updated/all_supercontigs.sorted.vcf"
     output:
-        vcf=report("annotated/all.vcf.gz", caption="../report/vcf.rst", category="Calls"),
+        vcf=report("annotated/all.vcf.gz", caption="report/vcf.rst", category="Calls"),
         csvstats="snpeff/all.csv",
         stats="snpeff/{sample}.html"
     log:
