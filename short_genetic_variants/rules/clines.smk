@@ -5,7 +5,7 @@ def get_tabtype_arg(wildcards):
 
 rule table:
     input:
-        "updated/all_supercontigs.sorted.vcf.gz"
+        "updated/all_supercontigs.sorted.vcf"
     output:
         "tables/all_contigs.vcf.{tabtype}.table"
     params:
@@ -13,7 +13,7 @@ rule table:
         extra=get_tabtype_arg
     shell:
         """
-        {params.gatk} --java-options '-Xmx9G' VariantsToTable \
+        {params.gatk} --java-options '-Xmx4G' VariantsToTable \
         -V {input} -O {output} \
         -F CHROM -F POS -F TYPE -F REF -F ALT {params.extra}
         """
@@ -23,7 +23,7 @@ def get_cline_vartype(wildcards):
 
 rule run_cline:
     input:
-        "tables/all_contigs.vcf.depth.table"
+        tab="tables/all_contigs.vcf.depth.table"
     output:
         "clines/CZCLI003_{vartype}_{zone}.txt"
     params:
@@ -31,6 +31,5 @@ rule run_cline:
         czs=get_zones_names
     shell:
         """
-        module load apps/R
-        Rscript --vanilla ./scripts/czcli003_clines_20181005.R {input} {params.czs} {params.var} {output}
+        Rscript --vanilla ./scripts/czcli003_clines_20181005.R {input.tab} {wildcards.zone} {params.var} {output}
         """

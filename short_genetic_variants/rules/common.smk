@@ -38,9 +38,9 @@ wildcard_constraints:
 def get_zones_names(wildcards):
     space = glob.glob(os.path.join("data", "*spatial*"))
     files = [os.path.basename(s) for s in space]
-    name = [i.split('_')[0] for i in files]
+    zone = [i.split('_')[0] for i in files]
     # name = wildcards.supercontigs
-    return name
+    return wildcards.zone
 
 # def get_fastq(wildcards):
 #     """Get fastq files of given sample-unit."""
