@@ -5,6 +5,7 @@ modules:
   gatk: /home/bo4spe/modules/gatk-4.1.0.0/gatk
   bedt: /home/bo4spe/.conda/envs/short-variants/bin/bedtools
   pic: /home/bo4spe/.conda/envs/short-variants/share/picard-2.18.7-0/picard.jar
+  eff: /home/bo4spe/.conda/envs/short-variants/share/snpeff-4.3.1t-0/snpEff.jar
 
 rmdup: true
 

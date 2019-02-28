@@ -52,7 +52,7 @@ rule cat_vcfs:
         "updated/all_supercontigs.updated.list"
     output:
         cat="updated/all_supercontigs.updated.vcf.gz",
-        sort="updated/all_supercontigs.sorted.vcf.gz"
+        sort="updated/all_supercontigs.sorted.vcf"
     shell:
         """
         ./scripts/catVCFs.py -vcf {input} -out_vcf {output.cat}

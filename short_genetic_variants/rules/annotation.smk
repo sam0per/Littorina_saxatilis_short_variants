@@ -1,14 +1,31 @@
+rule sel_calls:
+    input:
+        ref=config["ref"]["genome"],
+        vcf="updated/all_supercontigs.sorted.vcf"
+    output:
+        vcf="updated/up_{vartype}.sorted.vcf"
+    params:
+        extra=get_vartype_arg,
+        gatk=config["modules"]["gatk"]
+    shell:
+        """
+        {params.gatk} --java-options '-Xmx6G' SelectVariants \
+        -R {input.ref} \
+        -V {input.vcf} \
+        {params.extra} \
+        -O {output.vcf} \
+        --restrict-alleles-to BIALLELIC
+		"""
+
 rule snpeff:
     input:
-        "updated/all_supercontigs.sorted.vcf"
+        "updated/up_{vartype}.sorted.vcf"
     output:
-        vcf=report("annotated/all.vcf.gz", caption="report/vcf.rst", category="Calls"),
-        csvstats="snpeff/all.csv",
-        stats="snpeff/{sample}.html"
-    log:
-        "logs/snpeff.log"
+        "annotated/up_{vartype}_anno.vcf"
     params:
-        reference=config["ref"]["genome"],
-        extra="-Xmx6g"
-    wrapper:
-        "0.31.1/bio/snpeff"
+        eff=config["modules"]["eff"],
+        ref=config["ref"]["genome"].replace(".fasta", "")
+    shell:
+        """
+        java -Xmx4g -jar {params.eff} -v -o gatk {params.ref} {input} > {output}
+        """
