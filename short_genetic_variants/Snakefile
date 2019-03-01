@@ -6,14 +6,15 @@ rule all:
     input:
         # "subreference/Lsax_subref_supercontigs_len.txt",
         # expand("dedup/{sample}-{unit}.bam.bai", sample=samples.index, unit=units["unit"]),
-        "joined_captured_supercontigs.bed",
+        # "joined_captured_supercontigs.bed",
         # "qc/multiqc.html",
         # "genotyped/all.vcf.gz"
-        "filtered/all.vcf.gz",
-        "updated/all_supercontigs.sorted.vcf",
-        expand("tables/all.vcf.{tabtype}.table", tabtype=['depth', 'coverage']),
-        expand("clines/CZCLI003_{vartype}_{zone}.txt", vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD']),
-        expand("annotated/up_{vartype}_anno.vcf", vartype=['snvs', 'indels'])
+        # "filtered/all.vcf.gz",
+        # "updated/all_supercontigs.sorted.vcf",
+        # expand("tables/all.vcf.{tabtype}.table", tabtype=['depth', 'coverage']),
+        # expand("clines/CZCLI003_{vartype}_{zone}.txt", vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD']),
+        expand("annotated/up_{vartype}_anno.vcf", vartype=['snvs', 'indels']),
+        expand("snpeff/up_{vartype}.sorted.{ext}", vartype=['snvs', 'indels'], ext=['html', 'csv'])
 
 
 
@@ -22,11 +23,11 @@ rule all:
 # include: "rules/subset_ref.smk"
 # include: "rules/subref_prep.smk"
 # include: "rules/mapping.smk"
-include: "rules/intervals.smk"
-include: "rules/calling.smk"
-include: "rules/filtering.smk"
-include: "rules/update_coords.smk"
-include: "rules/clines.smk"
+# include: "rules/intervals.smk"
+# include: "rules/calling.smk"
+# include: "rules/filtering.smk"
+# include: "rules/update_coords.smk"
+# include: "rules/clines.smk"
 # include: "rules/stats.smk"
 # include: "rules/qc.smk"
 include: "rules/annotation.smk"
