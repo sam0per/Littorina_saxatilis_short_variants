@@ -1,4 +1,5 @@
 import pandas as pd
+import glob
 from snakemake.utils import validate
 
 report: "../report/workflow.rst"

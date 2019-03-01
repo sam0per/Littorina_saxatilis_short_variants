@@ -15,8 +15,8 @@ rule all:
         # expand("clines/CZCLI003_{vartype}_{zone}.txt", vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD']),
         expand("annotated/up_{vartype}_anno.vcf", vartype=['snvs', 'indels']),
         expand("snpeff/up_{vartype}.sorted.{ext}", vartype=['snvs', 'indels'], ext=['html', 'csv']),
-        expand("clines/CZCLI005_{vartype}_{zone}_{side}_means.txt",
-               vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD'], side=['left', 'right'])
+        expand("clines/CZCLI005_{vartype}_{zone}_{sidetype}_means.txt",
+               vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD'], sidetype=['left', 'right'])
 
 
 
