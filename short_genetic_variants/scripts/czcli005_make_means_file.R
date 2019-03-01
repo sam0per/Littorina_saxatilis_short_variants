@@ -10,10 +10,10 @@ zone = args[2]
 # vartype = "indels"
 vartype = args[3]
 
-# side = "right"
+# side = "left"
 side = args[4]
 
-# means_out = paste0("clines/CZCLI005_", vartype, "_", zone, "_", side, ".txt")
+# means_out = paste0("clines/CZCLI005_", vartype, "_", zone, "_", side, "_means.txt")
 means_out = args[5]
 
 ################################################################################################################
@@ -138,7 +138,7 @@ means$Index = NULL
 ##### ADD OTHER INFO ###########################################################################################
 
 # get map data
-mapdata = read.table("./map_v11.txt", header=T, stringsAsFactors = F)
+mapdata = read.table("data/map_v11.txt", header=T, stringsAsFactors = F)
 mapdata$cp = paste(mapdata$contig, mapdata$pos, sep="_")
 
 # assign SNPs not on map to closest map position, if within 1000bp
@@ -175,33 +175,34 @@ means = means[is.na(means$p_diff_left)==T | means$p_diff_left>=0, ]
 means = means[is.na(means$p_diff_right)==T | means$p_diff_right>=0, ]
 
 # add Fst calculated based on raw genotypes
-W_side_file = list.files(pattern = paste("CZ000_", zone, "_W_", side, "_endfreqs.txt", sep=""))
-W_side = read.table(W_side_file, header=T, stringsAsFactors=F)
-C_file = list.files(pattern = paste("CZ000_", zone, "_C_endfreqs.txt", sep=""))
-C = read.table(C_file, header=T, stringsAsFactors=F)
-
-zoneRaw = merge(W_side, C, by="cp")
-names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
-zoneRaw$Hs = ((2*zoneRaw$allele1.W*zoneRaw$allele2.W)+
-                (2*zoneRaw$allele1.C*zoneRaw$allele2.C))/2
-zoneRaw$Ht = 0.5*(zoneRaw$allele1.W+zoneRaw$allele1.C)*(zoneRaw$allele2.W+zoneRaw$allele2.C)
-zoneRaw$FstRaw = (zoneRaw$Ht-zoneRaw$Hs) / zoneRaw$Ht
-
-means = merge(means, zoneRaw[, c("cp", "FstRaw", "allele1.W", "allele2.W", "allele1.C", "allele2.C")], by="cp", all.x=T, all.y=F)
-means$p_waveRaw = NA
-means$p_crabRaw = NA
-means$p_waveRaw[means$Wave==1&is.na(means$Wave)==F] = means$allele1.W[means$Wave==1&is.na(means$Wave)==F]
-means$p_crabRaw[means$Wave==1&is.na(means$Wave)==F] = means$allele1.C[means$Wave==1&is.na(means$Wave)==F]
-means$p_waveRaw[means$Wave==2&is.na(means$Wave)==F] = means$allele2.W[means$Wave==2&is.na(means$Wave)==F]
-means$p_crabRaw[means$Wave==2&is.na(means$Wave)==F] = means$allele2.C[means$Wave==2&is.na(means$Wave)==F]
-means$p_waveRaw[is.na(means$Wave)] = means$allele1.W[is.na(means$Wave)]
-means$p_crabRaw[is.na(means$Wave)] = means$allele1.C[is.na(means$Wave)]
-
-plot(means$p_crab, means$p_crabRaw)
-plot(means$p_wave_right, means$p_waveRaw)
+# W_side_file = list.files(pattern = paste("CZ000_", zone, "_W_", side, "_endfreqs.txt", sep=""))
+# W_side = read.table(W_side_file, header=T, stringsAsFactors=F)
+# C_file = list.files(pattern = paste("CZ000_", zone, "_C_endfreqs.txt", sep=""))
+# C = read.table(C_file, header=T, stringsAsFactors=F)
+# 
+# zoneRaw = merge(W_side, C, by="cp")
+# names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
+# zoneRaw$Hs = ((2*zoneRaw$allele1.W*zoneRaw$allele2.W)+
+#                 (2*zoneRaw$allele1.C*zoneRaw$allele2.C))/2
+# zoneRaw$Ht = 0.5*(zoneRaw$allele1.W+zoneRaw$allele1.C)*(zoneRaw$allele2.W+zoneRaw$allele2.C)
+# zoneRaw$FstRaw = (zoneRaw$Ht-zoneRaw$Hs) / zoneRaw$Ht
+# 
+# means = merge(means, zoneRaw[, c("cp", "FstRaw", "allele1.W", "allele2.W", "allele1.C", "allele2.C")], by="cp", all.x=T, all.y=F)
+# means$p_waveRaw = NA
+# means$p_crabRaw = NA
+# means$p_waveRaw[means$Wave==1&is.na(means$Wave)==F] = means$allele1.W[means$Wave==1&is.na(means$Wave)==F]
+# means$p_crabRaw[means$Wave==1&is.na(means$Wave)==F] = means$allele1.C[means$Wave==1&is.na(means$Wave)==F]
+# means$p_waveRaw[means$Wave==2&is.na(means$Wave)==F] = means$allele2.W[means$Wave==2&is.na(means$Wave)==F]
+# means$p_crabRaw[means$Wave==2&is.na(means$Wave)==F] = means$allele2.C[means$Wave==2&is.na(means$Wave)==F]
+# means$p_waveRaw[is.na(means$Wave)] = means$allele1.W[is.na(means$Wave)]
+# means$p_crabRaw[is.na(means$Wave)] = means$allele1.C[is.na(means$Wave)]
+# 
+# plot(means$p_crab, means$p_crabRaw)
+# plot(means$p_wave_right, means$p_waveRaw)
 
 # write out
-write.table(means, paste("CZCLI005_", zone, "_", side, "_means.txt", sep=""),
-            append = F, quote=F, col.names=T, row.names=T)
+# write.table(means, paste("CZCLI005_", zone, "_", side, "_means.txt", sep=""),
+#             append = F, quote=F, col.names=T, row.names=T)
+write.table(means, means_out, append = F, quote=F, col.names=T, row.names=T)
 
 

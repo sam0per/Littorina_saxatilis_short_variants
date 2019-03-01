@@ -66,3 +66,5 @@ params:
         - "TRAILING:3"
         - "SLIDINGWINDOW:4:15"
         - "MINLEN:36"
+  rstudio:
+    ClineSide: "left, right"

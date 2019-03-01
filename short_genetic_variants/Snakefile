@@ -14,7 +14,9 @@ rule all:
         # expand("tables/all.vcf.{tabtype}.table", tabtype=['depth', 'coverage']),
         # expand("clines/CZCLI003_{vartype}_{zone}.txt", vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD']),
         expand("annotated/up_{vartype}_anno.vcf", vartype=['snvs', 'indels']),
-        expand("snpeff/up_{vartype}.sorted.{ext}", vartype=['snvs', 'indels'], ext=['html', 'csv'])
+        expand("snpeff/up_{vartype}.sorted.{ext}", vartype=['snvs', 'indels'], ext=['html', 'csv']),
+        expand("clines/CZCLI005_{vartype}_{zone}_{side}_means.txt",
+               vartype=['snvs', 'indels'], zone=['CZA', 'CZB', 'CZD'], side=['left', 'right'])
 
 
 
@@ -27,7 +29,7 @@ rule all:
 # include: "rules/calling.smk"
 # include: "rules/filtering.smk"
 # include: "rules/update_coords.smk"
-# include: "rules/clines.smk"
+include: "rules/clines.smk"
 # include: "rules/stats.smk"
 # include: "rules/qc.smk"
 include: "rules/annotation.smk"

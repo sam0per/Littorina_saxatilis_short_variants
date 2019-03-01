@@ -33,3 +33,22 @@ rule run_cline:
         """
         Rscript --vanilla ./scripts/czcli003_clines_20181005.R {input.tab} {wildcards.zone} {params.var} {output}
         """
+
+
+def get_clineside_arg(wildcards):
+    side = config["params"]["rstudio"]["ClineSide"]
+    for sidetype in side.split(","):
+        return wildcards.sidetype
+
+rule make_means:
+    input:
+        "clines/CZCLI003_{vartype}_{zone}.txt",
+    output:
+        "clines/CZCLI005_{vartype}_{zone}_{side}_means.txt"
+    params:
+        extra=get_clineside_arg
+    shell:
+        """
+        Rscript --vanilla ./scripts/czcli005_make_means_file.R \
+        {input} {wildcards.zone} {wildcards.vartype} {wildcards.sidetype} {output}
+        """
