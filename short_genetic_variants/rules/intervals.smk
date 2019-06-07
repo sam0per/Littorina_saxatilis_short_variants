@@ -30,7 +30,7 @@ rule cov_filters:
 	output:
 		"coverage/non_zero/{sample}-{unit}_cov_filtered.txt"
 	shell:
-		"python scripts/filter_cov_windows.py -cov {input} -bases 500 -out {output}"
+		"python scripts/filter_cov_windows.py -cov {input} -bases 500 -nelems 100 -out {output}"
 
 rule supercontigs:
 	input:
