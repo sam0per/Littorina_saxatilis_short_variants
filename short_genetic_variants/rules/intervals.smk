@@ -48,10 +48,10 @@ rule join:
 	input:
 		"captured_supercontigs.bed"
 	output:
-		"joined_captured_supercontigs.bed"
-	params:
-		size=config["params"]["subref"]["Scontigs"]
+		"unique_captured_supercontigs.bed"
+	# params:
+	# 	size=config["params"]["subref"]["Scontigs"]
 	shell:
 		"""
-		./scripts/join_consec_intervals.py -inp {input} -size {params.size} -out {output}
+		./scripts/join_consec_intervals.py -inp {input} -out {output}
 		"""
