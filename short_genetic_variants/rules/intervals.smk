@@ -54,7 +54,7 @@ rule split:
 		./scripts/split_diff_intervals.py -inp {input} -out {output}
 		"""
 
-rule split:
+rule join:
 	input:
 		"splitted_captured_supercontigs.bed"
 	output:
