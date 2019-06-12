@@ -49,9 +49,11 @@ rule split:
 		"captured_supercontigs.bed"
 	output:
 		"splitted_captured_supercontigs.bed"
+	params:
+		size=config["params"]["subref"]["Scontigs"]
 	shell:
 		"""
-		./scripts/split_diff_intervals.py -inp {input} -out {output}
+		./scripts/split_diff_intervals.py -inp {input} -out {output} -size {params.size} -topn 10
 		"""
 
 rule join:
@@ -63,5 +65,5 @@ rule join:
 		size=config["params"]["subref"]["Scontigs"]
 	shell:
 		"""
-		./scripts/join_consec_intervals.py -inp {input} -size {params.size} -out {output}
+		./scripts/join_consec_intervals.py -inp {input} -out {output} -size {params.size}
 		"""

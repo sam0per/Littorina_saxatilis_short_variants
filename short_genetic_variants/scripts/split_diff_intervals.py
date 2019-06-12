@@ -5,13 +5,17 @@ import pandas as pd
 from itertools import groupby, count, islice
 
 # arguments
-parser = argparse.ArgumentParser(description='Join consecutive intervals within contig.')
+parser = argparse.ArgumentParser(description='Join consecutive intervals within contig.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-inp', help='INPUT bed file', type=str, required=True)
 parser.add_argument('-out', help='OUTPUT bed file', type=str, required=True)
+parser.add_argument('-topn', help='Select the TOP N largest gap between intervals per contig', type=int, default=5)
+parser.add_argument('-size', help='interval SIZE', type=int, required=True)
 args = parser.parse_args()
 
 bed_in = args.inp
 bed_out = args.out
+top_n = args.topn
+step = args.size
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -29,7 +33,7 @@ with open(bed_out, 'w') as outfile:
         sorted_coord = sorted(set(coord))
         # print('\n' + contig + '\t' + str(len(sorted_coord)))
         diff_coord = [t - s for s, t in zip(sorted_coord, sorted_coord[1:])]
-        idxtop_diff = sorted(range(len(diff_coord)), key=lambda i: diff_coord[i])[-5:]
+        idxtop_diff = sorted(range(len(diff_coord)), key=lambda i: diff_coord[i])[-top_n:]
         idx_sorted = sorted(idxtop_diff)
         diff_idx = [t - s for s, t in zip(idx_sorted, idx_sorted[1:])]
         diff_idx.insert(0, idx_sorted[0] + 1)
@@ -48,11 +52,12 @@ with open(bed_out, 'w') as outfile:
                 slices.append(remaining)
         for i in slices:
             if min(i) == max(i):
-                outfile.write(contig + '\t' +  str(min(i)) + '\t' + str(min(i) + 1000) + '\n')
+                outfile.write(contig + '\t' +  str(min(i)) + '\t' + str(min(i) + step) + '\n')
             else:
                 # print(contig + '\t' +  str(min(i)) + '\t' + str(max(i)))
                 outfile.write(contig + '\t' +  str(min(i)) + '\t' + str(max(i)) + '\n')
         # top_diff = [diff_coord[i] for i in idxtop_diff]
+        # print(contig)
         # print(sorted_coord)
         # print(diff_coord)
         # print(idx_sorted)
@@ -69,5 +74,5 @@ with open(bed_out, 'w') as outfile:
 with open(bed_out) as f:
     row = len(f.readlines())
     print("Job completed! \n" +
-    bed_in + " has " + str(len(df_in.index)) + " lines.\n" +
-    bed_out + " has " + str(row) + " lines.")
+    "input " + bed_in + " has " + str(len(df_in.index)) + " lines.\n" +
+    "output " + bed_out + " has " + str(row) + " lines.")

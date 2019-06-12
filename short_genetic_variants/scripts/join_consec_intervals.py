@@ -5,7 +5,6 @@ import pandas as pd
 from itertools import groupby, count
 from operator import itemgetter
 
-
 # arguments
 parser = argparse.ArgumentParser(description='Join consecutive intervals within contig.')
 parser.add_argument('-inp', help='INPUT bed file', type=str, required=True)
@@ -29,21 +28,20 @@ def checkConsecutive(l):
 #         return '{0}\t{1}\t{2}'.format(idx, l[0], l[-1])
 
 print("--- Reading input " + bed_in + " ...")
-
 df_in = pd.read_csv(bed_in, names=['contig', 'start', 'end'], sep='\t')
 
 with open(bed_out, 'w') as outfile:
     print("--- Generating groups of consecutive intervals per contig ...")
     for contig, group in df_in.groupby('contig'):
-        print(group)
+        # print(group)
         start_in, end_in = group['start'].tolist(), group['end'].tolist()
         diff_end = [t - s for s, t in zip(end_in, end_in[1:])]
-        print(diff_end)
+        # print(diff_end)
         if (2 * step) in diff_end:
             de_idx = [i for i in range(len(diff_end)) if diff_end[i] == 2 * step]
             nnde_idx = [i for i in range(len(diff_end)) if not diff_end[i] == 2 * step]
             # print(str(de_idx))
-            print(str(nnde_idx))
+            # print(str(nnde_idx))
             if checkConsecutive(de_idx) == True:
                 # print(str(start_in[de_idx[0]]) + '\t' + str(end_in[de_idx[-1] + 1]))
                 outfile.write(contig + '\t' + str(start_in[de_idx[0]]) + '\t' + str(end_in[de_idx[-1] + 1]) + '\n')
@@ -52,7 +50,7 @@ with open(bed_out, 'w') as outfile:
                     outfile.write(contig + '\t' + str(start_in[idx]) + '\t' + str(end_in[idx + 1]) + '\n')
             if len(nnde_idx) > 0:
                 for nnx in nnde_idx:
-                    print(contig + '\t' + str(start_in[nnx]) + '\t' + str(end_in[nnx]) + '\n')
+                    # print(contig + '\t' + str(start_in[nnx]) + '\t' + str(end_in[nnx]) + '\n')
                     outfile.write(contig + '\t' + str(start_in[nnx]) + '\t' + str(end_in[nnx]) + '\n')
         else:
             for count,end_out in enumerate(end_in):
@@ -76,5 +74,5 @@ with open(bed_out, 'w') as outfile:
 with open(bed_out) as f:
     row = len(f.readlines())
     print("Job completed! \n" +
-    bed_in + " has " + str(len(df_in.index)) + " lines.\n" +
-    bed_out + " has " + str(row) + " lines.")
+    "input " + bed_in + " has " + str(len(df_in.index)) + " lines.\n" +
+    "output " + bed_out + " has " + str(row) + " lines.")
