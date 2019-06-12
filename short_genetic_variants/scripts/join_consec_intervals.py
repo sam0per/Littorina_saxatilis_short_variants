@@ -39,12 +39,9 @@ with open(bed_out, 'w') as outfile:
         start_in, end_in = group['start'].tolist(), group['end'].tolist()
         diff_end = [t - s for s, t in zip(end_in, end_in[1:])]
         print(diff_end)
-        # for count,ele in enumerate(end_in):
         if (2 * step) in diff_end:
-        # if len(diff_end) > 0:
             de_idx = [i for i in range(len(diff_end)) if diff_end[i] == 2 * step]
             nnde_idx = [i for i in range(len(diff_end)) if not diff_end[i] == 2 * step]
-            # nnde_idx.insert(-1, nnde_idx[-1] + 1)
             # print(str(de_idx))
             print(str(nnde_idx))
             if checkConsecutive(de_idx) == True:
@@ -57,8 +54,6 @@ with open(bed_out, 'w') as outfile:
                 for nnx in nnde_idx:
                     print(contig + '\t' + str(start_in[nnx]) + '\t' + str(end_in[nnx]) + '\n')
                     outfile.write(contig + '\t' + str(start_in[nnx]) + '\t' + str(end_in[nnx]) + '\n')
-        # else:
-        #     outfile.write(contig + '\n')
         else:
             for count,end_out in enumerate(end_in):
                 outfile.write(contig + '\t' + str(start_in[count]) + '\t' + str(end_out) + '\n')

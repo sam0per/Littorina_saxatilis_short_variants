@@ -6,7 +6,7 @@ rule all:
     input:
         # "subreference/Lsax_subref_supercontigs_len.txt",
         # expand("dedup/{sample}-{unit}.bam.bai", sample=samples.index, unit=units["unit"]),
-        "unique_captured_supercontigs.bed"
+        "joined_captured_supercontigs.bed"
         # "qc/multiqc.html",
         # "genotyped/all.vcf.gz"
         # "filtered/all.vcf.gz",

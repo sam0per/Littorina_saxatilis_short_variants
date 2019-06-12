@@ -44,14 +44,24 @@ rule supercontigs:
 		awk "{{if (!a[\$1"\\t"\$2]++) print}}" {params.files} | cut -f 1,2,3 > {output}
 		"""
 
-rule join:
+rule split:
 	input:
 		"captured_supercontigs.bed"
 	output:
-		"unique_captured_supercontigs.bed"
-	# params:
-	# 	size=config["params"]["subref"]["Scontigs"]
+		"splitted_captured_supercontigs.bed"
 	shell:
 		"""
-		./scripts/join_consec_intervals.py -inp {input} -out {output}
+		./scripts/split_diff_intervals.py -inp {input} -out {output}
+		"""
+
+rule split:
+	input:
+		"splitted_captured_supercontigs.bed"
+	output:
+		"joined_captured_supercontigs.bed"
+	params:
+		size=config["params"]["subref"]["Scontigs"]
+	shell:
+		"""
+		./scripts/join_consec_intervals.py -inp {input} -size {params.size} -out {output}
 		"""
