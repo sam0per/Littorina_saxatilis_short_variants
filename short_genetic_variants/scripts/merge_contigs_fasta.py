@@ -32,6 +32,7 @@ def main():
 
     path, filename = os.path.split(fasta)
     longname, ext = os.path.splitext(filename)
+    # basename = Littorina
     basename = longname.split('_')[0]
     # open input file
     with open(fasta, 'r') as f_in:
