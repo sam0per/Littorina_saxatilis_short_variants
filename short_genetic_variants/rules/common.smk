@@ -5,15 +5,15 @@ from snakemake.utils import validate
 report: "../report/workflow.rst"
 
 ###### Config file and sample sheets #####
-configfile: "config.yaml"
-validate(config, schema="../schemas/config.schema.yaml")
+configfile: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/config.yaml"
+validate(config, schema="/home/bo4spe/Littorina_saxatilis/short_genetic_variants/schemas/config.schema.yaml")
 
 samples = pd.read_csv(config["samples"], sep='\t').set_index("sample", drop=False)
-validate(samples, schema="../schemas/samples.schema.yaml")
+validate(samples, schema="/home/bo4spe/Littorina_saxatilis/short_genetic_variants/schemas/samples.schema.yaml")
 
 units = pd.read_csv(config["units"], dtype=str, sep='\t').set_index(["sample", "unit"], drop=False)
 units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
-validate(units, schema="../schemas/units.schema.yaml")
+validate(units, schema="/home/bo4spe/Littorina_saxatilis/short_genetic_variants/schemas/units.schema.yaml")
 
 # contigs in reference genome
 contigs = pd.read_csv(config["ref"]["genome"] + ".fai",

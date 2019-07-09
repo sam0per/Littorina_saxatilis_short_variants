@@ -1,4 +1,4 @@
-include: "rules/common.smk"
+include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/common.smk"
 
 ##### Target rules #####
 
@@ -28,7 +28,7 @@ rule all:
 
 ##### Modules #####
 
-include: "rules/mapping.smk"
+include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/mapping.smk"
 # include: "rules/subset_ref.smk"
 # include: "rules/subref_prep.smk"
 # include: "rules/callbayes.smk"
