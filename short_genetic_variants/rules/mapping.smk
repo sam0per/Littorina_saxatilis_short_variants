@@ -19,23 +19,17 @@ rule trim_reads_pe:
 
 rule map_reads:
     input:
-        #ref="subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
         reads=get_trimmed_reads
     output:
         temp("mapped/{sample}-{unit}.sorted.bam")
-        #temp("mapped/{sample}.sorted.bam")
     log:
         "logs/bwa_mem/{sample}-{unit}.log"
     params:
-        index=config["ref"]["subref"],
-        #index="subreference/Lsax_subsuperref_run2_7_Oct_2016_unmasked.fasta",
-        #bwa=config["modules"]["bwa"],
-        #samt=config["modules"]["samt"],
+        index=config["ref"]["genome"],
         extra=get_read_group,
         sort="samtools",
         sort_order="coordinate"
     threads: 8
-    #priority: 1
     # shell:
     #     """
     #     {params.bwa} mem -M {params.rg} -t {threads} {input.ref} {input.reads} | \
@@ -54,16 +48,13 @@ rule mark_duplicates:
     log:
         "logs/picard/dedup/{sample}-{unit}.log"
     params:
-        #pic=config["params"]["picard"]["MarkDuplicates"]
         pic=config["modules"]["pic"]
     shell:
         """
         java -Xmx16g -jar {params.pic} MarkDuplicates I={input} O={output.bam} M={output.metrics} \
-		REMOVE_DUPLICATES=True READ_NAME_REGEX=null MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
-		QUIET=true VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=True
+        REMOVE_DUPLICATES=True READ_NAME_REGEX=null MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
+        QUIET=true VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=True
         """
-    #wrapper:
-        #"0.27.1/bio/picard/markduplicates"
 
 rule bamidx:
     input: "dedup/{sample}-{unit}.bam"
@@ -73,3 +64,8 @@ rule bamidx:
     params:
         samt=config["modules"]["samt"]
     shell: "{params.samt} index {input}"
+
+rule filelist:
+    input: expand("dedup/{sample}-{unit}.bam", zip, sample=units["sample"], unit=units["unit"])
+    output: "bam.fbayes.filelist"
+    shell: "ls {input} > {output}"
