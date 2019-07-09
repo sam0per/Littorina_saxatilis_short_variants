@@ -70,4 +70,7 @@ rule filelist:
         bam=expand("dedup/{sample}-{unit}.bam", zip, sample=units["sample"], unit=units["unit"]),
         bai=expand("dedup/{sample}-{unit}.bam.bai", zip, sample=units["sample"], unit=units["unit"])
     output: "bam.fbayes.filelist"
-    shell: "ls {input} > {output}"
+    shell:
+        """
+        ls {input.bam} > {output}
+        """
