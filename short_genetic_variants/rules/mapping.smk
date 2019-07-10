@@ -13,6 +13,7 @@ rule trim_reads_pe:
         **config["params"]["trimmomatic"]["pe"]
     log:
         "logs/trimmomatic/{sample}-{unit}.log"
+    threads: 4
     wrapper:
         "0.30.0/bio/trimmomatic/pe"
 

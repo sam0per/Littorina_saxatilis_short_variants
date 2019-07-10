@@ -5,8 +5,7 @@ include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/common.s
 rule all:
     input:
         "bam.fbayes.filelist"
-        # "dedup/{sample}-{unit}.bam.bai"
-        # "called/all.freebayes.vcf",
+        # "called/all.freebayes.vcf"
         # "qc/multiqc.html"
         # "subreference/Lsax_subref_supercontigs_len.txt",
         # expand("mapped/{sample}-{unit}.sorted.bam", zip, sample=samples.index, unit=units["unit"])
@@ -29,6 +28,7 @@ rule all:
 ##### Modules #####
 
 include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/mapping.smk"
+# include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/callbayes.smk"
 # include: "rules/subset_ref.smk"
 # include: "rules/subref_prep.smk"
 # include: "rules/callbayes.smk"
