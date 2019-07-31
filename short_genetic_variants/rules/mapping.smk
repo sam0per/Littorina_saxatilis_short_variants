@@ -13,7 +13,7 @@ rule trim_reads_pe:
         **config["params"]["trimmomatic"]["pe"]
     log:
         "logs/trimmomatic/{sample}-{unit}.log"
-    threads: 4
+    threads: 2
     wrapper:
         "0.30.0/bio/trimmomatic/pe"
 
@@ -30,7 +30,7 @@ rule map_reads:
         extra=get_read_group,
         sort="samtools",
         sort_order="coordinate"
-    threads: 8
+    threads: 2
     # shell:
     #     """
     #     {params.bwa} mem -M {params.rg} -t {threads} {input.ref} {input.reads} | \
@@ -52,7 +52,7 @@ rule mark_duplicates:
         pic=config["modules"]["pic"]
     shell:
         """
-        java -Xmx16g -jar {params.pic} MarkDuplicates I={input} O={output.bam} M={output.metrics} \
+        java -Xmx12g -jar {params.pic} MarkDuplicates I={input} O={output.bam} M={output.metrics} \
         REMOVE_DUPLICATES=True READ_NAME_REGEX=null MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
         QUIET=true VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=True
         """
@@ -60,7 +60,7 @@ rule mark_duplicates:
 rule bamidx:
     input: "dedup/{sample}-{unit}.bam"
     output: "dedup/{sample}-{unit}.bam.bai"
-    priority: 150
+    # priority: 150
     threads: 4
     params:
         samt=config["modules"]["samt"]
