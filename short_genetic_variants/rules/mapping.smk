@@ -30,7 +30,7 @@ rule map_reads:
         extra=get_read_group,
         sort="samtools",
         sort_order="coordinate"
-    threads: 2
+    threads: 6
     # shell:
     #     """
     #     {params.bwa} mem -M {params.rg} -t {threads} {input.ref} {input.reads} | \
