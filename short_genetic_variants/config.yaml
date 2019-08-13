@@ -38,6 +38,7 @@ processing:
   # If regions are restricted, use this to enlarge them in order to include
   # flanking areas.
   region-padding: 100
+  zone: "CZA"
 
 
 params:
