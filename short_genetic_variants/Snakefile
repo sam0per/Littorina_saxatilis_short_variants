@@ -5,7 +5,8 @@ include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/common.s
 rule all:
     input:
         "bam.fbayes.filelist",
-        "called/all.freebayes.vcf.gz"
+        "genotyped/" + config["processing"]["zone"] + "_freebayes.vcf.gz"
+        # "called/all.freebayes.vcf.gz"
         # "qc/multiqc.html"
         # "subreference/Lsax_subref_supercontigs_len.txt",
         # expand("mapped/{sample}-{unit}.sorted.bam", zip, sample=samples.index, unit=units["unit"])
