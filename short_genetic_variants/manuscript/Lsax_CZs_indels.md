@@ -11,16 +11,17 @@ Originally, mutations were detected using (first method of variant calling) and 
 
 1. Studies on humans ... and other model species ... were the first ones to assess INDEL variation and they were also the first ones to encounter the challenges associated with INDEL discovery. Mapping algorithms deal poorly with long INDELs and with repeated motifs [@narzisiandschatz2015]. False-negatives and false-positives can be generated when coverage distribution is not uniform or the efficiency of targeted resequencing is not even for all the probes [@fang2016]. Currently, the best practice is to [GATK best practice; @li2018 and more].
 
-1. INDELs can show a different and complementary evolutionary pattern compared to the one based on SNPs.
+1. INDELs can indicate an evolutionary pattern that supports the one based on SNPs. The major histocompatibility complex in birds is one example where an excess of non-synonymous substitutions corresponded to an increase in frequency of deletions [@minias2018]. Other examples involve ... On the other hand, INDEL variation can carry unique information on how different species or distinct populations of the same species have evolved diverse genomes. In fact, INDELs are typical mutations employed in studies of genome evolution because ... [@bartonandzeng2018; @bartonandzeng2019; hollister2009].
 
+1. The eukaryote genome contains mutation hotspots where the occurrence of an INDEL may have increased the rate of nucleotide substitution in its sorrounding [@tian2008]. The numerous forms of the major histocompatibility complex in vertebrates might have originated under this mechanism [@minias2018].
 
 1. SNP-based study in _Littorina saxatilis_, species biology and results.
 
 # Questions  
-Can short INDELs be used as genetic markers for patterns of local adaptation? How does INDEL variation differ from SNP variation in _L. saxatilis_? Are nonsynonymous SNPs flanked by frameshift INDELs (epistasis)?
+Can short INDELs be used as genetic markers for patterns of local adaptation? How does INDEL variation differ from SNP variation in _L. saxatilis_? Are non-synonymous SNPs flanked by frameshift INDELs (epistasis)?
 
 # Hypothesis  
-Nucleotide divergence between closely related species can be composed of a higher percentage of short INDELs than SNPs [@britten2002] and the same pattern might be found between two locally adapted populations of the same species. Detecting INDELs can reveal additional evolutionary patterns that would otherwise be unnoticed by a SNP-based analysis.
+Nucleotide divergence between closely related species can be composed of a higher percentage of short INDELs than SNPs [@britten2002] and the same pattern might be found between two locally adapted populations of the same species. Detecting INDELs can reveal additional evolutionary patterns that can strengthen the evidence from SNP-based analyses.
 
 # Materials and methods  
 Called variants including outgroup as this allows to polarise those mutations that are fixed between species and polymorphic between ecotypes of the same species.
