@@ -4,19 +4,18 @@ rule call_variants:
         ref=config["ref"]["genome"]
     output:
         gvcf=protected("called/{sample}.g.vcf.gz")
+    log:
+        "logs/gatk/haplotypecaller/{sample}.log"
     params:
-        gatk=config["modules"]["gatk"],
-	files = lambda wildcards, input: " -I ".join(input.bam)
-    shell:
-        """
-        {params.gatk} --java-options '-Xmx18G' HaplotypeCaller -R {input.ref} -I {params.files} \
-        -O {output.gvcf} -ERC GVCF --heterozygosity 0.05 --pcr-indel-model NONE -L {input.int}
-        """
+        extra="-L targets_GATK.list",
+        java_opts="-Xmx16G -XX:ParallelGCThreads=3"
+    wrapper:
+        "0.38.0/bio/gatk/haplotypecaller"
 
 rule DBImport:
     input:
         gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index),
-        int="joined_captured_supercontigs.bed"
+        int="targets_GATK.list"
     output:
         directory("database")
     params:
@@ -24,16 +23,16 @@ rule DBImport:
         files = lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
-        {params.gatk} --java-options '-Xmx18G' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
+        {params.gatk} --java-options '-Xmx16G' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
         --intervals {input.int}
         """
 
 rule genotype_variants:
     input:
-        ref=config["ref"]["subref"],
+        ref=config["ref"]["genome"],
         dbi=directory("database")
     output:
-        vcf="genotyped/all.vcf.gz"
+        vcf="genotyped/all_GATK.vcf.gz"
     params:
         gatk=config["modules"]["gatk"]
     shell:
