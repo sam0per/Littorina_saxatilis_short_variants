@@ -1,6 +1,6 @@
 rule call_variants:
     input:
-        bam=config["processing"]["zone"] + "_bam.fbayes.filelist",
+        bam="bam.gatk.filelist",
         ref=config["ref"]["genome"]
     output:
         gvcf=protected("called/{sample}.g.vcf.gz")
