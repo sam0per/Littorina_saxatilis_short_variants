@@ -10,7 +10,7 @@ rule call_variants:
         "logs/gatk/haplotypecaller/{sample}.log"
     params:
         gatk=config["modules"]["gatk"],
-        files=lambda wildcards, input: " -I ".join([s for s in input.bam if "{sample}" in s]),
+        files=lambda wildcards, input: " -I ".join([s for s in input.bam if samples.index in s]),
         java_opts="-Xmx8G -XX:ParallelGCThreads=4"
     shell:
         """
