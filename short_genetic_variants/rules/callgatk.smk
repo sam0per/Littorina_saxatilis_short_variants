@@ -8,7 +8,7 @@ rule call_variants:
         "logs/gatk/haplotypecaller/{sample}.log"
     params:
         extra="-L targets_GATK.list",
-        java_opts="-Xmx8G -XX:ParallelGCThreads=3"
+        java_opts="-Xmx8G -XX:ParallelGCThreads=4"
     wrapper:
         "0.38.0/bio/gatk/haplotypecaller"
 

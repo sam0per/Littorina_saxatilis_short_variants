@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # request memory for job (default 6G, max 72G)
-#$ -pe smp 3
-#$ -l rmem=10G
+#$ -pe smp 8
+#$ -l rmem=5G
 # run time for job in hours:mins:sec (max 168:0:0, jobs with h_rt < 8:0:0 have priority)
 #$ -l h_rt=00:59:59
 #$ -cwd
@@ -11,7 +11,7 @@
 #$ -V
 
 # Tell programs that use the OpenMP library to use N cores
-export OMP_NUM_THREADS=3
+export OMP_NUM_THREADS=8
 
 module load apps/R
 module load apps/java
@@ -25,7 +25,7 @@ source activate short-variants
 
 # export TILEDB_DISABLE_FILE_LOCKING=1
 
-snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 3
+snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 2
 # snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 4 --rerun-incomplete
 
 source deactivate
