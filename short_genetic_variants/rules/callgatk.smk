@@ -14,7 +14,7 @@ rule call_variants:
         java_opts="-Xmx8G -XX:ParallelGCThreads=4"
     shell:
         """
-        {params.gatk} --java-options {params.java_opts} HaplotypeCaller -R {input.ref} -I {params.files} \
+        {params.gatk} --java-options '{params.java_opts}' HaplotypeCaller -R {input.ref} -I {params.files} \
         -O {output.gvcf} -ERC GVCF --heterozygosity 0.05 -L {input.int} > {log} 2>&1
         """
 
