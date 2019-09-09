@@ -1,16 +1,22 @@
 rule call_variants:
     input:
-        bam="bam.gatk.filelist",
-        ref=config["ref"]["genome"]
+        bam=["dedup/CZD438-161004_D00261_0367_ACA2LEANXX_6_SX-PE-046.bam", "dedup/CZD438-161122_D00261_0374_AC9U24ANXX_2_SX-PE-046.bam", "dedup/CZB020-161004_D00261_0367_ACA2LEANXX_1_SX-PE-062.bam"],
+        # bam=get_sample_bams,
+        ref=config["ref"]["genome"],
+        int="targets_GATK.list"
     output:
         gvcf=protected("called/{sample}.g.vcf.gz")
     log:
         "logs/gatk/haplotypecaller/{sample}.log"
     params:
-        extra="-L targets_GATK.list",
+        gatk=config["modules"]["gatk"],
+        files=lambda wildcards, input: " -I ".join([s for s in input.bam if "{sample}" in s]),
         java_opts="-Xmx8G -XX:ParallelGCThreads=4"
-    wrapper:
-        "0.38.0/bio/gatk/haplotypecaller"
+    shell:
+        """
+        {params.gatk} --java-options {params.java_opts} HaplotypeCaller -R {input.ref} -I {params.files} \
+        -O {output.gvcf} -ERC GVCF --heterozygosity 0.05 -L {input.int} > {log} 2>&1
+        """
 
 rule DBImport:
     input:
