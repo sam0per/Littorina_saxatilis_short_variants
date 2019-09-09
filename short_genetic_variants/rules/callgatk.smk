@@ -32,7 +32,7 @@ rule genotype_variants:
         ref=config["ref"]["genome"],
         dbi=directory("database")
     output:
-        vcf="genotyped/" + config["processing"]["zone"] + "_all_GATK.vcf.gz"
+        vcf="genotyped/all_GATK.vcf.gz"
     params:
         gatk=config["modules"]["gatk"]
     shell:
