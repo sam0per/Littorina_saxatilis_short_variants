@@ -29,7 +29,7 @@ rule all:
 ##### Modules #####
 
 include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/mapping.smk"
-include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/callbayes.smk"
+include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/callgatk.smk"
 # include: "rules/subset_ref.smk"
 # include: "rules/subref_prep.smk"
 # include: "rules/callbayes.smk"

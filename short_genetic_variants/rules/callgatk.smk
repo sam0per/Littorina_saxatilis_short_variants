@@ -20,7 +20,7 @@ rule DBImport:
         directory("database")
     params:
         gatk=config["modules"]["gatk"],
-        files = lambda wildcards, input: " -V ".join(input.gvcf)
+        files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
         {params.gatk} --java-options '-Xmx16G' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
@@ -32,7 +32,7 @@ rule genotype_variants:
         ref=config["ref"]["genome"],
         dbi=directory("database")
     output:
-        vcf="genotyped/all_GATK.vcf.gz"
+        vcf="genotyped/" + config["processing"]["zone"] + "_all_GATK.vcf.gz"
     params:
         gatk=config["modules"]["gatk"]
     shell:
