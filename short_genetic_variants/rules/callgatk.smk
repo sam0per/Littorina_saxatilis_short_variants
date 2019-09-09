@@ -1,7 +1,7 @@
 rule call_variants:
     input:
-        bam=["dedup/CZD438-161004_D00261_0367_ACA2LEANXX_6_SX-PE-046.bam", "dedup/CZD438-161122_D00261_0374_AC9U24ANXX_2_SX-PE-046.bam", "dedup/CZB020-161004_D00261_0367_ACA2LEANXX_1_SX-PE-062.bam"],
-        # bam=get_sample_bams,
+        # bam=["dedup/CZD438-161004_D00261_0367_ACA2LEANXX_6_SX-PE-046.bam", "dedup/CZD438-161122_D00261_0374_AC9U24ANXX_2_SX-PE-046.bam", "dedup/CZB020-161004_D00261_0367_ACA2LEANXX_1_SX-PE-062.bam"],
+        bam=get_sample_bams,
         ref=config["ref"]["genome"],
         int="targets_GATK.list"
     output:
