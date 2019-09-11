@@ -4,6 +4,13 @@ date: "6th September 2019"
 author: "Samuel Perini et al."
 ---
 
+# Questions  
+Can short INDELs be used as genetic markers for patterns of local adaptation and ecological speciation? How does the pattern of INDEL variation differ from the one of SNP variation in _L. saxatilis_ (comparison site frequency spectra and Tajima's D, outlier positions, correlation of density per window)?  
+EXTRA: Are non-synonymous SNPs flanked by frameshift INDELs (epistasis)?
+
+# Hypothesis  
+Nucleotide divergence between locally adapted populations can be captured using single base substitutions because these can be reliable genetic markers for both patterns of neutral and adaptive differentiation. SNPs are commonly called together with short INDELs but the latter are often removed because their expected low frequency is not suitable for studying population divergence. However, short INDELs can still be subject to the same population genomic processes as SNPs and, more importantly, being informative for additional evolutionary patterns that have occurred during local adaptation and ecological speciation. For instance, closely related species can be composed of a higher percentage of short INDELs than SNPs [@britten2002] and the same pattern might be found between two locally adapted populations of the same species. Detecting INDELs can reveal additional evolutionary patterns that can strengthen the evidence from SNP-based analyses.
+
 # Background
 
 1. Mutations are changes in the nucleotide sequence of the DNA and without them evolution will not exist because any trait cannot change over time unless there is genetic variation for genetic drift and natural selection to act upon. Mutations occur in different sizes and as they go from one base to (size of the longest variant), their contribution to genetic diversity increases as well as their potential to decrease fitness of the individuals carrying the mutation. Accordingly, different species and also alternative forms of the same species (ecotypes) have been found to differ for a greater number of single nucleotides than for long structural variants. The explanation behind this observation is almost intuitive, large modifications to a functional system are more likely to cause damage than small ones and thus, they will be maintained at lower frequency [@massouras2012]. However, there are examples of non-SNP variants with positive effects such as ... [human unique traits @chen2007 and others in specialissuesvs].  
@@ -16,12 +23,8 @@ On the other hand, INDEL variation can carry unique information on how different
 
 1. SNP-based study in _Littorina saxatilis_, species biology and results.
 
-# Hypothesis  
-Nucleotide divergence between locally adapted populations can be captured using single base substitutions and short INDELs as genetic markers. 
-closely related species can be composed of a higher percentage of short INDELs than SNPs [@britten2002] and the same pattern might be found between two locally adapted populations of the same species. Detecting INDELs can reveal additional evolutionary patterns that can strengthen the evidence from SNP-based analyses.
 
-# Questions  
-Can short INDELs be used as genetic markers for patterns of local adaptation? How does INDEL variation differ from SNP variation in _L. saxatilis_ (correlation and AFS of annotated variants)? Are non-synonymous SNPs flanked by frameshift INDELs (epistasis)?
+
 
 # Materials and methods  
 Called variants including outgroup as this allows to polarise those mutations that are fixed between species and polymorphic between ecotypes of the same species.
