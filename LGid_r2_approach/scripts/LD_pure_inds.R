@@ -69,7 +69,7 @@ linkmap = arrange(linkmap, LG, av)
 #### read phenotype (length) data ####
 CZ_len = lapply(island, function(i) {
   len_fl = list.files(path = spat_dir, pattern = paste0(i, "_length"), full.names = TRUE)
-  len_df = read.csv(len_fl, sep = ";")
+  len_df = read.csv(len_fl)
   len_shore =  mutate(len_df, shore=i)
   return(len_shore)
 })
