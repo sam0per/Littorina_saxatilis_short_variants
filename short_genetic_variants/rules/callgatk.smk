@@ -1,6 +1,5 @@
 rule call_variants:
     input:
-        # bam=["dedup/CZD438-161004_D00261_0367_ACA2LEANXX_6_SX-PE-046.bam", "dedup/CZD438-161122_D00261_0374_AC9U24ANXX_2_SX-PE-046.bam", "dedup/CZB020-161004_D00261_0367_ACA2LEANXX_1_SX-PE-062.bam"],
         bam=get_sample_bams,
         ref=config["ref"]["genome"],
         int="targets_GATK.list"
@@ -11,7 +10,7 @@ rule call_variants:
     params:
         gatk=config["modules"]["gatk"],
         files=lambda wildcards, input: " -I ".join([s for s in input.bam if wildcards.sample in s]),
-        java_opts="-Xmx8G -XX:ParallelGCThreads=4"
+        java_opts="-Xmx16G -XX:ParallelGCThreads=4"
     shell:
         """
         {params.gatk} --java-options '{params.java_opts}' HaplotypeCaller -R {input.ref} -I {params.files} \
@@ -29,7 +28,7 @@ rule DBImport:
         files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
-        {params.gatk} --java-options '-Xmx16G' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
+        {params.gatk} --java-options '-Xmx32G' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
         --intervals {input.int}
         """
 
