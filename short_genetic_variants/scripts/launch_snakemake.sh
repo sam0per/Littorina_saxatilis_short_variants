@@ -2,9 +2,9 @@
 
 # request memory for job (default 6G, max 72G)
 #$ -pe smp 12
-#$ -l rmem=5G
+#$ -l rmem=4G
 # run time for job in hours:mins:sec (max 168:0:0, jobs with h_rt < 8:0:0 have priority)
-#$ -l h_rt=23:59:59
+#$ -l h_rt=29:59:59
 #$ -cwd
 #$ -m bea
 #$ -M samuel.perini@gu.se
@@ -25,7 +25,7 @@ source activate short-variants
 
 # export TILEDB_DISABLE_FILE_LOCKING=1
 
-snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 3
+snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 4 --rerun-incomplete
 # snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 4 --rerun-incomplete
 
 source deactivate

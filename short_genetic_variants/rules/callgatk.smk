@@ -10,7 +10,7 @@ rule call_variants:
     params:
         gatk=config["modules"]["gatk"],
         files=lambda wildcards, input: " -I ".join([s for s in input.bam if wildcards.sample in s]),
-        java_opts="-Xmx16G -XX:ParallelGCThreads=4"
+        java_opts="-Xmx12G -XX:ParallelGCThreads=3"
     shell:
         """
         {params.gatk} --java-options '{params.java_opts}' HaplotypeCaller -R {input.ref} -I {params.files} \
