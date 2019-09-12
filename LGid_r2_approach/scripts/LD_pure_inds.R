@@ -2,7 +2,7 @@ rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
 .packages = c("ggplot2", "dplyr", "reshape2", "parallel", "optparse", "tidyr", "splitstackshape", "data.table", "gdata",
-              "adjclust", "matrixStats", "bbmle")
+              "adjclust", "matrixStats", "bbmle", "RCurl")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -80,7 +80,7 @@ CZ_diss = lapply(island, function(i) {
   return(LCP)
 })
 #### identify sex of each snail, using brood pouch and penis data ####
-sex <- function(b, p) { 
+sex <- function(b, p) {
   if(b=="Y" & p=="N" & (is.na(b)==F)) y <- "female"
   if(b=="N" & p=="Y" & (is.na(b)==F)) y <- "male"
   if((b %in% c("Y", "N"))==F | (p %in% c("Y", "N"))==F | b==p) y<-"NA"
@@ -106,13 +106,13 @@ cline_2c4s <- function(phen,position,sex,cl,cr,lwl,lwr,crab,wave,zs_c,zs_w,sc,sh
   z_xl <- crab+(wave-crab)*p_xl  # z_xl is expected phenotype for left cline
   z_xl[sex=="female"] <- z_xl[sex=="female"] + zs_c + (zs_w-zs_c)*p_xl[sex=="female"]
   s_xl <- sqrt(sc^2 + 4*p_xl*(1-p_xl)*shl^2 + (p_xl^2)*(sw^2-sc^2))
-  
+
   # right cline
   p_x <- 1/(1+exp(0-4*(position-cr)/wr))  # increasing
   z_x <- crab+(wave-crab)*p_x  # z_x is expected phenotype for the right cline
   z_x[sex=="female"] <- z_x[sex=="female"] + zs_c + (zs_w-zs_c)*p_x[sex=="female"]
   s_x <- sqrt(sc^2 + 4*p_x*(1-p_x)*sh^2 + (p_x^2)*(sw^2-sc^2))
-  
+
   # combined cline
   cond <- z_x < z_xl
   z_x[cond] <- z_xl[cond]
@@ -144,9 +144,8 @@ cline_pars = lapply(seq_along(island), function(c) {
 })
 #### sample from crab or wave habitat (commented out) ####
 #### dataset(s) is provided on GitHub ####
-repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
-repodf = list.files(path = file.path(repodir, spat_dir), pattern = ecotype, full.names = TRUE)
-df_eco = list(read.csv(repodf))
+repodir = getURL(paste0("https://github.com/The-Bioinformatics-Group/Littorina_saxatilis.git/LGid_r2_approach/data/", island, "_", ecotype, "50_LCP_ID.csv"))
+df_eco = list(read.csv(repodir))
 # df_eco = lapply(seq_along(island), function(x) {
 #   if (ecotype == "crab") {
 #     cl = cline_pars[[x]]["cl", "Estimate"]
