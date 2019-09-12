@@ -144,8 +144,9 @@ cline_pars = lapply(seq_along(island), function(c) {
 })
 #### sample from crab or wave habitat (commented out) ####
 #### dataset(s) is provided on GitHub ####
-repodir = getURL(paste0("https://github.com/The-Bioinformatics-Group/Littorina_saxatilis.git/LGid_r2_approach/data/", island, "_", ecotype, "50_LCP_ID.csv"))
-df_eco = list(read.csv(repodir))
+gitdir = getURL(paste0("https://raw.githubusercontent.com/The-Bioinformatics-Group/Littorina_saxatilis/master/LGid_r2_approach/data/CZA_",
+                       ecotype, "50_LCP_ID.csv"))
+df_eco = list(read.csv(text = gitdir))
 # df_eco = lapply(seq_along(island), function(x) {
 #   if (ecotype == "crab") {
 #     cl = cline_pars[[x]]["cl", "Estimate"]
@@ -308,7 +309,9 @@ r2_ukn_map = lapply(seq_along(island), function(isl) {
 })
 #### plot r2 against map position ####
 #### NOTE: only for one island and one test variant in desired LG ####
-repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
+dir.create(file.path(getwd(), "figures"))
+repodir = getwd()
+# repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
 r2_1ukn_map = r2_ukn_map[[1]][r2_ukn_map[[1]]$cont_ukn==as.character(unique(r2_ukn_map[[1]]$cont_ukn)[1]), ]
 r2_1ukn_map = r2_1ukn_map[r2_1ukn_map$cont_map!=conlg6invcf, ]
 pdf(paste0(repodir, "figures/", island, "_", ecotype, "_", unique(r2_1ukn_map$cont_ukn), "_mean&max_r2_map.pdf"))
