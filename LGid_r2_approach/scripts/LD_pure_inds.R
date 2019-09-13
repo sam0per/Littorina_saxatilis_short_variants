@@ -170,14 +170,15 @@ df_eco = list(read.csv(text = gitdir))
 ###############################
 # plot samples along transect #
 ###############################
+# dir.create(file.path(getwd(), "figures"))
 # df_eco_spa = merge(CZ_data[[1]], df_eco[[1]], by = c("snail_ID"))
-# pdf(paste0("../Littorina_saxatilis/LGid_r2_approach/figures/", island, "_", ecotype, nrow(df_eco_spa), "_spatial.pdf"))
+# pdf(paste0(getwd(), "/figures/", island, "_", ecotype, nrow(df_eco_spa), "_spatial.pdf"))
 # plot(x = CZ_data[[1]]$LCmeanDist, CZ_data[[1]]$length_mm, pch=19, cex=0.5,
 #      xlab=paste0(island, " transect position"), ylab = "length (mm)")
 # text(x = df_eco_spa$LCmeanDist.x, y = df_eco_spa$length_mm, labels = df_eco_spa$snail_ID, cex = 0.5, pos = 4)
 # segments(x0 = df_eco_spa$LCmeanDist.x, y0 = df_eco_spa$length_mm, x1 = df_eco_spa$LCmeanDist.x+5, y1 = df_eco_spa$length_mm)
 # dev.off()
-###############################
+##################################
 #### find sample names in vcf ####
 ecoID = lapply(seq_along(island), function(n) {
   intersect(colnames(tabreads), paste(df_eco[[n]]$snail_ID, "GT", sep = "."))
