@@ -16,6 +16,6 @@ Unfortunately, the file `data/genotype.table` is missing but Samuel can provide 
 The current version of the script works only for the island CZA and this is why the directory `data` contains only files recorded for CZA. If somebody would like to run some tests on other islands, this is what he/she/it must do:  
 1. Retrieve data for the other islands. The filenames should follow the same pattern as the one for CZA.  
 1. Comment out lines from 147 to 149 of `scripts/LD_pure_inds.R`.  
-1. Comment in lines from 150 to 169 and from 173 to 179 of `scripts/LD_pure_inds.R`.
+1. Comment in lines from 150 to 169 and from 173 to 180 of `scripts/LD_pure_inds.R`.
 
 GOOD LUCK!
