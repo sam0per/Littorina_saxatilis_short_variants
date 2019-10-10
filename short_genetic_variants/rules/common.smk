@@ -20,7 +20,7 @@ contigs = pd.read_csv(config["ref"]["genome"] + ".fai",
                       header=None, usecols=[0], squeeze=True, dtype=str, sep='\t')
 
 # target regions in reference genome
-ref_int = pd.read_csv("targets.regions", sep='\t', header=None, squeeze=True, dtype=str)
+ref_int = pd.read_csv(config["regions"], sep='\t', header=None, squeeze=True, dtype=str)
 # ref_int = pd.read_csv("targets.regions", sep='\t', header=None).set_index([0], drop=False)
 
 # supercontigs in subreference genome

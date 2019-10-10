@@ -19,32 +19,32 @@ rule call_variants:
 
 rule DBImport:
     input:
-        gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index),
-        reg="targets_GATK.list"
+        gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index)
+        # reg="targets_GATK.list"
     output:
-        directory("gatkDBI")
-        # directory("gatkDBI_{reg}")
+        # directory("gatkDBI")
+        directory("gatkDBI_{reg}")
     params:
         gatk=config["modules"]["gatk"],
         files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
         {params.gatk} --java-options '-Xmx6g -Xms6g' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
-        --intervals {input.reg} --batch-size 50 --reader-threads 4
+        --intervals {wildcards.reg} --batch-size 50 --reader-threads 6
         """
 
 rule genotype_variants:
     input:
         ref=config["ref"]["genome"],
-        # dbi=expand("gatkDBI_{reg}", reg=ref_int)
-        dbi=directory("gatkDBI")
+        dbi=expand("gatkDBI_{reg}", reg=ref_int)
+        # dbi=directory("gatkDBI")
     output:
         vcf="genotyped/all_GATK.vcf.gz"
     params:
-        gatk=config["modules"]["gatk"]
-        # dbis=lambda wildcards, input: " -V ".join(input.dbi)
+        gatk=config["modules"]["gatk"],
+        dbis=lambda wildcards, input: " -V ".join(input.dbi)
     shell:
         """
-        {params.gatk} --java-options '-Xmx6g -Xms6g' GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation \
+        {params.gatk} --java-options '-Xmx6g -Xms6g' GenotypeGVCFs -R {input.ref} -V gendb://{params.dbis} -G StandardAnnotation \
         -O {output.vcf}
         """
