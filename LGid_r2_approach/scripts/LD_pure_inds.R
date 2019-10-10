@@ -2,7 +2,7 @@ rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
 .packages = c("ggplot2", "dplyr", "reshape2", "parallel", "optparse", "tidyr", "splitstackshape", "data.table", "gdata",
-              "adjclust", "matrixStats", "bbmle")
+              "adjclust", "matrixStats", "bbmle", "RCurl")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -80,7 +80,7 @@ CZ_diss = lapply(island, function(i) {
   return(LCP)
 })
 #### identify sex of each snail, using brood pouch and penis data ####
-sex <- function(b, p) { 
+sex <- function(b, p) {
   if(b=="Y" & p=="N" & (is.na(b)==F)) y <- "female"
   if(b=="N" & p=="Y" & (is.na(b)==F)) y <- "male"
   if((b %in% c("Y", "N"))==F | (p %in% c("Y", "N"))==F | b==p) y<-"NA"
@@ -106,13 +106,13 @@ cline_2c4s <- function(phen,position,sex,cl,cr,lwl,lwr,crab,wave,zs_c,zs_w,sc,sh
   z_xl <- crab+(wave-crab)*p_xl  # z_xl is expected phenotype for left cline
   z_xl[sex=="female"] <- z_xl[sex=="female"] + zs_c + (zs_w-zs_c)*p_xl[sex=="female"]
   s_xl <- sqrt(sc^2 + 4*p_xl*(1-p_xl)*shl^2 + (p_xl^2)*(sw^2-sc^2))
-  
+
   # right cline
   p_x <- 1/(1+exp(0-4*(position-cr)/wr))  # increasing
   z_x <- crab+(wave-crab)*p_x  # z_x is expected phenotype for the right cline
   z_x[sex=="female"] <- z_x[sex=="female"] + zs_c + (zs_w-zs_c)*p_x[sex=="female"]
   s_x <- sqrt(sc^2 + 4*p_x*(1-p_x)*sh^2 + (p_x^2)*(sw^2-sc^2))
-  
+
   # combined cline
   cond <- z_x < z_xl
   z_x[cond] <- z_xl[cond]
@@ -144,9 +144,9 @@ cline_pars = lapply(seq_along(island), function(c) {
 })
 #### sample from crab or wave habitat (commented out) ####
 #### dataset(s) is provided on GitHub ####
-repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
-repodf = list.files(path = file.path(repodir, spat_dir), pattern = ecotype, full.names = TRUE)
-df_eco = list(read.csv(repodf))
+gitdir = getURL(paste0("https://raw.githubusercontent.com/The-Bioinformatics-Group/Littorina_saxatilis/master/LGid_r2_approach/data/CZA_",
+                       ecotype, "50_LCP_ID.csv"))
+df_eco = list(read.csv(text = gitdir))
 # df_eco = lapply(seq_along(island), function(x) {
 #   if (ecotype == "crab") {
 #     cl = cline_pars[[x]]["cl", "Estimate"]
@@ -170,14 +170,15 @@ df_eco = list(read.csv(repodf))
 ###############################
 # plot samples along transect #
 ###############################
+# dir.create(file.path(getwd(), "figures"))
 # df_eco_spa = merge(CZ_data[[1]], df_eco[[1]], by = c("snail_ID"))
-# pdf(paste0("../Littorina_saxatilis/LGid_r2_approach/figures/", island, "_", ecotype, nrow(df_eco_spa), "_spatial.pdf"))
+# pdf(paste0(getwd(), "/figures/", island, "_", ecotype, nrow(df_eco_spa), "_spatial.pdf"))
 # plot(x = CZ_data[[1]]$LCmeanDist, CZ_data[[1]]$length_mm, pch=19, cex=0.5,
 #      xlab=paste0(island, " transect position"), ylab = "length (mm)")
 # text(x = df_eco_spa$LCmeanDist.x, y = df_eco_spa$length_mm, labels = df_eco_spa$snail_ID, cex = 0.5, pos = 4)
 # segments(x0 = df_eco_spa$LCmeanDist.x, y0 = df_eco_spa$length_mm, x1 = df_eco_spa$LCmeanDist.x+5, y1 = df_eco_spa$length_mm)
 # dev.off()
-###############################
+##################################
 #### find sample names in vcf ####
 ecoID = lapply(seq_along(island), function(n) {
   intersect(colnames(tabreads), paste(df_eco[[n]]$snail_ID, "GT", sep = "."))
@@ -309,7 +310,9 @@ r2_ukn_map = lapply(seq_along(island), function(isl) {
 })
 #### plot r2 against map position ####
 #### NOTE: only for one island and one test variant in desired LG ####
-repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
+dir.create(file.path(getwd(), "figures"))
+repodir = getwd()
+# repodir = "/Users/samuelperini/Documents/research/projects/Littorina_saxatilis/LGid_r2_approach/"
 r2_1ukn_map = r2_ukn_map[[1]][r2_ukn_map[[1]]$cont_ukn==as.character(unique(r2_ukn_map[[1]]$cont_ukn)[1]), ]
 r2_1ukn_map = r2_1ukn_map[r2_1ukn_map$cont_map!=conlg6invcf, ]
 pdf(paste0(repodir, "figures/", island, "_", ecotype, "_", unique(r2_1ukn_map$cont_ukn), "_mean&max_r2_map.pdf"))
