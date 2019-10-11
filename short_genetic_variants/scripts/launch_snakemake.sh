@@ -2,9 +2,9 @@
 
 # request memory for job (default 6G, max 72G)
 #$ -pe smp 4
-#$ -l rmem=16G
+#$ -l rmem=17G
 # run time for job in hours:mins:sec (max 168:0:0, jobs with h_rt < 8:0:0 have priority)
-#$ -l h_rt=00:19:59
+#$ -l h_rt=00:49:59
 #$ -cwd
 #$ -m bea
 #$ -M samuel.perini@gu.se
