@@ -37,7 +37,7 @@ rule DBImport:
 rule genotype_variants:
     input:
         ref=config["ref"]["genome"],
-        dbi=expand("gatkDBI/gatkDBI_{reg}", reg=ref_int)
+        dbi="gatkDBI/gatkDBI_{reg}"
         # dbi=directory("gatkDBI")
     output:
         vcf="genotyped/{reg}_GATK.vcf.gz"
