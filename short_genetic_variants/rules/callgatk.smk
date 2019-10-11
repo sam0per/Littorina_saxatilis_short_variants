@@ -24,28 +24,38 @@ rule DBImport:
         # reg="targets_GATK.list"
     output:
         # directory("gatkDBI")
-        directory("gatkDBI_{reg}")
+        directory("gatkDBI/gatkDBI_{reg}")
     params:
         gatk=config["modules"]["gatk"]
         # files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
-        {params.gatk} --java-options '-Xmx16g -Xms16g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
-        --intervals {wildcards.reg} --batch-size 2 --reader-threads 2
+        {params.gatk} --java-options '-Xmx22g -Xms22g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
+        --intervals {wildcards.reg} --batch-size 60 --reader-threads 2
         """
 
 rule genotype_variants:
     input:
         ref=config["ref"]["genome"],
-        dbi=expand("gatkDBI_{reg}", reg=ref_int)
+        dbi=expand("gatkDBI/gatkDBI_{reg}", reg=ref_int)
         # dbi=directory("gatkDBI")
     output:
-        vcf="genotyped/all_GATK.vcf.gz"
+        vcf="genotyped/{reg}_GATK.vcf.gz"
     params:
-        gatk=config["modules"]["gatk"],
-        dbis=lambda wildcards, input: " -V ".join(input.dbi)
+        gatk=config["modules"]["gatk"]
+        # dbis=lambda wildcards, input: " -V ".join(input.dbi)
     shell:
         """
-        {params.gatk} --java-options '-Xmx16g -Xms16g' GenotypeGVCFs -R {input.ref} -V gendb://{params.dbis} -G StandardAnnotation \
+        {params.gatk} --java-options '-Xmx22g -Xms22g' GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation \
         -O {output.vcf}
         """
+
+rule merge_variants:
+    input:
+        vcf=expand("genotyped/{reg}_GATK.vcf.gz", reg=ref_int)
+    output:
+        "genotyped/all_GATK.vcf.gz"
+    log:
+        "logs/picard/merge-GATKgenotyped.log"
+    wrapper:
+        "0.36.0/bio/picard/mergevcfs"
