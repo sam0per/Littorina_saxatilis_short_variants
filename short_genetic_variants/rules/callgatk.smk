@@ -19,18 +19,19 @@ rule call_variants:
 
 rule DBImport:
     input:
-        gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index)
+        gvcf="/home/bo4spe/Littorina_saxatilis/short_genetic_variants/sample_map.tsv"
+        # gvcf=expand("called/{sample}.g.vcf.gz", sample=samples.index)
         # reg="targets_GATK.list"
     output:
         # directory("gatkDBI")
         directory("gatkDBI_{reg}")
     params:
-        gatk=config["modules"]["gatk"],
-        files=lambda wildcards, input: " -V ".join(input.gvcf)
+        gatk=config["modules"]["gatk"]
+        # files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
-        {params.gatk} --java-options '-Xmx16g -Xms16g' GenomicsDBImport -V {params.files} --genomicsdb-workspace-path {output} \
-        --intervals {wildcards.reg} --batch-size 50 --reader-threads 2
+        {params.gatk} --java-options '-Xmx16g -Xms16g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
+        --intervals {wildcards.reg} --batch-size 2 --reader-threads 2
         """
 
 rule genotype_variants:
