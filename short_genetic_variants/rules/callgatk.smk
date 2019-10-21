@@ -30,8 +30,8 @@ rule DBImport:
         # files=lambda wildcards, input: " -V ".join(input.gvcf)
     shell:
         """
-        {params.gatk} --java-options '-Xmx22g -Xms22g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
-        --intervals {wildcards.reg} --batch-size 60 --reader-threads 4
+        {params.gatk} --java-options '-Xmx28g -Xms28g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
+        --intervals {wildcards.reg} --batch-size 40 --reader-threads 4
         """
 
 rule genotype_variants:
@@ -46,7 +46,7 @@ rule genotype_variants:
         # dbis=lambda wildcards, input: " -V ".join(input.dbi)
     shell:
         """
-        {params.gatk} --java-options '-Xmx22g -Xms22g' GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation \
+        {params.gatk} --java-options '-Xmx28g -Xms28g' GenotypeGVCFs -R {input.ref} -V gendb://{input.dbi} -G StandardAnnotation \
         -O {output.vcf}
         """
 
