@@ -31,7 +31,7 @@ rule DBImport:
     shell:
         """
         {params.gatk} --java-options '-Xmx28g -Xms28g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
-        --intervals {wildcards.reg} --batch-size 40 --reader-threads 4
+        --intervals {wildcards.reg} --batch-size 40
         """
 
 rule genotype_variants:
