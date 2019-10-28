@@ -25,6 +25,7 @@ source activate short-variants
 
 export TILEDB_DISABLE_FILE_LOCKING=1
 
+snakemake -n -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile --unlock
 snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 4 --rerun-incomplete
 # snakemake --use-conda -s /home/bo4spe/Littorina_saxatilis/short_genetic_variants/Snakefile -j 4 --rerun-incomplete
 
