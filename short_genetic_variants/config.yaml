@@ -1,6 +1,6 @@
 samples: /home/bo4spe/Littorina_saxatilis/short_genetic_variants/samples.tsv
 units: /home/bo4spe/Littorina_saxatilis/short_genetic_variants/units.tsv
-regions: /home/bo4spe/Littorina_saxatilis/short_genetic_variants/targets_GATK.list
+regions: /home/bo4spe/Littorina_saxatilis/short_genetic_variants/targets.region.list
 
 modules:
   gatk: /home/bo4spe/modules/gatk-4.1.0.0/gatk
