@@ -4,7 +4,7 @@ include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/common.s
 
 rule all:
     input:
-        "bam.fbayes.filelist",
+        # "bam.fbayes.filelist",
         "all_GATK.vcf.gz"
         # "called/all.freebayes.vcf.gz"
         # "qc/multiqc.html"
@@ -28,7 +28,7 @@ rule all:
 
 ##### Modules #####
 
-include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/mapping.smk"
+# include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/mapping.smk"
 include: "/home/bo4spe/Littorina_saxatilis/short_genetic_variants/rules/callgatk.smk"
 # include: "rules/subset_ref.smk"
 # include: "rules/subref_prep.smk"
