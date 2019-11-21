@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/bo4spe/.conda/envs/short-variants/bin/python3
 # -*- coding: utf-8 -*-
 
 """Usage: ./qsub_generator.py -f <FILE> -o <FILE> -p <INT> -m <INT> -t <hh:mm:ss> -y <FILE> -s <STR> [-h]
