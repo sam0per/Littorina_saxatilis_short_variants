@@ -33,7 +33,8 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
             with open(outsh + "_{}.sh".format(line.replace(":", "_")), "w") as fsh:
                 fsh.write("#!/bin/bash\n")
                 fsh.write("\n#$ -pe smp {}".format(pe))
-                fsh.write("\n#$ -l rmem={}".format(mem))
+                fsh.write("\n#$ -l rmem={}".format(mem) + "G")
+                fsh.write("\n#$ -l mem={}".format(mem) + "G")
                 fsh.write("\n#$ -l h_rt={}".format(tm))
                 fsh.write("\n#$ -cwd")
                 fsh.write("\n#$ -V\n")
@@ -41,7 +42,7 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
                 fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
                 fsh.write("\nmodule load apps/java\n")
                 fsh.write("\n" + modu +
-                " --java-options '-Xmx50g -Xms50g' GenomicsDBImport " +
+                " --java-options '-Xmx45g -Xms45g' GenomicsDBImport " +
                 "--sample-name-map /home/bo4spe/Littorina_saxatilis/short_genetic_variants/sample_map.tsv " +
                 "--genomicsdb-workspace-path gatkDBI/gatkDBI_{} ".format(line) +
                 "--intervals {} ".format(line) +
