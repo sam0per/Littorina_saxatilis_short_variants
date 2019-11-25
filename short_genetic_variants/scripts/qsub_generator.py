@@ -42,7 +42,7 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
                 fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
                 fsh.write("\nmodule load apps/java\n")
                 fsh.write("\n" + modu +
-                " --java-options '-Xmx45g -Xms45g' GenomicsDBImport " +
+                " --java-options '-Xmx42g -Xms42g' GenomicsDBImport " +
                 "--sample-name-map /home/bo4spe/Littorina_saxatilis/short_genetic_variants/sample_map.tsv " +
                 "--genomicsdb-workspace-path gatkDBI/gatkDBI_{} ".format(line) +
                 "--intervals {} ".format(line) +
