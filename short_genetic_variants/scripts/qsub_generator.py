@@ -39,12 +39,13 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
                 fsh.write("\n#$ -V\n")
                 fsh.write("\nexport OMP_NUM_THREADS={}".format(pe))
                 fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
+                fsh.write("\nmodule load apps/java\n")
                 fsh.write("\n" + modu +
-                " --java-options '-Xmx28g -Xms28g' GenomicsDBImport " +
+                " --java-options '-Xmx50g -Xms50g' GenomicsDBImport " +
                 "--sample-name-map /home/bo4spe/Littorina_saxatilis/short_genetic_variants/sample_map.tsv " +
                 "--genomicsdb-workspace-path gatkDBI/gatkDBI_{} ".format(line) +
                 "--intervals {} ".format(line) +
-                "--batch-size 200 " +
+                "--batch-size 50 " +
                 "--reader-threads {}".format(pe))
 
 # {params.gatk} --java-options '-Xmx28g -Xms28g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
