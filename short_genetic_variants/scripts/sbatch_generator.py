@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Usage: ./qsub_generator.py -f <FILE> -o <FILE> -p <INT> -m <INT> -t <hh:mm:ss> -y <FILE> -s <STR> [-h]
+"""Usage: ./sbatch_generator.py -f <FILE> -o <FILE> -p <INT> -m <INT> -t <d-hh:mm:ss> -y <FILE> -s <STR> [-h]
 
-    -f, --infile <FILE>                  Input file
+    -f, --infile <FILE>                  Input file (e.g., list of intervals chr:start-end)
     -o, --outfile <FILE>                 Output bash script to qsub
     -p, --pesmp <INT>                    Number of cores for parallel jobs
     -m, --memory <INT>                   Memory size
@@ -32,19 +32,24 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
             os.makedirs(os.path.dirname(outsh), exist_ok=True)
             with open(outsh + "_{}.sh".format(line.replace(":", "_")), "w") as fsh:
                 fsh.write("#!/bin/bash\n")
-                fsh.write("\n#$ -pe smp {}".format(pe))
-                fsh.write("\n#$ -l rmem={}".format(mem) + "G")
-                fsh.write("\n#$ -l mem={}".format(mem) + "G")
-                fsh.write("\n#$ -l h_rt={}".format(tm))
-                fsh.write("\n#$ -cwd")
-                fsh.write("\n#$ -V\n")
-                fsh.write("\nexport OMP_NUM_THREADS={}".format(pe))
+                fsh.write("\n#SBATCH --job-name=gatkDBI_{}".format(line))
+                fsh.write("\n#SBATCH --output=%x-%j.out")
+                fsh.write("\n#SBATCH --nodes=1")
+                fsh.write("\n#SBATCH --ntasks-per-node=1")
+                fsh.write("\n#SBATCH --cpus-per-task={}".format(pe))
+                fsh.write("\n#SBATCH --mem-per-cpu={}".format(mem) + "GB")
+                # fsh.write("\n#$ -l mem={}".format(mem) + "G")
+                fsh.write("\n#SBATCH --time={}".format(tm))
+                fsh.write("\n#SBATCH --export=ALL")
+                fsh.write("\n#SBATCH --chdir=/fastdata/bo4spe/\n")
                 fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
-                fsh.write("\nmodule load apps/java\n")
+                fsh.write("\nmodule load OpenMPI/3.1.3-GCC-8.2.0-2.31.1\n")
+                fsh.write("module load Java/11\n")
+                fsh.write("\nexport OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}\n")
                 fsh.write("\n" + modu +
-                " --java-options '-Xmx42g -Xms42g' GenomicsDBImport " +
+                " --java-options '-Xmx84g -Xms84g' GenomicsDBImport " +
                 "--sample-name-map /home/bo4spe/Littorina_saxatilis/short_genetic_variants/sample_map.tsv " +
-                "--genomicsdb-workspace-path gatkDBI/gatkDBI_{} ".format(line) +
+                "--genomicsdb-workspace-path ./gatkDBI/gatkDBI_{} ".format(line) +
                 "--intervals {} ".format(line) +
                 "--batch-size 50 " +
                 "--reader-threads {}".format(pe))
