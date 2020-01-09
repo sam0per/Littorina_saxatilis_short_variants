@@ -9,6 +9,8 @@
 # -q molecol.q
 #$ -t 1000-1967
 #$ -tc 30
+#$ -cwd
+#$ -V
 
 module load apps/python/conda
 module load apps/python/anaconda3-4.2.0
