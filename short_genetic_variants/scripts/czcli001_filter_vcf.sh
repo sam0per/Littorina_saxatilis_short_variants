@@ -10,6 +10,10 @@
 #$ -t 1000-1967
 #$ -tc 30
 
+module load apps/python/conda
+module load apps/python/anaconda3-4.2.0
+source activate short-variants
+
 taskid=${SGE_TASK_ID}
 
 for site in CZA CZB CZD;do
@@ -19,7 +23,9 @@ for site in CZA CZB CZD;do
 # --positions ANG13b_positions_to_keep.txt --recode --out CZCLI01_$site.filt1-$taskid
 
 # minor allele freq filter, variant quality filter, keep biallelic SNPs only, remove SNPs where < 150 inds have data
-/home/bo1awx/programs/vcftools_0.1.13/bin/vcftools --vcf CZCLI01_$site.filt1-$taskid.recode.vcf --maf 0.01 --minQ 20 \
---min-alleles 2 --max-alleles 2 --max-missing-count 150 --recode --out CZCLI01_$site.filt2-$taskid
+vcftools --vcf Anja/czcli001_filter_vcf/CZCLI01_$site.filt1-$taskid.recode.vcf --maf 0.01 --minQ 20 \
+--min-alleles 2 --max-alleles 2 --max-missing-count 150 --recode --out Anja/czcli001_filter_vcf/CZCLI01_$site.filt2-$taskid
 
 done
+
+source deactivate
