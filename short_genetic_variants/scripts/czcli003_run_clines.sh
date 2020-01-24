@@ -9,15 +9,19 @@
 #$ -l h_rt=50:59:00
 # current environment settings are used for the job
 #$ -V
-##$ -P molecol
-##$ -q molecol.q
-#$ -t 1000-1963
-##$ -tc 10
+# -P molecol
+# -q molecol.q
+#$ -t 1000-1967
+#$ -tc 30
+#$ -cwd
 
 taskid=${SGE_TASK_ID}
 
-module add apps/R/3.3.1
+module add apps/R/3.5.1
 
-zone="CZA"
+for site in CZA CZB CZD; do
 
-Rscript --vanilla czcli003_clines_20180313.R CZCLI02_$zone-$taskid.alleles $zone $taskid
+  Rscript --vanilla /home/bo4spe/Littorina_saxatilis/short_genetic_variants/scripts/czcli003_clines_20190725.R \
+  Anja/czcli002_allele_count/CZCLI02_$site-$taskid.alleles $zone $taskid
+
+done
