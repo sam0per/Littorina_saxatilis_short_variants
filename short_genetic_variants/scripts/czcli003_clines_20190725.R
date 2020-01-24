@@ -95,7 +95,11 @@ sex <- function(b, p) {
 }
 snail$sex = apply(snail[, c("brood", "penis")], MARGIN = 1, FUN = function(x) sex(x[1], x[2]))
 
-
+# gmarker = args[4]
+# if (gmarker=="INDEL") {
+#   n_zone = substr(zone, start = 1, stop = 3)
+#   indel_reads = read.table(paste0("Anja/CZCLI02_INDEL_", n_zone, "-", taskid, ".AD.FORMAT"), header=T)
+# }
 
 # in what follows, the 'reference' allele is the allele that is more common in the wave
 # ecotype. That way, clines are always descending for the left contact, ascending for the right contact
