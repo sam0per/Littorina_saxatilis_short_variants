@@ -1,5 +1,5 @@
 rm (list=ls())
-
+setwd("Anja/Anja_results/20200115/")
 ################################################################################################################
 ##### INPUT ####################################################################################################
 
@@ -17,8 +17,8 @@ results$Wave[results$Wave=="a2"] = 2
 results$Wave = as.numeric(results$Wave)
 
 # total number of SNPs:
-length(unique(results$cp))
-
+(pre_res = length(unique(results$cp)))
+head(results)
 
 
 ################################################################################################################
@@ -28,7 +28,7 @@ length(unique(results$cp))
 results = results[(results$Type %in% c("Dup>HWE", "SL", "C_Peak", "Stuck"))==F, ]
 
 dim(results)
-length(unique(results$cp)) # should be ~1/3rd of the previous
+length(unique(results$cp))/pre_res # should be ~1/3rd of the previous
 
 
 # make table which for each SNP says how many of the replicates are of each type
