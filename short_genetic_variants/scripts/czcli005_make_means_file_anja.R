@@ -30,9 +30,37 @@ results = results[(results$Type %in% c("Dup>HWE", "SL", "C_Peak", "Stuck"))==F, 
 dim(results)
 length(unique(results$cp))/pre_res # should be ~1/3rd of the previous
 
+vartype = "SNP"
+id_csv = read.csv(file = paste0("CZCLI01_", substr(x = zone, start = 1, stop = 3), ".filt2.vcf.csv"))
+head(id_csv)
+colnames(id_csv) = c("Contig", "Position", "REF", "ALT")
+len_var = function(n_ref, n_alt, o_dt) {
+  c_ref = as.character(n_ref)
+  c_alt = as.character(n_alt)
+  l_var = nchar(c_ref) - nchar(c_alt)
+  if (abs(l_var)==0) {
+    vtype = "SNP"
+  } else {
+    vtype = "INDEL"
+  }
+  return(vtype)
+}
+# len_var(n_ref = "AC", n_alt = "CCAA")
+id_csv[, 'VTYPE'] = apply(X = id_csv[, c('REF', 'ALT')], MARGIN = 1,
+                          FUN = function(x) len_var(n_ref = x[1], n_alt = x[2]))
+table(id_csv$VTYPE)
+head(results)
+res_vtype = merge(x = id_csv, y = results, by = c('Contig', 'Position'))
+nrow(res_vtype)
+nrow(results)
+# table(res_vtype$Type)
+# table(results$Type)
 
+results = res_vtype[res_vtype$VTYPE==vartype, ]
+table(results$VTYPE)
 # make table which for each SNP says how many of the replicates are of each type
 tab = as.data.frame.matrix(table(results[, c("cp", "Type")]))
+head(tab)
 tab[tab$Cline >= 2, "cat"] = "Cline"
 tab[tab$Cline < 2, "cat"] = "NoCline"
 
@@ -109,14 +137,15 @@ use_names = c("cp","Contig","Position","Type","Wave","Centre_right","Width_right
 means = means[, use_names]
 names(means) = c("cp","Contig","Position","Type","Wave","Centre","Width","slope",
                  "p_crab","p_wave","p_diff","Var.Ex","Fst") 
-
+head(means)
 
 ################################################################################################################
 ##### ADD OTHER INFO ###########################################################################################
 
 # Add map data #################################################################################################
 # Get map
-mapdata = read.table("./data/map_v11.txt", header=T, stringsAsFactors = F)
+mapdata = read.table("../../../data/map_v11.txt", header=T, stringsAsFactors = F)
+head(mapdata)
 mapdata$cp = paste(mapdata$contig, mapdata$pos, sep="_")
 
 # Assign SNPs not on map to closest map position, if within 1000bp
