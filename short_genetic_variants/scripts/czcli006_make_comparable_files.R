@@ -1,17 +1,18 @@
 rm (list=ls())
-
+setwd("Anja/Anja_results/20200115/")
 ################################################################################################################
 ##### INPUT ####################################################################################################
-
+# vartype = "snp"
+vartype = opt$variant
 # Get cline fits
-ANG_right = read.table("CZCLI005_ANG_right_means.txt", header=T, stringsAsFactors=F)
-CZA_left = read.table("CZCLI005_CZA_left_means.txt", header=T, stringsAsFactors=F)
-CZA_right = read.table("CZCLI005_CZA_right_means.txt", header=T, stringsAsFactors=F)
-CZB_left = read.table("CZCLI005_CZB_left_means.txt", header=T, stringsAsFactors=F)
-CZB_right = read.table("CZCLI005_CZB_right_means.txt", header=T, stringsAsFactors=F)
-CZD_left = read.table("CZCLI005_CZD_left_means.txt", header=T, stringsAsFactors=F)
-CZD_right = read.table("CZCLI005_CZD_right_means.txt", header=T, stringsAsFactors=F)
-
+# ANG_right = read.table("CZCLI005_ANG_right_means.txt", header=T, stringsAsFactors=F)
+CZA_left = read.table(paste0("CZCLI005_means/CZCLI005_CZA_left_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+CZA_right = read.table(paste0("CZCLI005_means/CZCLI005_CZA_right_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+CZB_left = read.table(paste0("CZCLI005_means/CZCLI005_CZB_left_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+CZB_right = read.table(paste0("CZCLI005_means/CZCLI005_CZB_right_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+CZD_left = read.table(paste0("CZCLI005_means/CZCLI005_CZD_left_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+CZD_right = read.table(paste0("CZCLI005_means/CZCLI005_CZD_right_", vartype, "_means.txt"), header=T, stringsAsFactors=F)
+ANG_right = CZA_right
 
 # Keep only SNPs with data in all zones
 use = intersect(intersect(intersect(intersect(intersect(intersect(
@@ -65,7 +66,7 @@ liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_le
 
 for (zone in liste){
   dat = get(zone)
-  write.table(dat, paste("CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
+  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
 }
 
 
@@ -99,5 +100,5 @@ liste = c("ANG_rightNoInv", "CZA_leftNoInv", "CZA_rightNoInv", "CZB_leftNoInv", 
 
 for (zone in liste){
   dat = get(zone)
-  write.table(dat, paste("CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
+  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
 }
