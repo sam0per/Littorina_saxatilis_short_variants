@@ -1,10 +1,36 @@
-rm (list=ls())
-setwd("Anja/Anja_results/20200115/")
+rm(list=ls())
+# setwd("Anja/Anja_results/20200115/")
+.packages = c("data.table", "Rmisc", "optparse", "dplyr")
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+# Load packages into session
+lapply(.packages, require, character.only=TRUE)
 ################################################################################################################
 ##### INPUT ####################################################################################################
+option_list = list(
+  make_option(c("-d", "--dir"), type="character", default=NULL,
+              help="DIRECTORY with input data", metavar="character"),
+  make_option(c("-z", "--zone"), type="character", default=NULL,
+              help="Name of the zone found in the input filenames [example: CZA_right]", metavar="character"),
+  make_option(c("-v", "--variant"), type="character", default=NULL,
+              help="VARIANT TYPE, either SNP or INDEL", metavar="character"),
+  make_option(c("-o", "--output"), type = "character", default = NULL,
+              help = "Output file", metavar = "character"))
 
-zone = "CZD_right"
+opt_parser = OptionParser(option_list=option_list,
+                          description = "Compute summary statistics on the cline analysis output keeping zones and variant types separated.",
+                          epilogue = "Example: Rscript scripts/czcli005_make_means_file_anja.R -d Anja/Anja_results/20200115/ -z CZA_right -v INDEL -o Anja/Anja_results/20200115/CZCLI005_CZA_right_means.txt")
+opt = parse_args(opt_parser)
 
+if (is.null(opt$dir) | is.null(opt$zone) | is.null(opt$variant) | is.null(opt$output)){
+  print_help(opt_parser)
+  stop("All the arguments must be supplied.\n", call.=FALSE)
+}
+
+setwd(opt$dir)
+# zone = "CZD_right"
+zone = opt$zone
 
 ################################################################################################################
 ##### INPUT & OVERVIEW #########################################################################################
@@ -17,8 +43,9 @@ results$Wave[results$Wave=="a2"] = 2
 results$Wave = as.numeric(results$Wave)
 
 # total number of SNPs:
-(pre_res = length(unique(results$cp)))
-head(results)
+pre_res = length(unique(results$cp))
+cat("Total number of variants:", pre_res, "\n")
+# head(results)
 
 
 ################################################################################################################
@@ -27,12 +54,16 @@ head(results)
 # keep only Cline and NC SNPs
 results = results[(results$Type %in% c("Dup>HWE", "SL", "C_Peak", "Stuck"))==F, ]
 
-dim(results)
-length(unique(results$cp))/pre_res # should be ~1/3rd of the previous
+# dim(results)
+cat("Number of variants after filtering:", length(unique(results$cp)),
+    "\nProportion is:", length(unique(results$cp))/pre_res, "and it should be ~1/3rd of the previous\n")
+# should be ~1/3rd of the previous
+# length(unique(results$cp))/pre_res
 
-vartype = "SNP"
+# vartype = "SNP"
+vartype = opt$variant
 id_csv = read.csv(file = paste0("CZCLI01_", substr(x = zone, start = 1, stop = 3), ".filt2.vcf.csv"))
-head(id_csv)
+# head(id_csv)
 colnames(id_csv) = c("Contig", "Position", "REF", "ALT")
 len_var = function(n_ref, n_alt, o_dt) {
   c_ref = as.character(n_ref)
@@ -48,19 +79,21 @@ len_var = function(n_ref, n_alt, o_dt) {
 # len_var(n_ref = "AC", n_alt = "CCAA")
 id_csv[, 'VTYPE'] = apply(X = id_csv[, c('REF', 'ALT')], MARGIN = 1,
                           FUN = function(x) len_var(n_ref = x[1], n_alt = x[2]))
-table(id_csv$VTYPE)
-head(results)
+# table(id_csv$VTYPE)
+# head(results)
 res_vtype = merge(x = id_csv, y = results, by = c('Contig', 'Position'))
-nrow(res_vtype)
-nrow(results)
-# table(res_vtype$Type)
+# nrow(res_vtype)
+# nrow(results)
+# table(res_vtype$VTYPE)
 # table(results$Type)
+cat("\nTotal number of variants by type:\n", table(res_vtype$VTYPE),
+    "\nDownstream analysis is going to be run on", vartype, "\n")
 
 results = res_vtype[res_vtype$VTYPE==vartype, ]
-table(results$VTYPE)
+# table(results$VTYPE)
 # make table which for each SNP says how many of the replicates are of each type
 tab = as.data.frame.matrix(table(results[, c("cp", "Type")]))
-head(tab)
+# head(tab)
 tab[tab$Cline >= 2, "cat"] = "Cline"
 tab[tab$Cline < 2, "cat"] = "NoCline"
 
@@ -137,7 +170,7 @@ use_names = c("cp","Contig","Position","Type","Wave","Centre_right","Width_right
 means = means[, use_names]
 names(means) = c("cp","Contig","Position","Type","Wave","Centre","Width","slope",
                  "p_crab","p_wave","p_diff","Var.Ex","Fst") 
-head(means)
+# head(means)
 
 ################################################################################################################
 ##### ADD OTHER INFO ###########################################################################################
@@ -145,7 +178,7 @@ head(means)
 # Add map data #################################################################################################
 # Get map
 mapdata = read.table("../../../data/map_v11.txt", header=T, stringsAsFactors = F)
-head(mapdata)
+# head(mapdata)
 mapdata$cp = paste(mapdata$contig, mapdata$pos, sep="_")
 
 # Assign SNPs not on map to closest map position, if within 1000bp
@@ -175,22 +208,22 @@ means$ref_p_crab[means$Wave==2&is.na(means$Wave)==F] = 1-means$p_crab[means$Wave
 
 
 # Add end frequencies based on raw genotypes ###################################################################
-W_file = list.files(pattern = paste("CZ000_", zone, "_W_endfreqs.txt", sep=""))
-W = read.table(W_file, header=T, stringsAsFactors=F)
-C_file = list.files(pattern = paste("CZ000_", zone, "_C_endfreqs.txt", sep=""))
-C = read.table(C_file, header=T, stringsAsFactors=F)
-
-zoneRaw = merge(W, C, by="cp")
-names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
-
-means = merge(means, zoneRaw[, c("cp", "allele1.W", "allele1.C")], by="cp", all.x=T, all.y=F)
-means$p_waveRaw = means$allele1.W
-means$p_crabRaw = means$allele1.C
-means$allele1.C = means$allele1.W = NULL
+# W_file = list.files(pattern = paste("CZ000_", zone, "_W_endfreqs.txt", sep=""))
+# W = read.table(W_file, header=T, stringsAsFactors=F)
+# C_file = list.files(pattern = paste("CZ000_", zone, "_C_endfreqs.txt", sep=""))
+# C = read.table(C_file, header=T, stringsAsFactors=F)
+# 
+# zoneRaw = merge(W, C, by="cp")
+# names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
+# 
+# means = merge(means, zoneRaw[, c("cp", "allele1.W", "allele1.C")], by="cp", all.x=T, all.y=F)
+# means$p_waveRaw = means$allele1.W
+# means$p_crabRaw = means$allele1.C
+# means$allele1.C = means$allele1.W = NULL
 
 
 # Add info about Rui's inversions ##############################################################################
-invRui = read.table("./data/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
+invRui = read.table("../../../data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
                     stringsAsFactors=F)
 invRui$LG = gsub("LG", "", invRui$LG)
 
@@ -227,8 +260,8 @@ means = means[is.na(means$Var.Ex)==T | means$Var.Ex>=0, ]
 means = means[is.na(means$p_diff)==T | means$p_diff>=0, ]
 
 
-plot(means$p_crabRaw, means$p_crab)
-plot(means$p_waveRaw, means$p_wave)
+# plot(means$p_crabRaw, means$p_crab)
+# plot(means$p_waveRaw, means$p_wave)
 
 
 
@@ -236,6 +269,8 @@ plot(means$p_waveRaw, means$p_wave)
 ##### OUTPUT ###################################################################################################
 
 # write out
-write.table(means, paste("CZCLI005_", zone, "_means.txt", sep=""),
+# write.table(means, paste("CZCLI005_", zone, "_means.txt", sep=""),
+#             append = F, quote=F, col.names=T, row.names=T)
+write.table(means, opt$output,
             append = F, quote=F, col.names=T, row.names=T)
-
+cat("MISSION COMPLETE!\nOutput file is:", opt$output, "\n")
