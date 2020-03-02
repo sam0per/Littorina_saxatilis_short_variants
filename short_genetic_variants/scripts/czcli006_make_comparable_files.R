@@ -1,5 +1,27 @@
 rm (list=ls())
-setwd("Anja/Anja_results/20200115/")
+setwd("/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115")
+
+.packages = c("optparse")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session
+lapply(.packages, require, character.only=TRUE)
+
+
+option_list = list(
+  make_option(c("-v", "--variant"), type="character", default=NULL,
+              help="snp or indel", metavar="character"))
+
+opt_parser = OptionParser(option_list=option_list)
+opt = parse_args(opt_parser)
+
+if (is.null(opt$variant)){
+  print_help(opt_parser)
+  stop("The type of the variant must be selected, choose between snp or indel.\n", call.=FALSE)
+}
 ################################################################################################################
 ##### INPUT ####################################################################################################
 # vartype = "snp"
@@ -66,7 +88,7 @@ liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_le
 
 for (zone in liste){
   dat = get(zone)
-  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
+  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, "_", vartype, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
 }
 
 
@@ -100,5 +122,5 @@ liste = c("ANG_rightNoInv", "CZA_leftNoInv", "CZA_rightNoInv", "CZB_leftNoInv", 
 
 for (zone in liste){
   dat = get(zone)
-  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
+  write.table(dat, paste("CZCLI006_comp/CZCLI006_", zone, "_", vartype, ".txt", sep=""), col.names=T, quote=F, row.names=F, append=F)
 }
