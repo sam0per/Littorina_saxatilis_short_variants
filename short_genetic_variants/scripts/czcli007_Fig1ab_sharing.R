@@ -2,7 +2,7 @@ rm (list=ls())
 source(file = "/Users/samuelperini/Documents/research/projects/3.indels/Littorina_saxatilis/short_genetic_variants/scripts/colour_text_hadley.R")
 setwd("/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/CZCLI006_comp/")
 
-.packages = c("optparse")
+.packages = c("optparse", "dplyr")
 
 # Install CRAN packages (if not already installed)
 .inst <- .packages %in% installed.packages()
@@ -79,54 +79,57 @@ cat(colourise("CZD left:", "light blue"), "\n")
 length(CZD_left$cp[CZD_left$Type=="Cline"]) / length(CZD_left$cp)
 cat(colourise("CZD right:", "light blue"), "\n")
 length(CZD_right$cp[CZD_right$Type=="Cline"]) / length(CZD_right$cp)
-
+cat("\n")
 
 
 ################################################################################################################
 ##### PROP OF OUTLIERS THAT ARE SHARED #########################################################################
 ################################################################################################################
-
+cat(colourise(paste("Proportions of", vartype, YNinv, "outliers that are shared.", sep = " "), "blue"), "\n")
+cat(colourise("CZA left and right:", "light blue"), "\n")
 length(CZA_left$cp[CZA_left$sel==T & CZA_right$sel==T]) / length(CZA_left$cp[CZA_left$sel==T])
+cat(colourise("CZB left and right:", "light blue"), "\n")
 length(CZB_left$cp[CZB_left$sel==T & CZB_right$sel==T]) / length(CZB_left$cp[CZB_left$sel==T])
+cat(colourise("CZD left and right:", "light blue"), "\n")
 length(CZD_left$cp[CZD_left$sel==T & CZD_right$sel==T]) / length(CZD_left$cp[CZD_left$sel==T])
 
-mean(c(
-  length(ANG_right$cp[ANG_right$sel==T & CZA_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
-  length(ANG_right$cp[ANG_right$sel==T & CZA_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
+# mean(c(
+#   length(ANG_right$cp[ANG_right$sel==T & CZA_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
+#   length(ANG_right$cp[ANG_right$sel==T & CZA_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
+# 
+# mean(c(
+#   length(ANG_right$cp[ANG_right$sel==T & CZB_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
+#   length(ANG_right$cp[ANG_right$sel==T & CZB_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
+# 
+# mean(c(
+#   length(ANG_right$cp[ANG_right$sel==T & CZD_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
+#   length(ANG_right$cp[ANG_right$sel==T & CZD_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
 
-mean(c(
-  length(ANG_right$cp[ANG_right$sel==T & CZB_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
-  length(ANG_right$cp[ANG_right$sel==T & CZB_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
-
-mean(c(
-  length(ANG_right$cp[ANG_right$sel==T & CZD_left$sel==T]) / length(ANG_right$cp[ANG_right$sel==T]),
-  length(ANG_right$cp[ANG_right$sel==T & CZD_right$sel==T]) / length(ANG_right$cp[ANG_right$sel==T])))
-
-
+cat(colourise("CZA and CZB:", "light blue"), "\n")
 mean(c(
   length(CZA_left$cp[CZA_left$sel==T & CZB_left$sel==T]) / length(CZA_left$cp[CZA_left$sel==T]),
   length(CZA_left$cp[CZA_left$sel==T & CZB_right$sel==T]) / length(CZA_left$cp[CZA_left$sel==T]),
   length(CZA_left$cp[CZA_right$sel==T & CZB_left$sel==T]) / length(CZA_right$cp[CZA_right$sel==T]),
   length(CZA_left$cp[CZA_right$sel==T & CZB_right$sel==T]) / length(CZA_right$cp[CZA_right$sel==T])))
-
+cat(colourise("CZA and CZD:", "light blue"), "\n")
 mean(c(
   length(CZA_left$cp[CZA_left$sel==T & CZD_left$sel==T]) / length(CZA_left$cp[CZA_left$sel==T]),
   length(CZA_left$cp[CZA_left$sel==T & CZD_right$sel==T]) / length(CZA_left$cp[CZA_left$sel==T]),
   length(CZA_left$cp[CZA_right$sel==T & CZD_left$sel==T]) / length(CZA_right$cp[CZA_right$sel==T]),
   length(CZA_left$cp[CZA_right$sel==T & CZD_right$sel==T]) / length(CZA_right$cp[CZA_right$sel==T])))
-
+cat(colourise("CZB and CZD:", "light blue"), "\n")
 mean(c(
   length(CZB_left$cp[CZB_left$sel==T & CZD_left$sel==T]) / length(CZB_left$cp[CZB_left$sel==T]),
   length(CZB_left$cp[CZB_left$sel==T & CZD_right$sel==T]) / length(CZB_left$cp[CZB_left$sel==T]),
   length(CZB_left$cp[CZB_right$sel==T & CZD_left$sel==T]) / length(CZB_right$cp[CZB_right$sel==T]),
   length(CZB_left$cp[CZB_right$sel==T & CZD_right$sel==T]) / length(CZB_right$cp[CZB_right$sel==T])))
-
+cat("\n")
 
 
 ################################################################################################################
 ##### SHARING WITH ANY ZONE ####################################################################################
 ################################################################################################################
-
+cat(colourise(paste("Proportions of", vartype, YNinv, "outliers that are shared with any zone.", sep = " "), "blue"), "\n")
 for (zone1 in liste){
   out = get(zone1)
   out = out$cp[out$sel==T]
@@ -139,7 +142,7 @@ for (zone1 in liste){
   }
   print(paste(zone1, length(out[out %in% out_others == F]) / length(out)))
 }
-
+cat("\n")
 
 
 ################################################################################################################
@@ -154,23 +157,42 @@ outliers$CZB_left = outliers$cp %in% CZB_left$cp[CZB_left$sel==T]
 outliers$CZB_right = outliers$cp %in% CZB_right$cp[CZB_right$sel==T]
 outliers$CZD_left = outliers$cp %in% CZD_left$cp[CZD_left$sel==T]
 outliers$CZD_right = outliers$cp %in% CZD_right$cp[CZD_right$sel==T]
+outliers$ANG_right = NULL
 
-outliers$all = rowSums(outliers[, 5:11]) == 7
-outliers$any = rowSums(outliers[, 5:11]) >= 1
-outliers$count = rowSums(outliers[, 5:11])
+outliers$all = rowSums(outliers[, 5:10]) == 6
+outliers$any = rowSums(outliers[, 5:10]) >= 1
+outliers$count = rowSums(outliers[, 5:10])
+# sample_n(outliers[outliers$count>1, ], 30)
 
-length(outliers$cp[outliers$count==1])
-length(outliers$cp[outliers$count==2])
-length(outliers$cp[outliers$count==3])
-length(outliers$cp[outliers$count==4])
-length(outliers$cp[outliers$count==5])
-length(outliers$cp[outliers$count==6])
-length(outliers$cp[outliers$count==7])
+invisible(lapply(1:6, function(x) {
+  len_out = length(outliers$cp[outliers$count==x])
+  cat(colourise(paste("Number of", vartype, YNinv, "outliers found in", x, "hybrid zone(s):", len_out, sep = " "),
+                "light blue"), "\n")
+}))
+# outliers[outliers$count==6, ]
+# length(outliers$cp[outliers$count==1])
+# length(outliers$cp[outliers$count==2])
+# length(outliers$cp[outliers$count==3])
+# length(outliers$cp[outliers$count==4])
+# length(outliers$cp[outliers$count==5])
+# length(outliers$cp[outliers$count==6])
+# length(outliers$cp[outliers$count==7])
+# 
+# outliers[outliers$count==1 & outliers$invRui!=F, ]
+cat("\n")
+invisible(lapply(1:6, function(x) {
+  prop_out = length(outliers$cp[outliers$count==x & outliers$invRui!=F]) / length(outliers$cp[outliers$count==x])
+  cat(colourise(paste("Proportion of", vartype, YNinv, "outliers in inversions found in", x, "hybrid zone(s):", prop_out, sep = " "),
+                "light blue"), "\n")
+}))
+# length(outliers$cp[outliers$count==1 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==1])
+# length(outliers$cp[outliers$count==2 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==2])
+# length(outliers$cp[outliers$count==3 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==3])
+# length(outliers$cp[outliers$count==4 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==4])
+# length(outliers$cp[outliers$count==5 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==5])
+# length(outliers$cp[outliers$count==6 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==6])
+# length(outliers$cp[outliers$count==7 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==7])
 
-length(outliers$cp[outliers$count==1 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==1])
-length(outliers$cp[outliers$count==2 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==2])
-length(outliers$cp[outliers$count==3 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==3])
-length(outliers$cp[outliers$count==4 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==4])
-length(outliers$cp[outliers$count==5 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==5])
-length(outliers$cp[outliers$count==6 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==6])
-length(outliers$cp[outliers$count==7 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==7])
+if (vartype == "indel") {
+  outliers[outliers$count==6, ]
+}
