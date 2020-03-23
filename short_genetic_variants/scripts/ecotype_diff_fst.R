@@ -48,15 +48,20 @@ pure_dt = invisible(lapply(1:nrow(hab_tra), function(x) {
   PC = hab_tra$Step[x] - opt$crab
   pr_scr = paste(hab_tra$Island[x], hab_tra$Side[x], "exclude samples from", PC, "m to", PW, "m")
   cat(colourise(pr_scr, "blue"), "\n")
-  out_idx = which(in_dat[[x]][, "DistAlongPath"] < PC | in_dat[[x]][, "DistAlongPath"] > PW)
-  out_dat = in_dat[[x]][out_idx, ]
+  out_idx_C = which(in_dat[[x]][, "DistAlongPath"] < PC)
+  out_idx_W = which(in_dat[[x]][, "DistAlongPath"] > PW)
+  out_dat = list(crab = in_dat[[x]][out_idx_C, ],
+                 wave = in_dat[[x]][out_idx_W, ])
   return(out_dat)
 }))
 # pure_dt
 cat(colourise(paste("Check out your output directory", opt$outputdir), "green"), "\n")
 invisible(lapply(1:nrow(hab_tra), function(x) {
-  write.table(x = pure_dt[[x]][, "snail_ID"], file = paste0(opt$outputdir, hab_tra$Island[x], "_", hab_tra$Side[x],
-                                                            "_pure_ecotypes.tsv"),
+  write.table(x = pure_dt[[x]]$crab[, "snail_ID"], file = paste0(opt$outputdir, hab_tra$Island[x], "_", hab_tra$Side[x],
+                                                                 "_pure_crab.tsv"),
+              sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+  write.table(x = pure_dt[[x]]$wave[, "snail_ID"], file = paste0(opt$outputdir, hab_tra$Island[x], "_", hab_tra$Side[x],
+                                                                 "_pure_wave.tsv"),
               sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
   # write.csv(x = pure_dt[[x]], file = paste0(opt$outputdir, hab_tra$Island[x], "_", hab_tra$Side[x],
   #                                           "_pure_ecotypes.csv"), row.names = FALSE)

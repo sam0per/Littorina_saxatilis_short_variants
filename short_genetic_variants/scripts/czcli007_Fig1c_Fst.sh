@@ -20,9 +20,11 @@ taskid=${SGE_TASK_ID}
 
 for site in CZA CZB CZD; do
   for side in left right; do
-    # make one file per location; keep only SNPs used in ANG analysis
-    vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_${side}_pure_ecotypes.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-${taskid}.recode.vcf \
-    --freq --out Anja/czcli007_Fig1c_Fst/allele_freq/CZCLI007_${site}_${side}_pure_ecotypes-${taskid}_allele
+    for type in crab wave; do
+      # make one file per location; keep only SNPs used in ANG analysis
+      vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_${side}_pure_${type}.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-${taskid}.recode.vcf \
+      --freq --out Anja/czcli007_Fig1c_Fst/allele_freq/CZCLI007_${site}_${side}_pure_${type}-${taskid}_allele
+    done
   done
 done
 
