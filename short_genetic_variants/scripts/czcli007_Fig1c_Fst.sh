@@ -21,8 +21,8 @@ taskid=${SGE_TASK_ID}
 for site in CZA CZB CZD;do
 
 # make one file per location; keep only SNPs used in ANG analysis
-vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_pure_ecotypes.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-$taskid.recode.vcf \
---freq --out Anja/czcli007_Fig1c_Fst/CZCLI007_${site}_pure_ecotypes_allele.freq
+vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_pure_ecotypes.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-${taskid}.recode.vcf \
+--freq --out Anja/czcli007_Fig1c_Fst/CZCLI007_${site}_pure_ecotypes_allele-${taskid}
 
 # minor allele freq filter, variant quality filter, keep biallelic SNPs only, remove SNPs where < 150 inds have data
 # vcftools --vcf Anja/czcli001_filter_vcf/CZCLI01_$site.filt1-$taskid.recode.vcf --maf 0.01 --minQ 20 \
