@@ -18,16 +18,12 @@ source activate short-variants
 
 taskid=${SGE_TASK_ID}
 
-for site in CZA CZB CZD;do
-
-# make one file per location; keep only SNPs used in ANG analysis
-vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_pure_ecotypes.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-${taskid}.recode.vcf \
---freq --out Anja/czcli007_Fig1c_Fst/allele_freq/CZCLI007_${site}_pure_ecotypes-${taskid}_allele
-
-# minor allele freq filter, variant quality filter, keep biallelic SNPs only, remove SNPs where < 150 inds have data
-# vcftools --vcf Anja/czcli001_filter_vcf/CZCLI01_$site.filt1-$taskid.recode.vcf --maf 0.01 --minQ 20 \
-# --min-alleles 2 --max-alleles 2 --max-missing-count 150 --recode --out Anja/czcli001_filter_vcf/CZCLI01_$site.filt2-$taskid
-
+for site in CZA CZB CZD; do
+  for side in left right; do
+    # make one file per location; keep only SNPs used in ANG analysis
+    vcftools --keep Anja/czcli007_Fig1c_Fst/${site}_${side}_pure_ecotypes.tsv --vcf Anja/czcli001_filter_vcf/CZCLI01_${site}.filt2-${taskid}.recode.vcf \
+    --freq --out Anja/czcli007_Fig1c_Fst/allele_freq/CZCLI007_${site}_${side}_pure_ecotypes-${taskid}_allele
+  done
 done
 
 source deactivate
