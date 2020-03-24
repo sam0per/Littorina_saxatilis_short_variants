@@ -30,7 +30,7 @@ if (is.null(opt$dir) | is.null(opt$zone) | is.null(opt$variant) | is.null(opt$ou
 
 # setwd("Anja/Anja_results/20200115/")
 setwd(opt$dir)
-# zone = "CZD_right"
+# zone = "CZA_right"
 zone = opt$zone
 
 ################################################################################################################
@@ -61,7 +61,7 @@ cat("Number of variants after filtering:", length(unique(results$cp)),
 # should be ~1/3rd of the previous
 # length(unique(results$cp))/pre_res
 
-# vartype = "SNP"
+# vartype = "INDEL"
 vartype = opt$variant
 id_csv = read.csv(file = paste0("CZCLI01_", substr(x = zone, start = 1, stop = 3), ".filt2.vcf.csv"))
 # head(id_csv)
