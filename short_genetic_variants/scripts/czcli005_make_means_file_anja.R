@@ -1,6 +1,6 @@
 rm(list=ls())
 # setwd("Anja/Anja_results/20200115/")
-.packages = c("data.table", "Rmisc", "optparse", "dplyr")
+.packages = c( "tidyr", "data.table", "optparse", "Rmisc", "dplyr")
 # Install CRAN packages (if not already installed)
 .inst <- .packages %in% installed.packages()
 if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
@@ -28,6 +28,7 @@ if (is.null(opt$dir) | is.null(opt$zone) | is.null(opt$variant) | is.null(opt$ou
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
+# setwd("Anja/Anja_results/20200115/")
 setwd(opt$dir)
 # zone = "CZD_right"
 zone = opt$zone
@@ -208,17 +209,27 @@ means$ref_p_crab[means$Wave==2&is.na(means$Wave)==F] = 1-means$p_crab[means$Wave
 
 
 # Add end frequencies based on raw genotypes ###################################################################
-# W_file = list.files(pattern = paste("CZ000_", zone, "_W_endfreqs.txt", sep=""))
-# W = read.table(W_file, header=T, stringsAsFactors=F)
-# C_file = list.files(pattern = paste("CZ000_", zone, "_C_endfreqs.txt", sep=""))
-# C = read.table(C_file, header=T, stringsAsFactors=F)
-# 
-# zoneRaw = merge(W, C, by="cp")
-# names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
-# 
-# means = merge(means, zoneRaw[, c("cp", "allele1.W", "allele1.C")], by="cp", all.x=T, all.y=F)
+W_file = list.files(path = "/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/czcli007_Fig1c_Fst/allele_freq/",
+                    pattern = paste(zone, "_pure_wave", sep=""), full.names = TRUE)
+W = read.table(W_file, header=TRUE, stringsAsFactors=FALSE, row.names = NULL, sep = "\t")
+colnames(W) = c(colnames(W)[c(-1, -6)], "allele1.W", "allele2.W")
+W = W %>% unite("cp", CHROM:POS, remove = TRUE) %>% select(cp, allele1.W, allele2.W)
+
+C_file = list.files(path = "/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/czcli007_Fig1c_Fst/allele_freq/",
+                    pattern = paste(zone, "_pure_crab", sep=""), full.names = TRUE)
+C = read.table(C_file, header=TRUE, stringsAsFactors=FALSE, sep = "\t", row.names = NULL)
+colnames(C) = c(colnames(C)[c(-1, -6)], "allele1.C", "allele2.C")
+C = C %>% unite("cp", CHROM:POS, remove = TRUE) %>% select(cp, allele1.C, allele2.C)
+
+zoneRaw = merge(W, C, by="cp")
+names(zoneRaw) = c("cp", "allele1.W", "allele2.W", "allele1.C", "allele2.C")
+
+means = merge(means, zoneRaw[, c("cp", "allele1.W", "allele1.C")], by="cp", all.x=T, all.y=F)
 # means$p_waveRaw = means$allele1.W
+# head(means)
+means = separate(data = means, col = allele1.W, into = c("GT1W", "p_waveRaw"), sep = ":")
 # means$p_crabRaw = means$allele1.C
+means = separate(data = means, col = allele1.C, into = c("GT1C", "p_crabRaw"), sep = ":")
 # means$allele1.C = means$allele1.W = NULL
 
 
@@ -259,7 +270,8 @@ means = means[is.na(means$Fst)==T | means$Fst<=1, ]
 means = means[is.na(means$Var.Ex)==T | means$Var.Ex>=0, ]
 means = means[is.na(means$p_diff)==T | means$p_diff>=0, ]
 
-
+# means[1:9, 1:9]
+# means[10:19, 10:19]
 # plot(means$p_crabRaw, means$p_crab)
 # plot(means$p_waveRaw, means$p_wave)
 
