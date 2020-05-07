@@ -7,7 +7,7 @@
 #$ -l h_rt=01:59:00
 # -P molecol
 # -q molecol.q
-#$ -tc 30
+# -tc 30
 #$ -cwd
 #$ -V
 
