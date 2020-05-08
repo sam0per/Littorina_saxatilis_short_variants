@@ -11,6 +11,7 @@ modules:
   fbayes: /fastdata/bo4spe/freebayes
   vcflib: /fastdata/bo4spe/vcflib/bin
   samb: /home/bo4spe/.conda/envs/short-variants/bin/sambamba
+  vcftools: vcftools
 
 rmdup: true
 

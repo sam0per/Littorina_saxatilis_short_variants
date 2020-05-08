@@ -38,16 +38,22 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
                 fsh.write("\n#$ -l h_rt={}".format(tm))
                 fsh.write("\n#$ -cwd")
                 fsh.write("\n#$ -V\n")
-                fsh.write("\nexport OMP_NUM_THREADS={}".format(pe))
-                fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
+                # fsh.write("\nexport OMP_NUM_THREADS={}".format(pe))
+                # fsh.write("\nexport TILEDB_DISABLE_FILE_LOCKING=1\n")
                 fsh.write("\nmodule load apps/java\n")
-                fsh.write("\n" + modu +
-                " --java-options '-Xmx4g -Xms4g' GenotypeGVCFs " +
-                "-R /data/bo4spe/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta " +
-                "-V gendb://gatkDBI/gatkDBI_{} ".format(line) +
-                "--intervals {} ".format(line) +
-                "--heterozygosity 0.005 " +
-                "-O genotyped/raw_short_var_{}".format(line.replace(":", "_")) + ".vcf.gz")
+                fsh.write("\nmodule load apps/python/conda\n")
+                fsh.write("\nmodule load apps/python/anaconda3-4.2.0\n")
+                fsh.write("\nsource activate short-variants\n")
+                fsh.write("\nfor site in CZA CZB CZD; do\n" + "  " + modu +
+                " --keep individuals_$site.txt --vcf genotyped/raw_short_var_{}".format(line.replace(":", "_")) + ".vcf.gz" +
+                " --recode --out filtered/CZCLI01_$site.filt1-{}".format(line.replace(":", "_")))
+                fsh.write("\ndone\n")
+                fsh.write("\nsource deactivate\n")
+                # "-R /data/bo4spe/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta " +
+                # "-V gendb://gatkDBI/gatkDBI_{} ".format(line) +
+                # "--intervals {} ".format(line) +
+                # "--heterozygosity 0.005 " +
+                # "-O genotyped/raw_short_var_{}".format(line.replace(":", "_")) + ".vcf.gz")
 
 # {params.gatk} --java-options '-Xmx28g -Xms28g' GenomicsDBImport --sample-name-map {input.gvcf} --genomicsdb-workspace-path {output} \
 # --intervals {wildcards.reg} --batch-size 60 --reader-threads 4
