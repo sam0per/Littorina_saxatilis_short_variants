@@ -45,7 +45,8 @@ def qsub_gen(infl, outsh, pe, mem, tm, modu):
                 fsh.write("\nmodule load apps/python/anaconda3-4.2.0\n")
                 fsh.write("\nsource activate short-variants\n")
                 fsh.write("\nfor site in CZA CZB CZD; do\n" + "  " + modu +
-                " --keep individuals_$site.txt --vcf genotyped/raw_short_var_{}".format(line.replace(":", "_")) + ".vcf.gz" +
+                " --keep /home/bo4spe/Littorina_saxatilis/short_genetic_variants/individuals_$site.txt"
+                " --vcf genotyped/raw_short_var_{}".format(line.replace(":", "_")) + ".vcf.gz" +
                 " --recode --out filtered/CZCLI01_$site.filt1-{}".format(line.replace(":", "_")))
                 fsh.write("\ndone\n")
                 fsh.write("\nsource deactivate\n")
