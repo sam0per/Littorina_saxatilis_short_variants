@@ -12,6 +12,11 @@ modules:
   vcflib: /fastdata/bo4spe/vcflib/bin
   samb: /home/bo4spe/.conda/envs/short-variants/bin/sambamba
   vcftools: vcftools
+  filters:
+    SNP:
+      "QD < 2.0 || QUAL < 30.0 || SOR > 3.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    INDEL:
+      "QD < 2.0 || QUAL < 30.0 || FS > 200.0 || ReadPosRankSum < -20.0"
 
 rmdup: true
 
@@ -27,10 +32,10 @@ filtering:
   hard:
     # hard filtering as outlined in GATK docs
     # (https://gatkforums.broadinstitute.org/gatk/discussion/2806/howto-apply-hard-filters-to-a-call-set)
-    snvs:
-      "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
-    indels:
-      "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0 || InbreedingCoeff < -0.8 || SOR > 10.0"
+    SNP:
+      "QD < 2.0 || QUAL < 30.0 || SOR > 3.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    INDEL:
+      "QD < 2.0 || QUAL < 30.0 || FS > 200.0 || ReadPosRankSum < -20.0"
 
 processing:
   remove-duplicates: false
