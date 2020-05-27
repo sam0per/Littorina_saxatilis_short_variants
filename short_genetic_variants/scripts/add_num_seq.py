@@ -20,7 +20,7 @@ import os
 
 def add_seq(idir, ipat, iseq):
     os.chdir(idir)
-    filelist=glob.glob(ipat + "*")
+    filelist=glob.glob(ipat)
     for oldname in filelist:
         # ignore directories
         if os.path.isfile(oldname):
