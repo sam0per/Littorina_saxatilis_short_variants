@@ -26,7 +26,7 @@ def add_seq(idir, ipat, iseq):
         if os.path.isfile(oldname):
             # keep original path
             # basepath=os.path.split(oldname)[0:3]
-            basepath=oldname.split("vcf")[0]
+            basepath=oldname.split("Contig")[0]
             # newname=os.path.join(basepath, "-{}.txt".format(str(iseq)))
             newname=basepath + "{}.vcf.gz".format(str(iseq))
             iseq=int(iseq)+1
