@@ -4,7 +4,7 @@
 #$ -l mem=6G
 #$ -l rmem=6G
 # run time for job in hours:mins:sec (max 168:0:0, jobs with h_rt < 8:0:0 have priority)
-#$ -l h_rt=07:59:00
+#$ -l h_rt=01:50:00
 # -P molecol
 # -q molecol.q
 #$ -t 1000-16828
