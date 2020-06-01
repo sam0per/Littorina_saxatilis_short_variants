@@ -199,7 +199,7 @@ out <- data.frame(Index=numeric(),Contig=character(),Position=numeric(),Type=cha
                   error_rate=numeric(),Cross_freq=numeric(),Var.Ex=numeric(),Var.Ex.Ex=numeric(),
                   Dev.Ex=numeric(),Dev.Ex.Fit=numeric(),Spline.Ex=numeric(),
                   AIC_NC=numeric(),AIC_linear=numeric(),AIC_S_Cline=numeric(),AIC_cline=numeric())
-write.table(out,paste("CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=T, append=F)
+write.table(out,paste("czcli003_clines/CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=T, append=F)
 
 # outci <- data.frame(Index=numeric(),Contig=character(),Position=numeric(),Type=character(),Wave=character(),
 #                     cl_lo=numeric(),cl_hi=numeric(),
@@ -279,7 +279,7 @@ for (i in 1:length(reads[,1])) {
                       error_rate=NA,Cross_freq=NA,Var.Ex=NA,Var.Ex.Ex=NA,
                       Dev.Ex=NA,Dev.Ex.Fit=NA,Spline.Ex=NA,
                       AIC_NC=NA,AIC_linear=NA,AIC_S_Cline=NA,AIC_cline=NA)
-    write.table(out,paste("CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
+    write.table(out,paste("czcli003_clines/CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
   }
 
 
@@ -466,7 +466,7 @@ for (i in 1:length(reads[,1])) {
                               error_rate=as.numeric(pars[5]),Cross_freq=NA,Var.Ex=R2,Var.Ex.Ex=R2_fit,
                               Dev.Ex=dev_ex,Dev.Ex.Fit=dev_ex_fit,Spline.Ex=spline.varex,
                               AIC_NC=AIC.nc,AIC_linear=AIC.linear,AIC_S_Cline=NA,AIC_cline=AIC.cline)
-            write.table(out,paste("CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
+            write.table(out,paste("czcli003_clines/CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
 
 
             # if (number1 == 1){ # changed from 1 to 2 to disable during trials
@@ -498,7 +498,7 @@ for (i in 1:length(reads[,1])) {
                           error_rate=as.numeric(pars.lin[3]),Cross_freq=NA,Var.Ex=NA,Var.Ex.Ex=NA,
                           Dev.Ex=NA,Dev.Ex.Fit=NA,Spline.Ex=NA,
                           AIC_NC=AIC.nc,AIC_linear=AIC.linear,AIC_S_Cline=NA,AIC_cline=AIC.cline)
-        write.table(out,paste("CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
+        write.table(out,paste("czcli003_clines/CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
         } # end of NC>0.1 output
 
 
@@ -514,7 +514,7 @@ for (i in 1:length(reads[,1])) {
                             error_rate=as.numeric(pars.lin[3]),Cross_freq=NA,Var.Ex=NA,Var.Ex.Ex=NA,
                             Dev.Ex=NA,Dev.Ex.Fit=NA,Spline.Ex=NA,
                             AIC_NC=AIC.nc,AIC_linear=AIC.linear,AIC_S_Cline=NA,AIC_cline=NA)
-          write.table(out,paste("CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
+          write.table(out,paste("czcli003_clines/CZCLI003_cline_", vtype, "_", zone, "_", taskid, ".txt", sep=""), quote=F, row.names=F, col.names=F, append=T)
         }
       } # end of NC output
 
