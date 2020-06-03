@@ -23,6 +23,6 @@ module add apps/R/3.5.1
 for site in CZA CZB CZD; do
   for zone in left right; do
     Rscript --vanilla /home/bo4spe/Littorina_saxatilis/short_genetic_variants/scripts/czcli003_clines_20190725.R \
-    czcli002_allele_count/CZCLI02_${site}_${vtype}-${taskid}.alleles ${site}_${zone} ${taskid} ${vtype}
+    czcli002_allele_count/CZCLI02_${site}_${vtype}-${taskid}.alleles ${site}_${zone} ${taskid} ${vtype} || continue
   done
 done
