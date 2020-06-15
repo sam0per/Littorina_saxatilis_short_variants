@@ -5,8 +5,10 @@ rm (list=ls())
 ################################################################################################################
 
 liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_left", "CZD_right")
-vtype <- "SNP"
-
+vtype <- "INDEL"
+fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
+fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
+head(fai)
 # Get inversion info
 invRui = read.table("./data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
                     stringsAsFactors=F)
@@ -49,6 +51,18 @@ head(outliers)
 
 outliers$all = rowSums(outliers[, 6:11]) == 6
 outliers$any = rowSums(outliers[, 6:11]) >= 1
+
+###################################################################################
+##### MARKER DENSITIES ############################################################
+###################################################################################
+library(tidyr)
+outliers <- separate(data = outliers, col = cp, into = c("chr", "pos"), sep = "_")
+head(outliers)
+colnames(fai) <- c("chr", "len")
+head(fai)
+outliers <- merge(outliers, fai, by = "chr")
+length(unique(outliers$chr))
+table(outliers[outliers$any==TRUE, "LG"])
 
 
 
