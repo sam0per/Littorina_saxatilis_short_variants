@@ -5,20 +5,21 @@ rm (list=ls())
 ################################################################################################################
 
 liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_left", "CZD_right")
+vtype <- "SNP"
 
 # Get inversion info
-invRui = read.table("./data/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
+invRui = read.table("./data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
                     stringsAsFactors=F)
 invRui$LG = gsub("LG", "", invRui$LG)
 
 # Get cline fits
-ANG_right = read.table("CZCLI006_ANG_right.txt", header=T, stringsAsFactors=F)
-CZA_left = read.table("CZCLI006_CZA_left.txt", header=T, stringsAsFactors=F)
-CZA_right = read.table("CZCLI006_CZA_right.txt", header=T, stringsAsFactors=F)
-CZB_left = read.table("CZCLI006_CZB_left.txt", header=T, stringsAsFactors=F)
-CZB_right = read.table("CZCLI006_CZB_right.txt", header=T, stringsAsFactors=F)
-CZD_left = read.table("CZCLI006_CZD_left.txt", header=T, stringsAsFactors=F)
-CZD_right = read.table("CZCLI006_CZD_right.txt", header=T, stringsAsFactors=F)
+ANG_right = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZA_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZA_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
+CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
 
 # Or cline fits without inversions
 ANG_right = read.table("CZCLI006_ANG_rightNoInv.txt", header=T, stringsAsFactors=F)
@@ -44,8 +45,10 @@ outliers$CZB_right = outliers$cp %in% CZB_right$cp[CZB_right$sel==T]
 outliers$CZD_left = outliers$cp %in% CZD_left$cp[CZD_left$sel==T]
 outliers$CZD_right = outliers$cp %in% CZD_right$cp[CZD_right$sel==T]
 
-outliers$all = rowSums(outliers[, 5:11]) == 7
-outliers$any = rowSums(outliers[, 5:11]) >= 1
+head(outliers)
+
+outliers$all = rowSums(outliers[, 6:11]) == 6
+outliers$any = rowSums(outliers[, 6:11]) >= 1
 
 
 
@@ -123,7 +126,7 @@ for(LG in sort(outl_LGs)){
   focal = focal[order(focal$av), ]
   
   # Get highest map position for this LG
-  max_av = read.table("CZCLI006_ANG_right.txt", header=T, stringsAsFactors=F)
+  max_av = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
   max_av = max(max_av[max_av$LG==LG, "av"], na.rm=T)
   
   # Plot box for this LG

@@ -1,6 +1,6 @@
 rm (list=ls())
 source(file = "/Users/samuelperini/Documents/research/projects/3.indels/Littorina_saxatilis/short_genetic_variants/scripts/colour_text_hadley.R")
-setwd("/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/CZCLI006_comp/")
+# setwd("/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/")
 
 .packages = c("optparse", "dplyr")
 
@@ -14,7 +14,7 @@ lapply(.packages, require, character.only=TRUE)
 
 option_list = list(
   make_option(c("-v", "--variant"), type="character", default=NULL,
-              help="snp or indel", metavar="character"),
+              help="SNP or INDEL", metavar="character"),
   make_option(c("-i", "--inversion"), type="logical", default=FALSE,
               help="TRUE or FALSE [default: %default]", metavar="logical"))
 
@@ -23,7 +23,7 @@ opt = parse_args(opt_parser)
 
 if (is.null(opt$variant)){
   print_help(opt_parser)
-  stop("The type of the variant must be selected, choose between snp or indel.\n", call.=FALSE)
+  stop("The type of the variant must be selected, choose between SNP or INDEL.\n", call.=FALSE)
 }
 
 ################################################################################################################
@@ -31,7 +31,7 @@ if (is.null(opt$variant)){
 ################################################################################################################
 # setwd("Anja/Anja_results/20200115/CZCLI006_comp/")
 liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_left", "CZD_right")
-# vartype = "snp"
+# vartype = "SNP"
 vartype = opt$variant
 # YNinv = "NoInv"
 if (opt$inversion) {
@@ -41,13 +41,14 @@ if (opt$inversion) {
 }
 
 # Get cline fits
-ANG_right = read.table(paste0("CZCLI006_ANG_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZA_left = read.table(paste0("CZCLI006_CZA_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZA_right = read.table(paste0("CZCLI006_CZA_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZB_left = read.table(paste0("CZCLI006_CZB_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZB_right = read.table(paste0("CZCLI006_CZB_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZD_left = read.table(paste0("CZCLI006_CZD_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZD_right = read.table(paste0("CZCLI006_CZD_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+# ANG_right = CZA_right
+ANG_right = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZA_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZA_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
 
 
 
@@ -129,6 +130,8 @@ cat("\n")
 ################################################################################################################
 ##### SHARING WITH ANY ZONE ####################################################################################
 ################################################################################################################
+???????
+# zone1 <- "CZA_left"
 cat(colourise(paste("Proportions of", vartype, YNinv, "outliers that are shared with any zone.", sep = " "), "blue"), "\n")
 for (zone1 in liste){
   out = get(zone1)
@@ -193,6 +196,6 @@ invisible(lapply(1:6, function(x) {
 # length(outliers$cp[outliers$count==6 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==6])
 # length(outliers$cp[outliers$count==7 & outliers$invRui!=F]) / length(outliers$cp[outliers$count==7])
 
-if (vartype == "indel") {
-  outliers[outliers$count==6, ]
-}
+# if (vartype == "indel") {
+#   outliers[outliers$count==6, ]
+# }
