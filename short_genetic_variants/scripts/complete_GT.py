@@ -13,11 +13,11 @@
 from timeit import default_timer as timer
 from docopt import docopt
 import pandas as pd
-import ntpath
+# import ntpath
 
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
+# def path_leaf(path):
+#     head, tail = ntpath.split(path)
+#     return tail or ntpath.basename(head)
 
 def fill_gt(infl, ref, fill):
     iref = pd.read_table(ref, header=None)
@@ -29,7 +29,7 @@ def fill_gt(infl, ref, fill):
         for i in miss_cols:
             df[''.join(i)] = fill
         df = df.reindex(sorted(df.columns), axis=1)
-    df.to_csv(path_leaf(infl) + ".completed", sep='\t')
+    df.to_csv(infl + ".completed", sep='\t')
 
 
 if __name__ == "__main__":
