@@ -1,5 +1,7 @@
-rm (list=ls())
-
+# rm (list=ls())
+setwd("Anja/Anja_results/20200115/")
+setwd("../../../")
+getwd()
 ################################################################################################################
 ##### INPUT ####################################################################################################
 ################################################################################################################
@@ -8,10 +10,10 @@ liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_le
 vtype <- "INDEL"
 fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
 fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
-head(fai)
+# head(fai)
 # Get inversion info
-invRui = read.table("./data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=T,
-                    stringsAsFactors=F)
+invRui = read.table("/Users/samuelperini/Documents/research/projects/3.indels/data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv",
+                    sep=",", header=T, stringsAsFactors=F)
 invRui$LG = gsub("LG", "", invRui$LG)
 
 # Get cline fits
@@ -22,6 +24,8 @@ CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left_", vtype, ".txt"),
 CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+table(ANG_right$Type)
+table(CZB_right$Type)
 
 # Or cline fits without inversions
 ANG_right = read.table("CZCLI006_ANG_rightNoInv.txt", header=T, stringsAsFactors=F)
@@ -52,10 +56,13 @@ head(outliers)
 outliers$all = rowSums(outliers[, 6:11]) == 6
 outliers$any = rowSums(outliers[, 6:11]) >= 1
 
+table(outliers$all)
+outliers[outliers$all==TRUE, ]
 ###################################################################################
 ##### MARKER DENSITIES ############################################################
 ###################################################################################
 library(tidyr)
+library(ggplot2)
 outliers <- separate(data = outliers, col = cp, into = c("chr", "pos"), sep = "_")
 head(outliers)
 colnames(fai) <- c("chr", "len")
@@ -63,6 +70,60 @@ head(fai)
 outliers <- merge(outliers, fai, by = "chr")
 length(unique(outliers$chr))
 table(outliers[outliers$any==TRUE, "LG"])
+
+contig_count <- aggregate(x = outliers$len, by = list(outliers$chr), function(x) c(count = length(x), len = unique(x)))
+head(contig_count)
+# m_count$nN <- round(m_count$x[, 1] / nrow(outliers), 3)
+m_count <- data.frame(chr = contig_count$Group.1, contig_count$x, nN = round(contig_count$x[, 1] / nrow(outliers), 3))
+# m_count$density <- round(m_count$nN * m_count$x[, 2], 3)
+head(m_count)
+tail(m_count)
+
+(p_nN <- ggplot(data = m_count, aes(x = len, y = nN)) +
+    geom_point(alpha = 0.6, size = 3) +
+    labs(x = "contig length", y = paste(vtype, "n / N")) +
+    theme(axis.title = element_text(size = 15),
+          axis.text = element_text(size = 10)))
+m_count[order(m_count$nN, decreasing = TRUE), ][1:10,]
+ggsave(filename = paste0("figures/prop_nN_all_", vtype, ".pdf"), plot = p_nN)
+
+(p_count <- ggplot(data = m_count, aes(x = len, y = count)) +
+    geom_point(alpha = 0.6, size = 3) +
+    labs(x = "contig length", y = paste(vtype, "count")) +
+    theme(axis.title = element_text(size = 15),
+          axis.text = element_text(size = 10)))
+m_count[order(m_count$count, decreasing = TRUE), ][1:10,]
+ggsave(filename = paste0("figures/count_all_", vtype, ".pdf"), plot = p_count)
+
+assign(paste(vtype, "nN", sep="_"), m_count)
+# rm(list = setdiff(ls(), c(paste(vtype, "nN", sep="_"), "SNP_nN", "INDEL_nN")))
+# rm(list = setdiff(ls(), "INDEL_nN"))
+
+shared_chr <- data.frame(chr = intersect(SNP_nN$chr, INDEL_nN$chr))
+head(shared_chr)
+shared <- merge(shared_chr, INDEL_nN, by = "chr")
+head(shared)
+shared <- merge(shared, SNP_nN, by = "chr")
+shared$sum <- shared$count.x + shared$count.y
+
+(p2_nN <- ggplot(data = shared, aes(x = nN.x, y = nN.y, col = len.x)) +
+    geom_abline(slope = 1) +
+    # facet_wrap(~shared) +
+    geom_point(aes(size = sum)) +
+    labs(x = "INDEL n / N", y = "SNP n / N", col = "contig length") +
+    theme(axis.title = element_text(size = 15),
+          axis.text = element_text(size = 10)))
+ggsave(filename = paste0("figures/prop_nN_all_INDEL_SNP.pdf"), plot = p2_nN)
+
+(p2_count <- ggplot(data = shared, aes(x = count.x, y = count.y, col = len.x)) +
+    geom_abline(slope = 1) +
+    # facet_wrap(~shared) +
+    geom_point(aes(size = sum)) +
+    labs(x = "INDEL count", y = "SNP count", col = "contig length") +
+    theme(axis.title = element_text(size = 15),
+          axis.text = element_text(size = 10)))
+ggsave(filename = paste0("figures/count_all_INDEL_SNP.pdf"), plot = p2_count)
+
 
 
 
