@@ -238,10 +238,11 @@ lapply(X = c("INDEL", "SNP"), FUN = function(x) {
   ggsave(filename = paste0("figures/maf_hist_prop_cline_", x, ".pdf"), plot = hist_one, width = 10, height = 5)
 })
 
-cline_type <- "Cline"
-isla <- "CZB"
-side <- "right"
+# cline_type <- "Cline"
+# isla <- "CZB"
+# side <- "right"
 split_vtype <- split(comp_freq[comp_freq$Type==cline_type, ], f = as.factor(comp_freq[comp_freq$Type==cline_type, "VTYPE"]))
+split_vtype <- split(comp_freq, f = as.factor(comp_freq[, "VTYPE"]))
 lapply(split_vtype, head)
 split_vtype <- lapply(split_vtype, function(x) {
   x[, "MAF"] <- round(x[, "MAF"], 2)
@@ -253,11 +254,11 @@ range(split_vtype$SNP$MAF)
 grid_dt <- expand.grid(INDEL = seq(from = min(split_vtype$INDEL$MAF), to = max(split_vtype$INDEL$MAF), by = 0.05),
                        SNP = seq(from = min(split_vtype$SNP$MAF), to = max(split_vtype$SNP$MAF), by = 0.05))
 head(grid_dt)
-sum(split_vtype$INDEL$MAF==grid_dt[1,1])/nrow(split_vtype$INDEL) +
-  sum(split_vtype$SNP$MAF==grid_dt[1,2])/nrow(split_vtype$SNP)
-sum(split_vtype$INDEL$MAF==grid_dt[4,1])/nrow(split_vtype$INDEL) +
-  sum(split_vtype$SNP$MAF==grid_dt[4,2])/nrow(split_vtype$SNP)
-sum(split_vtype$INDEL$MAF==grid_dt[2,1], split_vtype$SNP$MAF==grid_dt[2,2])
+# sum(split_vtype$INDEL$MAF==grid_dt[1,1])/nrow(split_vtype$INDEL) +
+#   sum(split_vtype$SNP$MAF==grid_dt[1,2])/nrow(split_vtype$SNP)
+# sum(split_vtype$INDEL$MAF==grid_dt[4,1])/nrow(split_vtype$INDEL) +
+#   sum(split_vtype$SNP$MAF==grid_dt[4,2])/nrow(split_vtype$SNP)
+# sum(split_vtype$INDEL$MAF==grid_dt[2,1], split_vtype$SNP$MAF==grid_dt[2,2])
 
 grid_dt$count <- apply(X = grid_dt, MARGIN = 1, FUN = function(x) {
   sum(split_vtype$INDEL$MAF==x[1])/nrow(split_vtype$INDEL) + sum(split_vtype$SNP$MAF==x[2])/nrow(split_vtype$SNP)
@@ -267,9 +268,9 @@ grid_dt[1:15,]
 grid_dt$INDEL <- as.factor(grid_dt$INDEL)
 grid_dt$SNP <- as.factor(grid_dt$SNP)
 
-ggp <- ggplot(grid_dt, aes(INDEL, SNP)) +
-  geom_tile(aes(fill = count))
-ggp
+# ggp <- ggplot(grid_dt, aes(INDEL, SNP)) +
+#   geom_tile(aes(fill = count))
+# ggp
 
 # wide_dt <- reshape(grid_dt, idvar = "INDEL", timevar = "SNP", direction = "wide")
 wide_dt <- reshape2::dcast(grid_dt, SNP ~ INDEL)
@@ -277,6 +278,7 @@ head(wide_dt)
 # install.packages('textshape')
 library(textshape)
 wide_dt <- as.matrix(column_to_rownames(wide_dt, 'SNP'))
+wide_dt <- round(wide_dt, 2)
 # rownames(wide_dt) <- paste0('row', 1:nrow(wide_dt))
 # colnames(wide_dt) <- paste0('col', 1:ncol(wide_dt))
 plot_ly(x = rownames(wide_dt), y = colnames(wide_dt), z = wide_dt, colors = "Greys", type = "heatmap") %>%
