@@ -45,10 +45,10 @@ str(frqs_dt)
 # display.brewer.all(colorblindFriendly = TRUE)
 # display.brewer.pal(n = 8, name = 'Dark2')
 # brewer.pal(n = 8, name = 'Dark2')
-display.brewer.pal(n = 9, name = 'Greys')
-brewer.pal(n = 9, name = 'Greys')
-display.brewer.pal(n = 9, name = 'Greens')
-brewer.pal(n = 9, name = 'Greens')
+# display.brewer.pal(n = 9, name = 'Greys')
+# brewer.pal(n = 9, name = 'Greys')
+# display.brewer.pal(n = 9, name = 'Greens')
+# brewer.pal(n = 9, name = 'Greens')
 
 vtype_pal <- data.frame(INDEL="#1B9E77", SNP="#666666")
 
@@ -239,16 +239,60 @@ lapply(X = c("INDEL", "SNP"), FUN = function(x) {
 })
 
 cline_type <- "Cline"
+isla <- "CZB"
+side <- "right"
 split_vtype <- split(comp_freq[comp_freq$Type==cline_type, ], f = as.factor(comp_freq[comp_freq$Type==cline_type, "VTYPE"]))
 lapply(split_vtype, head)
 split_vtype <- lapply(split_vtype, function(x) {
   x[, "MAF"] <- round(x[, "MAF"], 2)
+  # x <- x[x[, "ISL"]==isla & x[, "SIDE"]==side, ]
   return(x)
 })
-split_vtype$INDEL$MAF[split_vtype$INDEL$MAF==0.15]
-split_vtype$SNP$MAF[split_vtype$SNP$MAF==0.15]
-table(split_vtype$INDEL$MAF)
-table(split_vtype$SNP$MAF)
+range(split_vtype$INDEL$MAF)
+range(split_vtype$SNP$MAF)
+grid_dt <- expand.grid(INDEL = seq(from = min(split_vtype$INDEL$MAF), to = max(split_vtype$INDEL$MAF), by = 0.05),
+                       SNP = seq(from = min(split_vtype$SNP$MAF), to = max(split_vtype$SNP$MAF), by = 0.05))
+head(grid_dt)
+sum(split_vtype$INDEL$MAF==grid_dt[1,1])/nrow(split_vtype$INDEL) +
+  sum(split_vtype$SNP$MAF==grid_dt[1,2])/nrow(split_vtype$SNP)
+sum(split_vtype$INDEL$MAF==grid_dt[4,1])/nrow(split_vtype$INDEL) +
+  sum(split_vtype$SNP$MAF==grid_dt[4,2])/nrow(split_vtype$SNP)
+sum(split_vtype$INDEL$MAF==grid_dt[2,1], split_vtype$SNP$MAF==grid_dt[2,2])
+
+grid_dt$count <- apply(X = grid_dt, MARGIN = 1, FUN = function(x) {
+  sum(split_vtype$INDEL$MAF==x[1])/nrow(split_vtype$INDEL) + sum(split_vtype$SNP$MAF==x[2])/nrow(split_vtype$SNP)
+})
+head(grid_dt)
+grid_dt[1:15,]
+grid_dt$INDEL <- as.factor(grid_dt$INDEL)
+grid_dt$SNP <- as.factor(grid_dt$SNP)
+
+ggp <- ggplot(grid_dt, aes(INDEL, SNP)) +
+  geom_tile(aes(fill = count))
+ggp
+
+# wide_dt <- reshape(grid_dt, idvar = "INDEL", timevar = "SNP", direction = "wide")
+wide_dt <- reshape2::dcast(grid_dt, SNP ~ INDEL)
+head(wide_dt)
+# install.packages('textshape')
+library(textshape)
+wide_dt <- as.matrix(column_to_rownames(wide_dt, 'SNP'))
+# rownames(wide_dt) <- paste0('row', 1:nrow(wide_dt))
+# colnames(wide_dt) <- paste0('col', 1:ncol(wide_dt))
+plot_ly(x = rownames(wide_dt), y = colnames(wide_dt), z = wide_dt, colors = "Greys", type = "heatmap") %>%
+  add_segments(x = 0.1, y = 0.1, xend = 0.5, yend = 0.5) %>%
+  layout(xaxis = list(title = "INDEL MAF"),
+         yaxis = list(title = "SNP MAF"))
+
+write.table(x = wide_dt, file = 'results/joint_mafs_CZs.txt', append = FALSE, quote = FALSE, sep = '\t', row.names = TRUE,
+            col.names = TRUE)
+# class(wide_dt)
+# wide_dt <- as.matrix(wide_dt)
+
+# split_vtype$INDEL$MAF[split_vtype$INDEL$MAF==0.15]
+# split_vtype$SNP$MAF[split_vtype$SNP$MAF==0.15]
+# table(split_vtype$INDEL$MAF)
+# table(split_vtype$SNP$MAF)
 # re_freq <- data.frame()
 
 head(comp_freq)
@@ -266,6 +310,9 @@ prop_vtype <- lapply(X = c("INDEL", "SNP"), FUN = function(x) {
   # table(one_vtype$bins)
   # nrow(one_vtype)
 })
+sum(prop_vtype[[1]]$x)
+sum(prop_vtype[[2]]$x)
+
 prop_maf <- data.frame(INDEL_PROP = prop_vtype[[1]]$x, SNP_PROP = prop_vtype[[2]]$x)
 
 ggplot(data = prop_maf, aes(x = INDEL_PROP, y = SNP_PROP)) +

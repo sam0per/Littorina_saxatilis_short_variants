@@ -1,0 +1,17 @@
+---
+title: "Joint minor allele frequency spectrum"
+output: html_notebook
+---
+
+All six hybrid zones are combined and minor allele frequencies of both INDELs and SNPs were calculated from the GATK call. Separately for INDELs and SNPs, variants with a difference in minor allele frequency that was less than 0.05 were grouped together and their proportion was calculated relative to the total number of INDELs or SNPs, respectively. Then, each frequency group of one variant type was paired with a frequency group of the other variant type and the sum of their proportions was taken. By doing so, we obtained the proportions of INDELs and SNPs for a given pair of allele frequency values. To give an example, the proportion of INDELs at frequency 0.25 and SNPs at frequency 0.1 was 0.04 because 154 out of 4741 (proportion = 0.03) were INDELs at frequency between 0.25 and 0.3 while 212 out of 29969 (proportion = 0.01) were SNPs at frequency between 0.1 and 0.15. The AFS is not exactly symmetrical with a small tendency of higher proportions (i.e., more grey/dark) to fall above the 1:1 line than below. The values above the 1:1 line represent combinations of SNPs and INDELs where the former have higher minor allele frequency than the latter. The opposite is true for the values below the 1:1 line.
+
+```{r, fig.height=5, fig.width=7, message=FALSE, warning=FALSE}
+library(plotly)
+wide_dt <- read.table(file = '../../../results/joint_mafs_CZs.txt', header = TRUE, sep = '\t', row.names = 1)
+colnames(wide_dt) <- rownames(wide_dt)
+plot_ly(x = rownames(wide_dt), y = colnames(wide_dt), z = as.matrix(wide_dt), colors = "Greys", type = "heatmap") %>%
+  add_segments(x = 0.1, y = 0.1, xend = 0.5, yend = 0.5) %>%
+  layout(xaxis = list(title = "INDEL MAF"),
+         yaxis = list(title = "SNP MAF"))
+```
+
