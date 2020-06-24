@@ -17,15 +17,15 @@ invRui = read.table("/Users/samuelperini/Documents/research/projects/3.indels/da
 invRui$LG = gsub("LG", "", invRui$LG)
 
 # Get cline fits
-ANG_right = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+ANG_right = read.table(paste0("CZCLI006_comp/ANG/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZA_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZA_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left_", vtype, ".txt"), header=T, stringsAsFactors=F)
 CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
-table(ANG_right$Type)
-table(CZB_right$Type)
+# table(ANG_right$Type)
+# table(CZB_right$Type)
 
 # Or cline fits without inversions
 ANG_right = read.table("CZCLI006_ANG_rightNoInv.txt", header=T, stringsAsFactors=F)
@@ -121,7 +121,7 @@ outliers_cM[,liste] = outliers_cM[,liste]/outliers_cM$n
 outliers_cM10 = outliers_cM[outliers_cM$n>=10, ]
 
 
-pdf(file = "CZCLI007_Fig2_along_genome.pdf", width = 10, height = 10)
+pdf(file = paste0("CZCLI007_Fig2_along_genome_", vtype, ".pdf"), width = 10, height = 10)
 par(mar=c(3.1,3.5,1.1,0.1), mfrow=c(4,5), oma=c(1,3.5,1,1)) # plotting parameters
 
 # All LGs with any outliers
@@ -133,7 +133,7 @@ for(LG in sort(outl_LGs)){
   focal = focal[order(focal$av), ]
   
   # Get highest map position for this LG
-  max_av = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
+  max_av = read.table(paste0("CZCLI006_comp/ANG/CZCLI006_ANG_right_", vtype, ".txt"), header=T, stringsAsFactors=F)
   max_av = max(max_av[max_av$LG==LG, "av"], na.rm=T)
   
   # Plot box for this LG
