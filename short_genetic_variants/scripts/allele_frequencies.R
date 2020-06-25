@@ -1,20 +1,29 @@
 rm(list = ls())
-library(tidyr)
-library(dplyr)
-library(tools)
-library(data.table)
-library(ggplot2)
-library(RColorBrewer)
-# islands <- c("CZA", "CZB", "CZD")
-# vtype <- c("INDEL", "SNP")
+
+.packagesdev = "thomasp85/patchwork"
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape")
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("snpStats")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+.instdev <- basename(.packagesdev) %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.instdev])
+# Load packages into session
+lapply(.packages, require, character.only=TRUE)
+lapply(basename(.packagesdev), require, character.only=TRUE)
 
 ## AFTER FILTERING
 
 # DERIVED ALLELE FREQUENCY
 
-# gen_fl <- list.files(path = "genotypes", full.names = TRUE)
-# genos <- lapply(gen_fl, read.table, header = TRUE)
-# lapply(genos, head)
+(gen_fl <- list.files(path = "genotypes", full.names = TRUE))
+genos <- lapply(gen_fl, read.table, row.names = NULL)
+
+lapply(genos, head)
+lapply(genos, colnames)
+lapply(genos, nrow)
 
 # MINOR ALLELE FREQUENCY
 
@@ -34,6 +43,7 @@ frqs_dt <- as.data.frame(rbindlist(lapply(seq_along(frq_fl), function(x) {
   one_frq <- data.frame(ISL = island, VTYPE = vtype, MAF = maf,
                         cp = paste(one_frq[, "CHROM"], one_frq[, "POS"], sep = "_"))
   one_frq <- mutate(one_frq, ISL = as.character(ISL), VTYPE = as.character(VTYPE), cp = as.character(cp))
+  one_frq <- separate(data = one_frq, col = cp, into = c("Contig", "Position"), sep = "_", remove = FALSE)
   return(one_frq)
   
   # hist(maf, breaks = 20, main = paste(vtype, "maf"))
@@ -42,15 +52,139 @@ frqs_dt <- as.data.frame(rbindlist(lapply(seq_along(frq_fl), function(x) {
 })))
 head(frqs_dt)
 str(frqs_dt)
+
+fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
+fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
+# head(fai)
+colnames(fai) <- c("Contig", "Length")
+fai$Contig <- as.character(fai$Contig)
+
+# comp_fai <- merge(comp_freq, fai, by = "Contig")
+frqs_fai <- as.data.frame(merge(frqs_dt, fai, by = "Contig"))
+head(frqs_fai)
+frqs_fai <- frqs_fai[!is.na(frqs_fai$MAF), ]
+frqs_fai$frq_bin <- cut(x = frqs_fai$MAF, breaks = seq(from = 0, to = max(frqs_fai$MAF), by = 0.05),
+                        include.lowest = TRUE)
+
+contig_bin <- merge(expand.grid(VTYPE = unique(frqs_fai$VTYPE),
+                                Contig = unique(frqs_fai$Contig),
+                                FREQ = levels(frqs_fai$frq_bin)),
+                    aggregate(x = frqs_fai$MAF, list(VTYPE=frqs_fai$VTYPE,
+                                                     Contig=frqs_fai$Contig,
+                                                     FREQ=frqs_fai$frq_bin),
+                              function(x) c(Count = as.integer(length(x)), Mean_frq = round(mean(x), 3))), all.x = TRUE)
+contig_bin[1:20,]
+# contig_bin[contig_bin$Contig=="Contig0", ]
+# frqs_fai[frqs_fai$Contig=="Contig0", ]
+contig_bin <- data.frame(contig_bin[, 1:3], 
+                         apply(X = contig_bin$x, MARGIN = 2, FUN = function(x) ifelse(test = is.na(x), yes = 0, no = x)))
+contig_bin <- merge(x = contig_bin, y = fai, by = "Contig")
+# contig_bin$Count_Len <- round(contig_bin$Count/contig_bin$Length, 5)
+
+contig_bin$Proportion <- NA
+table(frqs_dt$VTYPE)
+contig_bin[contig_bin$VTYPE=="INDEL", "Proportion"] <- round(contig_bin[contig_bin$VTYPE=="INDEL", "Count"]/
+                                                               table(frqs_dt$VTYPE)["INDEL"], 5)
+contig_bin[contig_bin$VTYPE=="SNP", "Proportion"] <- round(contig_bin[contig_bin$VTYPE=="SNP", "Count"]/
+                                                             table(frqs_dt$VTYPE)["SNP"], 5)
+contig_bin[1:30,]
+contig_bin <- contig_bin[order(contig_bin$FREQ), ]
+# order(levels(contig_bin$FREQ))
+# contig_bin[which.max(contig_bin$Count_Tot), ]
+
+ggplot(contig_bin, aes(x = Length, y = Proportion, col = VTYPE)) +
+  facet_wrap(~FREQ) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  scale_color_manual(values = c("#666666", "#1B9E77")) +
+  labs(x = "contig length", y = "variant proportion", col = "") +
+  theme(axis.text.x = element_text(angle = 320, hjust = 0))
+
+freq_split <- split(contig_bin, f = contig_bin$VTYPE)
+identical(freq_split$SNP$Contig,freq_split$INDEL$Contig)
+identical(freq_split$SNP$FREQ,freq_split$INDEL$FREQ)
+identical(freq_split$SNP$Length,freq_split$INDEL$Length)
+lapply(freq_split, head)
+
+freq_wide <- data.frame(FREQ=as.character(contig_bin[contig_bin$VTYPE=="INDEL", "FREQ"]),
+                        INDEL=contig_bin[contig_bin$VTYPE=="INDEL", "Proportion"],
+                        SNP=contig_bin[contig_bin$VTYPE=="SNP", "Proportion"])
+
+freq_wide <- data.frame(freq_split$SNP[, c("Contig", "Length", "FREQ")],
+                        INDEL=freq_split$INDEL$Proportion,
+                        INDEL_COUNT=freq_split$INDEL$Count,
+                        SNP=freq_split$SNP$Proportion,
+                        SNP_COUNT=freq_split$SNP$Count)
+
+freq_wide[1:20,]
+
+str(freq_wide)
+# order(levels(freq_wide$FREQ))
+freq_wide$FREQ <- relevel(freq_wide$FREQ, "[0,0.05]")
+
+freq_wide$Len_bin <- cut(freq_wide$Length,
+                         breaks = as.integer(seq(from = 0, to = 500000, length.out = 10)),
+                         include.lowest = TRUE)
+table(freq_wide$Len_bin)
+
+len_pal <- colorRampPalette(c("grey", "black"))
+
+ggplot(freq_wide, aes(x = INDEL, y = SNP, col = Len_bin)) +
+  facet_wrap(~FREQ) +
+  geom_point() +
+  geom_abline(slope = 1, linetype = "dashed") +
+  
+  # geom_smooth(method='lm') +
+  scale_color_manual(values = len_pal(10)) +
+  # labs(x = "contig length", y = "variant proportion", col = "") +
+  theme(axis.text.x = element_text(angle = 320, hjust = 0))
+
+freq_wide[freq_wide$FREQ=="(0.1,0.15]", ][which.max(freq_wide[freq_wide$FREQ=="(0.1,0.15]", "INDEL"]), ]
+contig_bin[contig_bin$Proportion==0.00053,]
+
+contig_bin[which.max(contig_bin$Proportion), ]
+contig_bin[which.max(contig_bin$Length), ]
+contig_bin[contig_bin$Length==237503, ]
+# ggplot(contig_bin, aes(x = Length, y = Count_Tot, fill = VTYPE)) +
+#   facet_wrap(~FREQ) +
+#   geom_bar(stat = "identity", position = "dodge")
+
+# contig_bin$Count_Tot <- contig_bin$Count_Tot/100
+# summary(lm(formula = Count_Tot~Length, data = contig_bin[contig_bin$VTYPE=="SNP" & contig_bin$FREQ=="[0,0.05]", ]))
+
+# with(data = contig_bin, plot(x = Length, Mean_frq))
+
+freq_bin <- merge(expand.grid(VTYPE = levels(contig_bin$VTYPE),
+                              FREQ = levels(contig_bin$FREQ)),
+                    aggregate(x = contig_bin$Count_Len, list(VTYPE=contig_bin$VTYPE,
+                                                             FREQ=contig_bin$FREQ), sum), all.x = TRUE)
+freq_bin
+levels(freq_bin$FREQ)
+sort(levels(freq_bin$FREQ))
+freq_bin$SORT <- rep(order(levels(freq_bin$FREQ)), 2)
+freq_bin <- freq_bin[order(freq_bin$SORT), ]
+
+freq_wide <- rbind(INDEL=freq_bin[freq_bin$VTYPE=="INDEL", "x"],
+                   SNP=freq_bin[freq_bin$VTYPE=="SNP", "x"])
+freq_wide <- cbind(INDEL=freq_bin[freq_bin$VTYPE=="INDEL", "x"],
+                   SNP=freq_bin[freq_bin$VTYPE=="SNP", "x"])
+cor(freq_wide)
+
+vtype_pal <- data.frame(INDEL="#1B9E77", SNP="#666666")
+
+ggplot(data = freq_bin, aes(x = FREQ, y = x, fill = VTYPE)) +
+  geom_histogram(stat = "identity", position = "dodge", col = "black") +
+  scale_fill_manual(values = levels(unlist(vtype_pal)))
+
 # display.brewer.all(colorblindFriendly = TRUE)
 # display.brewer.pal(n = 8, name = 'Dark2')
-# brewer.pal(n = 8, name = 'Dark2')
+# brewer.pal(n = 11, name = 'YlOrRd')
 # display.brewer.pal(n = 9, name = 'Greys')
 # brewer.pal(n = 9, name = 'Greys')
 # display.brewer.pal(n = 9, name = 'Greens')
 # brewer.pal(n = 9, name = 'Greens')
 
-vtype_pal <- data.frame(INDEL="#1B9E77", SNP="#666666")
+
 
 lapply(X = c("INDEL", "SNP"), FUN = function(y) {
   hist_p <- ggplot(data = frqs_dt[frqs_dt$VTYPE==y, ], aes(x = MAF)) +
