@@ -25,6 +25,19 @@ lapply(genos, head)
 lapply(genos, colnames)
 lapply(genos, nrow)
 
+col_out <- c("row.names", "CHROM", "POS")
+
+# tt <- genos[[1]][1:10, 1:10]
+# str(tt)
+# length(levels(tt[,3]))
+# dim(tt[,!colnames(tt) %in% col_out])
+# rowSums(apply(X = rbindlist(sapply(X = tt[,!colnames(tt) %in% col_out], FUN = levels)), MARGIN = 1, FUN = duplicated))
+# 
+# as.factor(tt[1,!colnames(tt) %in% col_out])
+# gsub(pattern = levels(tt[,3])[3], replacement = NA, x = tt[1,!colnames(tt) %in% col_out])
+# levels(tt[,3])[as.integer(tt[,3])]
+
+
 # MINOR ALLELE FREQUENCY
 
 getwd()
@@ -123,7 +136,6 @@ freq_wide$Len_bin <- cut(freq_wide$Length,
                          include.lowest = TRUE, labels = FALSE)
 freq_wide$Len_bin <- factor(freq_wide$Len_bin, levels = as.character(1:10))
 table(freq_wide$Len_bin)
-order(levels(freq_wide$Len_bin))
 
 write.csv(x = freq_wide, file = "results/variant_prop_freq_bin.csv", row.names = FALSE)
 

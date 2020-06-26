@@ -37,7 +37,7 @@ plot_ly(x = rownames(wide_dt), y = colnames(wide_dt), z = as.matrix(wide_dt), co
 
 \
 
-There is another way to compare INDELs and SNPs frequency spectra and that is to look at the relationship between proportions of SNPs and proportions of INDELs per allele frequency bin. INDEL and SNP proportions were also calculated by contig, separately.
+There is another way to compare INDELs and SNPs frequency spectra and that is to look at the relationship between proportions of SNPs and proportions of INDELs per allele frequency bin. INDEL and SNP proportions were also calculated by contig, separately. Each facet is a minor allele frequency bin and the dots are coloured coded by contig length, 1 being from 0 to 50000 base pairs and 10 being from 450000 to 500000 bp.
 
 \
 
