@@ -1,17 +1,71 @@
 ---
 title: "Joint minor allele frequency spectrum"
 output: html_notebook
+editor_options: 
+  chunk_output_type: inline
 ---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+rm(list = ls())
+
+.packagesdev = "thomasp85/patchwork"
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly", "devtools")
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("snpStats")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+.instdev <- basename(.packagesdev) %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.instdev])
+# Load packages into session
+lapply(.packages, require, character.only=TRUE)
+lapply(basename(.packagesdev), require, character.only=TRUE)
+```
+
 
 All six hybrid zones are combined and minor allele frequencies of both INDELs and SNPs were calculated from the GATK call. Separately for INDELs and SNPs, variants with a difference in minor allele frequency that was less than 0.05 were grouped together and their proportion was calculated relative to the total number of INDELs or SNPs, respectively. Then, each frequency group of one variant type was paired with a frequency group of the other variant type and the sum of their proportions was taken. By doing so, we obtained the proportions of INDELs and SNPs for a given pair of allele frequency values. To give an example, the proportion of INDELs at frequency 0.25 and SNPs at frequency 0.1 was 0.04 because 154 out of 4741 (proportion = 0.03) were INDELs at frequency between 0.25 and 0.3 while 212 out of 29969 (proportion = 0.01) were SNPs at frequency between 0.1 and 0.15. The AFS is not exactly symmetrical with a small tendency of higher proportions (i.e., more grey/dark) to fall above the 1:1 line than below. The values above the 1:1 line represent combinations of SNPs and INDELs where the former have higher minor allele frequency than the latter. The opposite is true for the values below the 1:1 line.
 
 ```{r, fig.height=5, fig.width=7, message=FALSE, warning=FALSE}
-library(plotly)
 wide_dt <- read.table(file = '../../../results/joint_mafs_CZs.txt', header = TRUE, sep = '\t', row.names = 1)
 colnames(wide_dt) <- rownames(wide_dt)
 plot_ly(x = rownames(wide_dt), y = colnames(wide_dt), z = as.matrix(wide_dt), colors = "Greys", type = "heatmap") %>%
   add_segments(x = 0.1, y = 0.1, xend = 0.5, yend = 0.5) %>%
   layout(xaxis = list(title = "INDEL MAF"),
          yaxis = list(title = "SNP MAF"))
+```
+
+\
+
+There is another way to compare INDELs and SNPs frequency spectra and that is to look at the relationship between proportions of SNPs and proportions of INDELs per allele frequency bin. INDEL and SNP proportions were also calculated by contig, separately.
+
+\
+
+```{r, fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
+len_pal <- colorRampPalette(c("grey", "black"))
+
+freq_wide <- read.csv(file = "../../../results/variant_prop_freq_bin.csv")
+freq_wide$FREQ <- relevel(freq_wide$FREQ, "[0,0.05]")
+freq_wide$Len_bin <- factor(freq_wide$Len_bin, levels = as.character(1:10))
+
+maf_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP, col = Len_bin)) +
+  facet_wrap(~FREQ) +
+  geom_point() +
+  geom_abline(slope = 1, linetype = "dashed") +
+  # geom_smooth(method='lm') +
+  scale_color_manual(values = len_pal(10)) +
+  labs(x = "INDEL proportion", y = "SNP proportion", col = "") +
+  theme(axis.text.x = element_text(angle = 320, hjust = 0, size = 10),
+        axis.title = element_text(size = 14),
+        strip.text = element_text(size = 10),
+        legend.position = "top",
+        panel.background = element_blank(),
+        strip.background = element_rect(fill = "#91bfdb", color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2))
+
+ggplotly(maf_prop)
 ```
 

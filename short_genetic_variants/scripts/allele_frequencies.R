@@ -1,7 +1,7 @@
 rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
-.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape")
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly", "devtools")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -106,10 +106,6 @@ identical(freq_split$SNP$FREQ,freq_split$INDEL$FREQ)
 identical(freq_split$SNP$Length,freq_split$INDEL$Length)
 lapply(freq_split, head)
 
-freq_wide <- data.frame(FREQ=as.character(contig_bin[contig_bin$VTYPE=="INDEL", "FREQ"]),
-                        INDEL=contig_bin[contig_bin$VTYPE=="INDEL", "Proportion"],
-                        SNP=contig_bin[contig_bin$VTYPE=="SNP", "Proportion"])
-
 freq_wide <- data.frame(freq_split$SNP[, c("Contig", "Length", "FREQ")],
                         INDEL=freq_split$INDEL$Proportion,
                         INDEL_COUNT=freq_split$INDEL$Count,
@@ -123,21 +119,35 @@ str(freq_wide)
 freq_wide$FREQ <- relevel(freq_wide$FREQ, "[0,0.05]")
 
 freq_wide$Len_bin <- cut(freq_wide$Length,
-                         breaks = as.integer(seq(from = 0, to = 500000, length.out = 10)),
-                         include.lowest = TRUE)
+                         breaks = as.integer(seq(from = 0, to = 500000, length.out = 11)),
+                         include.lowest = TRUE, labels = FALSE)
+freq_wide$Len_bin <- factor(freq_wide$Len_bin, levels = as.character(1:10))
 table(freq_wide$Len_bin)
+order(levels(freq_wide$Len_bin))
+
+write.csv(x = freq_wide, file = "results/variant_prop_freq_bin.csv", row.names = FALSE)
 
 len_pal <- colorRampPalette(c("grey", "black"))
 
-ggplot(freq_wide, aes(x = INDEL, y = SNP, col = Len_bin)) +
+maf_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP, col = Len_bin)) +
   facet_wrap(~FREQ) +
   geom_point() +
   geom_abline(slope = 1, linetype = "dashed") +
-  
   # geom_smooth(method='lm') +
   scale_color_manual(values = len_pal(10)) +
-  # labs(x = "contig length", y = "variant proportion", col = "") +
-  theme(axis.text.x = element_text(angle = 320, hjust = 0))
+  labs(x = "INDEL proportion", y = "SNP proportion", col = "") +
+  theme(axis.text.x = element_text(angle = 320, hjust = 0, size = 12),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 12),
+        legend.position = "top",
+        panel.background = element_blank(),
+        strip.background = element_rect(fill = "#91bfdb", color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2))
+maf_prop
+ggplotly(maf_prop)
 
 freq_wide[freq_wide$FREQ=="(0.1,0.15]", ][which.max(freq_wide[freq_wide$FREQ=="(0.1,0.15]", "INDEL"]), ]
 contig_bin[contig_bin$Proportion==0.00053,]
