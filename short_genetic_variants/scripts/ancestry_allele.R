@@ -1,11 +1,11 @@
 rm(list=ls())
 # setwd("Anja/Anja_results/20200115/")
-.packages = c("mgsub", "tools", "tidyr", "data.table", "optparse", "dplyr")
+packs = c("mgsub", "tools", "data.table", "optparse", "dplyr")
 # Install CRAN packages (if not already installed)
-.inst <- .packages %in% installed.packages()
-if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+# .inst <- .packages %in% installed.packages()
+# if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 # Load packages into session
-lapply(.packages, require, character.only=TRUE)
+lapply(packs, require, character.only=TRUE)
 ################################################################################################################
 ##### INPUT ####################################################################################################
 option_list = list(
@@ -37,7 +37,7 @@ vartype = opt$variant
 # indv <- read.csv("geno_matrix/CZCLI01_CZA_INDEL.filt2.012.id")
 indv <- read.csv(opt$indv)
 
-gt_fl <- list.files(path = idir, pattern = file_ext(list.files(path = idir)[1]), full.names = TRUE)
+gt_fl <- list.files(path = idir, pattern = paste0(zone, '_', vartype, '.*.complete'), full.names = TRUE)
 cat('\nSome of the files that will be analysed:\n')
 head(gt_fl)
 
