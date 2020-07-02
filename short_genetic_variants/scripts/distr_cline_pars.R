@@ -1,3 +1,20 @@
+rm(list = ls())
+
+.packagesdev = "thomasp85/patchwork"
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly",
+              "devtools", "limma")
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("snpStats")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+.instdev <- basename(.packagesdev) %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.instdev])
+# Load packages into session
+lapply(.packages, require, character.only=TRUE)
+lapply(basename(.packagesdev), require, character.only=TRUE)
+
 ################################################################################################################
 ##### INPUT ####################################################################################################
 ################################################################################################################
@@ -98,22 +115,27 @@ cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP)) +
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
 
-len_pal <- colorRampPalette(c("red", "green", "blue", "orange"))
+len_pal <- colorRampPalette(c("blueviolet", "seagreen1", "black", "red"))
+# len_pal <- wes_palette(name = "Zissou1", n = nrow(freq_wide), type = "continuous")
 # length(levels(freq_wide$CLIPAR))
 
 cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP, col = CLIPAR)) +
   geom_point(size = 3) +
   geom_abline(slope = 1, linetype = "dashed") +
   scale_color_manual(values = len_pal(nrow(freq_wide))) +
+  # scale_color_manual(values = topo.colors(n = nrow(freq_wide))) +
+  # scale_color_viridis_d() +
+  # scale_color_manual(values = wes_palette(name = "Zissou1", n = nrow(freq_wide), type = "continuous")) +
   labs(x = paste0("Cline ", cpar, " INDEL proportion"), y = paste0("Cline ", cpar, " SNP proportion"), col = "") +
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 16),
-        legend.position = "top", legend.text = element_text(size = 8),
+        legend.text = element_text(size = 12),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
-  guides(colour = guide_legend(nrow = 3))
+  guides(colour = guide_legend(ncol = 2))
 
 cpar_prop
+ggsave(filename = paste0("figures/SNP_INDEL_prop_cline_", cpar, ".pdf"), plot = cpar_prop, width = 10, height = 7)
