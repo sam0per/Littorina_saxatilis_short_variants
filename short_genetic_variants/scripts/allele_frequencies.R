@@ -1,7 +1,8 @@
 rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
-.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly", "devtools")
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly",
+              "devtools", "limma")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -18,25 +19,122 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 
 # DERIVED ALLELE FREQUENCY
 
-(gen_fl <- list.files(path = "genotypes", full.names = TRUE))
-genos <- lapply(gen_fl, read.table, row.names = NULL)
+(anc_fl <- list.files(path = "allele_freq", pattern = "ANC", full.names = TRUE))
+ancs <- as.data.frame(rbindlist(lapply(anc_fl, read.csv)))
+head(ancs)
+ancs$NE_F1_141_Lc <- ifelse(test = ancs$NE_F1_141_Lc=="-het", yes = NA, no = as.character(ancs$NE_F1_141_Lc))
+ancs$W_com_01_Lc <- ifelse(test = ancs$W_com_01_Lc=="-het", yes = NA, no = as.character(ancs$W_com_01_Lc))
 
-lapply(genos, head)
-lapply(genos, colnames)
-lapply(genos, nrow)
+(frq_fl <- list.files(path = "allele_freq", pattern = ".frq", full.names = TRUE))
+frqs <- lapply(frq_fl, read.table, header = TRUE)
+lapply(frqs, head)
 
-col_out <- c("row.names", "CHROM", "POS")
+frqs_dt <- as.data.frame(rbindlist(lapply(seq_along(frq_fl), function(x) {
+  island <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][2]
+  vtype <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][3]
+  
+  one_frq <- separate(frqs[[x]], col = REF_FREQ, into = c("REF", "RFREQ"), sep = ":")
+  one_frq <- separate(one_frq, col = ALT_FREQ, into = c("ALT", "AFREQ"), sep = ":")
+  
+  # one_frq <- data.frame(ISL = island, VTYPE = vtype, MAF = maf,
+  #                       cp = paste(one_frq[, "CHROM"], one_frq[, "POS"], sep = "_"))
+  one_frq <- mutate(one_frq, ZONE = as.character(island), VTYPE = as.character(vtype),
+                    cp = paste(one_frq[, "CHROM"], one_frq[, "POS"], sep = "_"))
+  # one_frq <- separate(data = one_frq, col = cp, into = c("Contig", "Position"), sep = "_", remove = FALSE)
+  return(one_frq)
+})))
+head(frqs_dt)
 
-# tt <- genos[[1]][1:10, 1:10]
-# str(tt)
-# length(levels(tt[,3]))
-# dim(tt[,!colnames(tt) %in% col_out])
-# rowSums(apply(X = rbindlist(sapply(X = tt[,!colnames(tt) %in% col_out], FUN = levels)), MARGIN = 1, FUN = duplicated))
-# 
-# as.factor(tt[1,!colnames(tt) %in% col_out])
-# gsub(pattern = levels(tt[,3])[3], replacement = NA, x = tt[1,!colnames(tt) %in% col_out])
-# levels(tt[,3])[as.integer(tt[,3])]
+franc_dt <- merge(x = ancs, y = frqs_dt, by = c("cp", "ZONE", "VTYPE"))
+franc_dt <- franc_dt[rowSums(apply(X = franc_dt[, c("NE_F1_141_Lc", "W_com_01_Lc")], MARGIN = 2,
+                                   FUN = function(x) is.na(x))) != 2, ]
 
+head(franc_dt)
+
+rm(list = setdiff(x = ls(), y = "franc_dt"))
+
+table(franc_dt$NE_F1_141_Lc)
+
+len_pal <- colorRampPalette("Green")
+
+getVenn <- function(dt, grp1, grp2, vtype, cpal) {
+  set1 <- as.character(dt[dt$NE_F1_141_Lc==grp1 & dt$VTYPE==vtype, "cp"])
+  set2 <- as.character(dt[dt$W_com_01_Lc==grp2 & dt$VTYPE==vtype, "cp"])
+  universe <- sort(unique(c(set1, set2)))
+  Counts <- matrix(0, nrow=length(universe), ncol=2)
+  for (i in 1:length(universe)) {
+    Counts[i,1] <- universe[i] %in% set1
+    Counts[i,2] <- universe[i] %in% set2
+  }
+  colnames(Counts) <- c(paste(vtype, grp1, "NE", sep = "_"), paste(vtype, grp2, "W", sep = "_"))
+  
+  # Specify the colors for the sets
+  # cols <- c("Red", "Green")
+  cols <- brewer.pal(n = 9, name = cpal)[c(4,7)]
+  
+  if (grp1!=grp2) {
+    pdf(file = paste("figures/Venn", vtype, grp1, "NE", grp2, "W", "Lcomp.pdf", sep = "_"), width = 10)
+    vennDiagram(vennCounts(Counts), circle.col=cols,  cex=c(1,2,1))
+    dev.off()
+  } else {
+    pdf(file = paste("figures/Venn", vtype, grp1, "Lcomp.pdf", sep = "_"), width = 10)
+    vennDiagram(vennCounts(Counts), circle.col=cols,  cex=c(1,2,1))
+    dev.off()
+  }
+}
+getVenn(dt = franc_dt, grp1 = "ref_anc", grp2 = "ref_anc", vtype = "INDEL", cpal = "Greens")
+getVenn(dt = franc_dt, grp1 = "ref_anc", grp2 = "alt_anc", vtype = "INDEL", cpal = "Greens")
+getVenn(dt = franc_dt, grp1 = "alt_anc", grp2 = "ref_anc", vtype = "INDEL", cpal = "Greens")
+getVenn(dt = franc_dt, grp1 = "alt_anc", grp2 = "alt_anc", vtype = "INDEL", cpal = "Greens")
+getVenn(dt = franc_dt, grp = "het", vtype = "INDEL", cpal = "Greens")
+
+getVenn(dt = franc_dt, grp = "ref_anc", vtype = "SNP", cpal = "Greys")
+getVenn(dt = franc_dt, grp = "alt_anc", vtype = "SNP", cpal = "Greys")
+getVenn(dt = franc_dt, grp = "het", vtype = "SNP", cpal = "Greys")
+
+head(franc_dt)
+
+outg <- which(colnames(franc_dt) %in% c("NE_F1_141_Lc", "W_com_01_Lc"))
+# combn(x = unique(franc_dt[, outg[1]]), m = 2)[,4]
+franc_dt$NE_W_Lcomp <- paste(franc_dt$NE_F1_141_Lc, franc_dt$W_com_01_Lc, sep = ":")
+anc_tb <- data.frame(table(franc_dt$VTYPE, franc_dt$NE_W_Lcomp))
+anc_tb <- separate(data = anc_tb, col = Var2, into = c("NE", "W"), sep = ":")
+anc_tb <- split(x = anc_tb, f = anc_tb$Var1)
+# View(anc_tb$INDEL)
+# View(anc_tb$SNP)
+
+franc_dt <- franc_dt[franc_dt$NE_W_Lcomp!="alt_anc:ref_anc" & franc_dt$NE_W_Lcomp!="ref_anc:alt_anc" &
+                       franc_dt$NE_W_Lcomp!="het:het" & franc_dt$NE_W_Lcomp!="het:NA" &
+                       franc_dt$NE_W_Lcomp!="NA:het", ]
+data.frame(table(franc_dt$NE_W_Lcomp))
+franc_dt$DAF <- NA
+franc_dt$DAF <- ifelse(test = grepl(pattern = "alt", x = franc_dt$NE_W_Lcomp), yes = franc_dt$RFREQ, no = franc_dt$AFREQ)
+sample_n(tbl = franc_dt, size = 30)
+
+franc_dt$DAF <- as.numeric(franc_dt$DAF)
+
+vtype_pal <- data.frame(INDEL="#1B9E77", SNP="#666666")
+lapply(X = c("INDEL", "SNP"), FUN = function(y) {
+  hist_p <- ggplot(data = franc_dt[franc_dt$VTYPE==y, ], aes(x = DAF)) +
+    facet_grid(rows = vars(VTYPE)) +
+    geom_vline(xintercept = 0.1, col = "#D95F02", linetype = "dashed", size = 1.5) +
+    geom_histogram(aes(y = ..count../sum(..count..), fill = VTYPE), position = "dodge", binwidth = 0.01, col = "black") +
+    scale_fill_manual(values = as.character(vtype_pal[, y])) +
+    labs(fill = "") +
+    scale_y_continuous(limits = c(0, 0.13)) +
+    theme(legend.position = "top", legend.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          axis.text = element_text(size = 11),
+          panel.background = element_blank(),
+          strip.background = element_rect(fill = "#91bfdb", color = "black"),
+          strip.text = element_text(size = 11),
+          panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+          axis.line = element_line(size = 0.2, linetype = "solid",
+                                   colour = "black"),
+          panel.grid = element_line(colour = "gray70", size = 0.2))
+  ggsave(filename = paste0("figures/daf_hist_prop_filt2_", y, ".pdf"), plot = hist_p, width = 10, height = 5)
+})
+# franc_dt[franc_dt$DAF>0.75,]
 
 # MINOR ALLELE FREQUENCY
 
@@ -63,6 +161,15 @@ frqs_dt <- as.data.frame(rbindlist(lapply(seq_along(frq_fl), function(x) {
   # abline(v = 0.1, col = "red")
   # hist(maf[maf>0.1], breaks = 20, main = paste(vtype, "maf"))
 })))
+
+if (exists("franc_dt")) {
+  frqs_dt <- franc_dt
+  names(frqs_dt)[names(frqs_dt) == 'CHROM'] <- 'Contig'
+  names(frqs_dt)[names(frqs_dt) == 'POS'] <- 'Position'
+  frqs_dt$MAF <- frqs_dt$DAF
+  frqs_dt$cp <- as.character(frqs_dt$cp)
+  frqs_dt$Contig <- as.character(frqs_dt$Contig)
+}
 head(frqs_dt)
 str(frqs_dt)
 
@@ -76,9 +183,9 @@ fai$Contig <- as.character(fai$Contig)
 frqs_fai <- as.data.frame(merge(frqs_dt, fai, by = "Contig"))
 head(frqs_fai)
 frqs_fai <- frqs_fai[!is.na(frqs_fai$MAF), ]
-frqs_fai$frq_bin <- cut(x = frqs_fai$MAF, breaks = seq(from = 0, to = max(frqs_fai$MAF), by = 0.05),
+frqs_fai$frq_bin <- cut(x = frqs_fai$MAF, breaks = seq(from = 0, to = round(max(frqs_fai$MAF)), by = 0.05),
                         include.lowest = TRUE)
-
+table(frqs_fai$frq_bin)
 contig_bin <- merge(expand.grid(VTYPE = unique(frqs_fai$VTYPE),
                                 Contig = unique(frqs_fai$Contig),
                                 FREQ = levels(frqs_fai$frq_bin)),
@@ -105,13 +212,13 @@ contig_bin <- contig_bin[order(contig_bin$FREQ), ]
 # order(levels(contig_bin$FREQ))
 # contig_bin[which.max(contig_bin$Count_Tot), ]
 
-ggplot(contig_bin, aes(x = Length, y = Proportion, col = VTYPE)) +
-  facet_wrap(~FREQ) +
-  geom_point() +
-  geom_smooth(method='lm') +
-  scale_color_manual(values = c("#666666", "#1B9E77")) +
-  labs(x = "contig length", y = "variant proportion", col = "") +
-  theme(axis.text.x = element_text(angle = 320, hjust = 0))
+# ggplot(contig_bin, aes(x = Length, y = Proportion, col = VTYPE)) +
+#   facet_wrap(~FREQ) +
+#   geom_point() +
+#   geom_smooth(method='lm') +
+#   scale_color_manual(values = c("#666666", "#1B9E77")) +
+#   labs(x = "contig length", y = "variant proportion", col = "") +
+#   theme(axis.text.x = element_text(angle = 320, hjust = 0))
 
 freq_split <- split(contig_bin, f = contig_bin$VTYPE)
 identical(freq_split$SNP$Contig,freq_split$INDEL$Contig)
@@ -137,7 +244,12 @@ freq_wide$Len_bin <- cut(freq_wide$Length,
 freq_wide$Len_bin <- factor(freq_wide$Len_bin, levels = as.character(1:10))
 table(freq_wide$Len_bin)
 
-write.csv(x = freq_wide, file = "results/variant_prop_freq_bin.csv", row.names = FALSE)
+
+if (exists("franc_dt")) {
+  write.csv(x = freq_wide, file = "results/variant_prop_DAF_bin.csv", row.names = FALSE)
+} else {
+  write.csv(x = freq_wide, file = "results/variant_prop_MAF_bin.csv", row.names = FALSE)
+}
 
 len_pal <- colorRampPalette(c("grey", "black"))
 
@@ -159,6 +271,13 @@ maf_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP, col = Len_bin)) +
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
 maf_prop
+
+if (exists("franc_dt")) {
+  ggsave(filename = "figures/daf_snp_vs_indel_prop.pdf", plot = maf_prop, width = 10, height = 8, dpi = "print")
+} else {
+  ggsave(filename = "figures/maf_snp_vs_indel_prop.pdf", plot = maf_prop, width = 10, height = 8, dpi = "print")
+}
+franc_dt[franc_dt$DAF>0.95,]
 ggplotly(maf_prop)
 
 freq_wide[freq_wide$FREQ=="(0.1,0.15]", ][which.max(freq_wide[freq_wide$FREQ=="(0.1,0.15]", "INDEL"]), ]
