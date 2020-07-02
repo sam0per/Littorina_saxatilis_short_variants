@@ -30,7 +30,7 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 (cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE))
 (cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
 cl_ls <- lapply(cl_fl, read.table, header = TRUE)
-lapply(cl_ls, head)
+# lapply(cl_ls, head)
 
 cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
   island <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][2]
@@ -54,10 +54,13 @@ lapply(X = cpars, function(x) {
     scale_fill_manual(values = vtype_pal)
 })
 
-cpar <- cpars[1]
+cpar <- cpars[5]
 cl_dt_na <- cl_dt[!is.na(cl_dt[, cpar]), ]
 
-cl_dt_na$cpar_bin <- cut(x = cl_dt_na[, cpar], breaks = seq(from = 0, to = round(max(cl_dt_na[, cpar])), length.out = 31),
+range(cl_dt_na[, cpar])
+nbins <- 31
+cl_dt_na$cpar_bin <- cut(x = cl_dt_na[, cpar], breaks = seq(from = 0, to = round(max(cl_dt_na[, cpar])),
+                                                            length.out = nbins),
                          include.lowest = TRUE)
 table(cl_dt_na$cpar_bin)
 clipar_bin <- merge(expand.grid(VTYPE = unique(cl_dt_na$VTYPE),
@@ -95,25 +98,25 @@ freq_wide <- data.frame(CLIPAR=cpar_split$SNP[, "CLIPAR"],
 
 freq_wide[1:20,]
 
-str(freq_wide)
+# str(freq_wide)
 # order(levels(freq_wide$FREQ))
-freq_wide$CLIPAR <- relevel(freq_wide$CLIPAR, "[0,6.5]")
+freq_wide$CLIPAR <- relevel(freq_wide$CLIPAR, "[0,2.8]")
 
-cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP)) +
-  facet_wrap(~CLIPAR) +
-  geom_point() +
-  geom_abline(slope = 1, linetype = "dashed") +
-  labs(x = paste0("Cline ", cpar, " INDEL proportion"), y = paste0("Cline ", cpar, " SNP proportion")) +
-  theme(axis.text.x = element_text(angle = 320, hjust = 0, size = 12),
-        axis.title = element_text(size = 16),
-        strip.text = element_text(size = 12),
-        legend.position = "top",
-        panel.background = element_blank(),
-        strip.background = element_rect(fill = "#91bfdb", color = "black"),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        axis.line = element_line(size = 0.2, linetype = "solid",
-                                 colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2))
+# cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP)) +
+#   facet_wrap(~CLIPAR) +
+#   geom_point() +
+#   geom_abline(slope = 1, linetype = "dashed") +
+#   labs(x = paste0("Cline ", cpar, " INDEL proportion"), y = paste0("Cline ", cpar, " SNP proportion")) +
+#   theme(axis.text.x = element_text(angle = 320, hjust = 0, size = 12),
+#         axis.title = element_text(size = 16),
+#         strip.text = element_text(size = 12),
+#         legend.position = "top",
+#         panel.background = element_blank(),
+#         strip.background = element_rect(fill = "#91bfdb", color = "black"),
+#         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+#         axis.line = element_line(size = 0.2, linetype = "solid",
+#                                  colour = "black"),
+#         panel.grid = element_line(colour = "gray70", size = 0.2))
 
 len_pal <- colorRampPalette(c("blueviolet", "seagreen1", "black", "red"))
 # len_pal <- wes_palette(name = "Zissou1", n = nrow(freq_wide), type = "continuous")
