@@ -2,7 +2,7 @@ rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
 .packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly",
-              "devtools", "limma")
+              "devtools", "BiocManager", "limma")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -14,8 +14,9 @@ if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.
 # Load packages into session
 lapply(.packages, require, character.only=TRUE)
 lapply(basename(.packagesdev), require, character.only=TRUE)
+# BiocManager::install("limma")
 
-## AFTER FILTERING
+## AFTER FILTERING - BEFORE CLINE ANALYSIS
 
 # DERIVED ALLELE FREQUENCY
 
