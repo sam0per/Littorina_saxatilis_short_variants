@@ -25,6 +25,8 @@ ggplot(data = CW, aes(x = ShoreH, y = HI)) +
 
 wdt <- split(CW, CW$ZONE)
 lapply(unique(as.character(CW$ZONE)), FUN = function(x) {
-  write.table(x = wdt[[x]][,1], file = paste0('Littorina_saxatilis/short_genetic_variants/ecotypes_', x, '.txt'),
+  write.table(x = wdt[[x]][wdt[[x]]$ECOT=='CRAB', 1], file = paste0('Littorina_saxatilis/short_genetic_variants/CRAB_', x, '.txt'),
+              sep = '\t', row.names = FALSE, col.names = FALSE, quote = FALSE)
+  write.table(x = wdt[[x]][wdt[[x]]$ECOT=='WAVE', 1], file = paste0('Littorina_saxatilis/short_genetic_variants/WAVE_', x, '.txt'),
               sep = '\t', row.names = FALSE, col.names = FALSE, quote = FALSE)
 })
