@@ -25,6 +25,7 @@ for site in CZA CZB CZD; do
     --vcf filtered/CZCLI01_${site}_${type}.filt2-${taskid}.recode.vcf --freq \
     --out allele_freq/${ecot}/AF_${site}_${ecot}_${type}.filt2-${taskid} || continue
 
+    done
   done
 done
 
