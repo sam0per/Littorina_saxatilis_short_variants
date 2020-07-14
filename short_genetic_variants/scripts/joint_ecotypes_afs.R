@@ -242,11 +242,56 @@ join2_daf <- function(dd1, dd2, colnm, grps) {
   # dtm2 <- merge(dt, dd2)
   return(dtm)
 }
-zone <- "CZA"
-vtype <- "SNP"
-zv_dt <- join2_daf(dd1 = daf_ecot$WAVE, dd2 = daf_ecot$CRAB, colnm = "DAF_bin", grps = c(zone, vtype))
+# zone <- "CZA"
+# vtype <- "SNP"
+zv_grid <- expand.grid(zone=c("CZA", "CZB", "CZD"), vtype=c("INDEL", "SNP"))
+apply(X = zv_grid, MARGIN = 1, FUN = function(x) {
+  zv_dt <- join2_daf(dd1 = daf_ecot$WAVE, dd2 = daf_ecot$CRAB, colnm = "DAF_bin", grps = c(x[1], x[2]))
+  
+  zv_dt$DAF_bin_pop1 <- relevel(zv_dt$DAF_bin_pop1, "[0,0.05]")
+  zv_dt$DAF_bin_pop2 <- relevel(zv_dt$DAF_bin_pop2, "[0,0.05]")
+  
+  zv_dt$sqrt_pop1 <- sqrt(zv_dt$count_pop1)
+  zv_dt$sqrt_pop2 <- sqrt(zv_dt$count_pop2)
+  zv_dt$sqrt_sum <- rowSums(x = zv_dt[, 9:10])
+  
+  sqc_b <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
+    geom_tile(aes(fill = round(sqrt_sum))) +
+    scale_fill_viridis_b() +
+    labs(x = 'WAVE population uAFS', y = 'CRAB population uAFS', fill = paste(x[1], x[2], 'square root count')) +
+    theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
+          legend.position = 'top')
+  ggsave(filename = paste("figures/jafs", x[1], x[2], "sqrt_count_virb.pdf", sep = "_"), plot = sqc_b, width = 8, height = 8)
+  
+  sqc_c <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
+    geom_tile(aes(fill = round(sqrt_sum))) +
+    scale_fill_viridis_c() +
+    labs(x = 'WAVE population uAFS', y = 'CRAB population uAFS', fill = paste(x[1], x[2], 'square root count')) +
+    theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
+          legend.position = 'top')
+  ggsave(filename = paste("figures/jafs", x[1], x[2], "sqrt_count_virc.pdf", sep = "_"), plot = sqc_c, width = 8, height = 8)
+  
+  p_colu <- grepl(pattern = 'prop', colnames(zv_dt))
+  zv_dt$diff_count_prop <- apply(X = zv_dt[, p_colu], MARGIN = 1, FUN = function(y) y[1] - y[2])
+  
+  pdiff_b <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
+    geom_tile(aes(fill = round(diff_count_prop, 2))) +
+    scale_fill_viridis_b() +
+    labs(x = 'WAVE population uAFS', y = 'CRAB population uAFS', fill = paste(x[1], x[2], 'prop. difference')) +
+    theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
+          legend.position = 'top')
+  ggsave(filename = paste("figures/jafs", x[1], x[2], "prop_diff_virb.pdf", sep = "_"), plot = pdiff_b, width = 8, height = 8)
+  
+  pdiff_c <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
+    geom_tile(aes(fill = round(diff_count_prop, 2))) +
+    scale_fill_viridis_c() +
+    labs(x = 'WAVE population uAFS', y = 'CRAB population uAFS', fill = paste(x[1], x[2], 'prop. difference')) +
+    theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
+          legend.position = 'top')
+  ggsave(filename = paste("figures/jafs", x[1], x[2], "prop_diff_virc.pdf", sep = "_"), plot = pdiff_c, width = 8, height = 8)
+})
+
 # CZA_INDEL <- join2_daf(dd1 = daf_ecot$WAVE, dd2 = daf_ecot$CRAB, colnm = "DAF_bin", grps = c("CZA", "INDEL"))
-head(zv_dt)
 # CZA_INDEL <- zv_dt
 # sum(unique(CZA_INDEL$count_prop_pop1))
 # sum(unique(CZA_INDEL$count_pop1))
@@ -256,40 +301,7 @@ head(zv_dt)
 # sum(unique(CZA_INDEL$count_prop_pop2))
 # rm(CZA_INDEL)
 
-zv_dt$DAF_bin_pop1 <- relevel(zv_dt$DAF_bin_pop1, "[0,0.05]")
-zv_dt$DAF_bin_pop2 <- relevel(zv_dt$DAF_bin_pop2, "[0,0.05]")
-str(zv_dt)
-head(zv_dt)
-zv_dt$sqrt_pop1 <- sqrt(zv_dt$count_pop1)
-zv_dt$sqrt_pop2 <- sqrt(zv_dt$count_pop2)
-zv_dt$sqrt_sum <- rowSums(x = zv_dt[, 9:10])
 
-ggp <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
-  geom_tile(aes(fill = round(sqrt_sum))) +
-  scale_fill_viridis_b() +
-  labs(x = 'WAVE population', y = 'CRAB population', fill = paste(zone, vtype, 'squared count')) +
-  theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
-        legend.position = 'top')
-ggp
-ggp <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
-  geom_tile(aes(fill = round(sqrt_sum))) +
-  scale_fill_viridis_c() +
-  labs(x = 'WAVE population', y = 'CRAB population', fill = paste(zone, vtype, 'squared count')) +
-  theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
-        legend.position = 'top')
-ggp
-
-p_colu <- grepl(pattern = 'prop', colnames(zv_dt))
-zv_dt$diff_count_prop <- apply(X = zv_dt[, p_colu], MARGIN = 1, FUN = function(x) x[1] - x[2])
-head(zv_dt)
-
-ggp <- ggplot(zv_dt, aes(DAF_bin_pop1, DAF_bin_pop2)) +
-  geom_tile(aes(fill = round(diff_count_prop, 2))) +
-  scale_fill_viridis_c() +
-  labs(x = 'WAVE population', y = 'CRAB population', fill = paste(zone, vtype, 'prop. difference')) +
-  theme(axis.text.x = element_text(angle = 320, size = 8, hjust = 0),
-        legend.position = 'top')
-ggp
 
 
 
