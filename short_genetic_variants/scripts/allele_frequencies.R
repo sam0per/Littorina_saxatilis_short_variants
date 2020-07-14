@@ -122,6 +122,7 @@ franc_dt$DAF_bin <- cut(franc_dt$DAF, breaks = seq(from = 0, to = 1, length.out 
 table(franc_dt$DAF_bin)
 grid_dt <- expand.grid(CHROM=levels(franc_dt$CHROM), DAF_bin=levels(franc_dt$DAF_bin),
                        ZONE=levels(franc_dt$ZONE), ECOT=unique(franc_dt$ECOT), VTYPE=levels(franc_dt$VTYPE))
+head(grid_dt)
 # table(franc_dt[franc_dt$CHROM=="Contig0", "VTYPE"])
 
 aggr_dt <- aggregate(x = franc_dt$DAF, by=list(CHROM=franc_dt$CHROM, DAF_bin=franc_dt$DAF_bin, ZONE=franc_dt$ZONE,
@@ -194,7 +195,7 @@ fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/refer
 fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
 # head(fai)
 colnames(fai) <- c("CHROM", "Length")
-fai$Contig <- as.character(fai$Contig)
+# fai$Contig <- as.character(fai$Contig)
 
 # comp_fai <- merge(comp_freq, fai, by = "Contig")
 # frqs_fai <- as.data.frame(merge(frqs_dt, fai, by = "Contig"))
@@ -258,6 +259,49 @@ apply(X = comb_dt, MARGIN = 1, FUN = function(x) {
 
 contig_bin[1:30,]
 contig_bin <- contig_bin[order(contig_bin$DAF_bin), ]
+daf_sum <- aggregate(contig_bin$count, by = list(ZONE=contig_bin$ZONE, ECOT=contig_bin$ECOT,
+                                                 VTYPE=contig_bin$VTYPE, DAF_bin=contig_bin$DAF_bin), sum)
+head(daf_sum)
+colnames(daf_sum) <- c("grp1", "ECOT", "grp2", "DAF_bin", "count")
+daf_ecot <- split(daf_sum, f = daf_sum$ECOT)
+lapply(daf_ecot, head)
+colnames(daf_ecot$WAVE)[5] <- "count_pop1"
+colnames(daf_ecot$CRAB)[5] <- "count_pop2"
+daf_ecot$WAVE$ECOT <- NULL
+daf_ecot$CRAB$ECOT <- NULL
+
+join2_daf <- function(dd1, dd2, colnm, grps) {
+  cn1 <- paste0(colnames(dd1)[names(dd1) == colnm], "_pop1")
+  cn2 <- paste0(colnames(dd2)[names(dd2) == colnm], "_pop2")
+  # c(cn1, cn2)
+  dt <- expand.grid(levels(dd1[, names(dd1) == colnm]),
+                    levels(dd2[, names(dd2) == colnm]))
+  colnames(dt) <- c(cn1, cn2)
+  # head(dt)
+  for (i in seq_along(grps)) {
+    dt[, paste0("grp", i)] <- grps[i]
+  }
+  colnames(dd1)[names(dd1) == colnm] <- cn1
+  colnames(dd2)[names(dd2) == colnm] <- cn2
+  dtm <- merge(dt, dd1)
+  dtm <- merge(x = dtm, y = dd2)
+  # head(dd2)
+  # dtm2 <- merge(dt, dd2)
+  return(dtm)
+}
+CZA_INDEL <- join2_daf(dd1 = daf_ecot$WAVE, dd2 = daf_ecot$CRAB, colnm = "DAF_bin", grps = c("CZA", "INDEL"))
+CZA_INDEL$DAF_bin_pop1 <- relevel(CZA_INDEL$DAF_bin_pop1, "[0,0.05]")
+CZA_INDEL$DAF_bin_pop2 <- relevel(CZA_INDEL$DAF_bin_pop2, "[0,0.05]")
+str(CZA_INDEL)
+head(CZA_INDEL)
+CZA_INDEL$sqrt_pop1 <- sqrt(CZA_INDEL$count_pop1)
+CZA_INDEL$sqrt_pop2 <- sqrt(CZA_INDEL$count_pop2)
+CZA_INDEL$sqrt_sum <- rowSums(x = CZA_INDEL[, 7:8])
+
+ggp <- ggplot(CZA_INDEL, aes(DAF_bin_pop1, DAF_bin_pop2)) +
+  geom_tile(aes(fill = sqrt_sum))
+ggp
+
 # order(levels(contig_bin$FREQ))
 # contig_bin[which.max(contig_bin$Count_Tot), ]
 
