@@ -19,7 +19,7 @@ taskid=${SGE_TASK_ID}
 
 for site in CZA CZB CZD; do
   for type in INDEL SNP; do
-    for ecot in CRAB WAVE; do
+    for ecot in CRAB WAVE_LEFT WAVE_RIGHT; do
 
     vcftools --keep /home/bo4spe/Littorina_saxatilis/short_genetic_variants/${ecot}_${site}.txt \
     --vcf filtered/CZCLI01_${site}_${type}.filt2-${taskid}.recode.vcf --freq \
