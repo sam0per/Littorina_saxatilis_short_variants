@@ -22,7 +22,10 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 
 (anc_fl <- list.files(path = "allele_freq", pattern = "ANC", full.names = TRUE))
 ancs <- as.data.frame(rbindlist(lapply(anc_fl, read.csv)))
+ancs <- unique(ancs)
 head(ancs)
+# ancs[ancs$cp=='Contig23485_2700', ]
+
 ancs$NE_F1_141_Lc <- ifelse(test = ancs$NE_F1_141_Lc=="-het", yes = NA, no = as.character(ancs$NE_F1_141_Lc))
 ancs$W_com_01_Lc <- ifelse(test = ancs$W_com_01_Lc=="-het", yes = NA, no = as.character(ancs$W_com_01_Lc))
 
@@ -31,27 +34,34 @@ frqs <- lapply(frq_fl, read.table, header = TRUE)
 lapply(frqs, head)
 
 frqs_dt <- as.data.frame(rbindlist(lapply(seq_along(frq_fl), function(x) {
+  
   island <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][2]
   ecot <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][3]
-  vtype <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][4]
+  if (ecot == 'WAVE') {
+    side <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][4]
+    ecot <- paste(ecot, side, sep = "_")
+    vtype <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][5]
+  } else {
+    vtype <- strsplit(file_path_sans_ext(basename(frq_fl[[x]])), split = "_")[[1]][4]
+  }
   
   one_frq <- separate(frqs[[x]], col = REF_FREQ, into = c("REF", "RFREQ"), sep = ":")
   one_frq <- separate(one_frq, col = ALT_FREQ, into = c("ALT", "AFREQ"), sep = ":")
   
-  # one_frq <- data.frame(ISL = island, VTYPE = vtype, MAF = maf,
-  #                       cp = paste(one_frq[, "CHROM"], one_frq[, "POS"], sep = "_"))
   one_frq <- mutate(one_frq, ZONE = as.character(island), ECOT = as.character(ecot),
                     VTYPE = as.character(strsplit(x = vtype, split = ".", fixed = TRUE)[[1]][1]),
                     cp = paste(one_frq[, "CHROM"], one_frq[, "POS"], sep = "_"))
-  # one_frq <- separate(data = one_frq, col = cp, into = c("Contig", "Position"), sep = "_", remove = FALSE)
+  one_frq <- unique(one_frq)
   return(one_frq)
 })))
 head(frqs_dt)
+table(frqs_dt$ECOT)
 
 franc_dt <- merge(x = ancs, y = frqs_dt, by = c("cp", "ZONE", "VTYPE"))
 franc_dt <- franc_dt[rowSums(apply(X = franc_dt[, c("NE_F1_141_Lc", "W_com_01_Lc")], MARGIN = 2,
                                    FUN = function(x) is.na(x))) != 2, ]
 
+# franc_dt[duplicated(franc_dt), ]
 head(franc_dt)
 
 rm(list = setdiff(x = ls(), y = "franc_dt"))
@@ -116,20 +126,85 @@ franc_dt$DAF <- ifelse(test = grepl(pattern = "alt", x = franc_dt$NE_W_Lcomp), y
 sample_n(tbl = franc_dt, size = 30)
 
 franc_dt$DAF <- as.numeric(franc_dt$DAF)
+franc_dt$cp <- as.character(franc_dt$cp)
 str(franc_dt)
-range(franc_dt$DAF)
-franc_dt$DAF_bin <- cut(franc_dt$DAF, breaks = seq(from = 0, to = 1, length.out = 21), include.lowest = TRUE)
-table(franc_dt$DAF_bin)
-grid_dt <- expand.grid(CHROM=levels(franc_dt$CHROM), DAF_bin=levels(franc_dt$DAF_bin),
-                       ZONE=levels(franc_dt$ZONE), ECOT=unique(franc_dt$ECOT), VTYPE=levels(franc_dt$VTYPE))
-head(grid_dt)
-# table(franc_dt[franc_dt$CHROM=="Contig0", "VTYPE"])
 
-aggr_dt <- aggregate(x = franc_dt$DAF, by=list(CHROM=franc_dt$CHROM, DAF_bin=franc_dt$DAF_bin, ZONE=franc_dt$ZONE,
-                                               ECOT=franc_dt$ECOT, VTYPE=franc_dt$VTYPE), function(x) {
-                                                 c(count=length(x), mean_daf=mean(x))
-                                                 })
-aggr_dt[aggr_dt$CHROM=="Contig0", ]
+which.max(aggregate(franc_dt$DAF, by = list(cp = franc_dt$cp), sum)$x)
+aggregate(franc_dt$DAF, by = list(cp = franc_dt$cp), sum)[81329, ]
+cpdaf_sum <- aggregate(franc_dt$DAF, by = list(cp = franc_dt$cp), sum)
+head(cpdaf_sum)
+fixed_v <- as.character(unlist(lapply(X = 0:9, function(x) cpdaf_sum[cpdaf_sum$x==x, 'cp'])))
+
+# franc_dt[franc_dt$cp=='Contig3492_13320', ]
+# franc_dt[franc_dt$cp=='Contig2844_2649', ]
+
+table(unique(franc_dt[, c('cp', 'VTYPE')])$VTYPE)
+table(unique(franc_dt[franc_dt$cp %in% fixed_v, c('cp', 'VTYPE')])$VTYPE)
+franc_dt <- franc_dt[!franc_dt$cp %in% fixed_v, ]
+head(franc_dt)
+
+fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
+fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
+head(fai)
+colnames(fai) <- c("CHROM", "Length")
+
+franc_dt <- merge(dt, fai, by = 'CHROM')
+write.csv(x = franc_dt, file = "results/Lsax_short_var_czs_daf.csv", quote = FALSE, row.names = FALSE)
+
+mapdata = read.table("data/map_v11.txt", header = TRUE, stringsAsFactors = FALSE)
+head(mapdata)
+mapdata$cp = paste(mapdata$contig, mapdata$pos, sep="_")
+
+# Assign SNPs not on map to closest map position, if within 1000bp
+means <- franc_dt
+rm(franc_dt)
+for (number1 in seq(1,length(means$cp))){
+  contig = means[number1, "CHROM"]
+  pos = means[number1, "POS"]
+  focal = mapdata[mapdata$contig==contig, ]
+  closest = focal[abs(focal$pos-pos) == min(abs(focal$pos-pos)), ][1,]
+  
+  if((abs(closest$pos-pos))<=1000 & (is.na(closest$pos)==F)){
+    means[number1, "LG"] = closest$LG
+    means[number1, "av"] = closest$av
+  }
+}
+head(means)
+# Round map positions
+means$av = round(means$av, 1)
+table(means$LG)
+
+invRui = read.table("data/20200123/Sweden_inversions_coordinates_2nd_august_2019.csv", sep=",", header=TRUE,
+                    stringsAsFactors=FALSE)
+invRui$LG = gsub("LG", "", invRui$LG)
+
+getInvRui = function(x){
+  x$invRui = F
+  for (number1 in 1:length(x$av)){
+    av = x[number1, "av"]
+    LG = x[number1, "LG"]
+    if (LG %in% invRui$LG){
+      focal = invRui[invRui$LG==LG,]
+      for (number2 in seq(1, length(focal$Cluster))){
+        if (av>=(focal[number2, "Start"]-0.1) & av<=(focal[number2, "End"]+0.1)){
+          x$invRui[number1] = focal$Cluster[number2]
+        }
+      }
+    }
+  }
+  return(x)
+}
+means <- getInvRui(means)
+head(means)
+table(means$invRui)
+write.csv(x = means, file = "results/Lsax_short_var_czs_daf_inv.csv", quote = FALSE, row.names = FALSE)
+
+
+
+
+
+
+# contig_bin <- merge(grid_dt, aggr_dt, all.x = TRUE)
 
 vtype_pal <- data.frame(INDEL="#1B9E77", SNP="#666666")
 lapply(X = c("INDEL", "SNP"), FUN = function(y) {
