@@ -26,6 +26,8 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 #                     sep=",", header=T, stringsAsFactors=F)
 # invRui$LG = gsub("LG", "", invRui$LG)
 
+n <- 2
+
 # Get cline fits
 (cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE))
 (cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
@@ -48,13 +50,15 @@ vtype_pal <- c("#1B9E77", "#666666")
 
 cpars <- c("Centre", "Width", "slope", "p_diff", "Var.Ex")
 
-lapply(X = cpars, function(x) {
-  ggplot(data = cl_dt, aes_string(x = x, fill = "VTYPE")) +
-    geom_histogram(bins = 40, position = "dodge") +
-    scale_fill_manual(values = vtype_pal)
-})
+if (n==1) {
+  lapply(X = cpars, function(x) {
+    ggplot(data = cl_dt, aes_string(x = x, fill = "VTYPE")) +
+      geom_histogram(bins = 40, position = "dodge") +
+      scale_fill_manual(values = vtype_pal)
+  })
+}
 
-cpar <- cpars[5]
+(cpar <- cpars[n])
 cl_dt_na <- cl_dt[!is.na(cl_dt[, cpar]), ]
 
 range(cl_dt_na[, cpar])
@@ -78,9 +82,9 @@ clipar_bin <- data.frame(clipar_bin[, 1:2],
 clipar_bin$Proportion <- NA
 table(cl_dt_na$VTYPE)
 clipar_bin[clipar_bin$VTYPE=="INDEL", "Proportion"] <- round(clipar_bin[clipar_bin$VTYPE=="INDEL", "Count"]/
-                                                               table(cl_dt_na$VTYPE)["INDEL"], 5)
+                                                               table(cl_dt_na$VTYPE)["INDEL"], 9)
 clipar_bin[clipar_bin$VTYPE=="SNP", "Proportion"] <- round(clipar_bin[clipar_bin$VTYPE=="SNP", "Count"]/
-                                                             table(cl_dt_na$VTYPE)["SNP"], 5)
+                                                             table(cl_dt_na$VTYPE)["SNP"], 9)
 clipar_bin[1:30,]
 clipar_bin <- clipar_bin[order(clipar_bin$CLIPAR), ]
 
@@ -100,7 +104,9 @@ freq_wide[1:20,]
 
 # str(freq_wide)
 # order(levels(freq_wide$FREQ))
-freq_wide$CLIPAR <- relevel(freq_wide$CLIPAR, "[0,2.8]")
+
+cparlev <- c("[0,6.5]", "[0,6.23]", "[0,4.37]", "[0,0.0333]", "[0,2.8]")
+freq_wide$CLIPAR <- relevel(freq_wide$CLIPAR, cparlev[n])
 
 # cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP)) +
 #   facet_wrap(~CLIPAR) +
@@ -142,3 +148,11 @@ cpar_prop <- ggplot(freq_wide, aes(x = INDEL, y = SNP, col = CLIPAR)) +
 
 cpar_prop
 ggsave(filename = paste0("figures/SNP_INDEL_prop_cline_", cpar, ".pdf"), plot = cpar_prop, width = 10, height = 7)
+
+# length(unique(freq_wide$INDEL))
+# length(unique(freq_wide$SNP))
+# freq_wide$INDEL[duplicated(freq_wide$INDEL)]
+# freq_wide$SNP[duplicated(freq_wide$SNP)]
+ks.test(x = unique(freq_wide$INDEL), unique(freq_wide$SNP))
+# ks.test(x = freq_wide$INDEL, freq_wide$SNP)
+# ks.test(x = freq_wide$INDEL, freq_wide$SNP, exact = FALSE)
