@@ -27,10 +27,10 @@ for site in CZA CZB CZD; do
 
       awk '{for(i=2;i<=NF;i++)a[i]+=$i;print $0} END{l="SUM";i=2;while(i in a){l=l" "a[i];i++};print l}' \
       geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012 | tr " " "\n" | tail -n +2 \
-      > geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.sum
+      > geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.sum || continue
 
       paste geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.pos geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.sum \
-      > geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.count
+      > geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.count || continue
 
     done
   done
