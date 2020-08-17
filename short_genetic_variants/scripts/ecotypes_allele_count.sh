@@ -25,7 +25,7 @@ for site in CZA CZB CZD; do
       vcftools --vcf filtered/${ecot}/CZCLI01_${site}_${ecot}_${type}.filt2-${taskid}.recode.vcf \
       --012 --out geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid} || continue
 
-      awk '{for(i=2;i<=NF;i++)a[i]+=$i;print $0} END{l="SUM";i=2;while(i in a){l=l" "a[i];i++};print l}' \
+      awk '{for(i=2;i<=NF;i++)a[i]+=$i} END{l="SUM";i=2;while(i in a){l=l" "a[i];i++};print l}' \
       geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012 | tr " " "\n" | tail -n +2 \
       > geno_matrix/${ecot}/GM_${site}_${ecot}_${type}.filt2-${taskid}.012.sum || continue
 
