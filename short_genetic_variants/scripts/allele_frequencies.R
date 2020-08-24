@@ -140,7 +140,7 @@ fixed_v <- as.character(unlist(lapply(X = 0:9, function(x) cpdaf_sum[cpdaf_sum$x
 
 table(unique(franc_dt[, c('cp', 'VTYPE')])$VTYPE)
 table(unique(franc_dt[franc_dt$cp %in% fixed_v, c('cp', 'VTYPE')])$VTYPE)
-franc_dt <- franc_dt[!franc_dt$cp %in% fixed_v, ]
+# franc_dt <- franc_dt[!franc_dt$cp %in% fixed_v, ]
 head(franc_dt)
 
 fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"

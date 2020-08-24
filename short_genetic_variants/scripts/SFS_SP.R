@@ -157,5 +157,5 @@ all_df$VTYPE <- as.character(all_df$VTYPE)
 all_uni <- unique(all_df[, c('cp', 'VTYPE')])
 table(all_uni$VTYPE)
 
-# after the filter for a minimum number of individuals, the number of variants stayed the same.
+# after the filter for a minimum number of individuals, the number of variants decreased slightly.
 rm(list = ls())

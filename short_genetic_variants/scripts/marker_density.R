@@ -15,12 +15,24 @@ if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.
 lapply(.packages, require, character.only=TRUE)
 lapply(basename(.packagesdev), require, character.only=TRUE)
 
-rm_inv = TRUE
-dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv.csv")
+rm_inv = FALSE
+dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv_findv.csv")
 head(dt)
 if (rm_inv) {
   dt <- dt[dt$invRui==FALSE, ]
 }
+
+fxd <- dt[dt$DAF==0 | dt$DAF==1, ]
+fxd <- unique(fxd[, c('cp', 'VTYPE')])
+table(fxd$VTYPE)
+dtp <- dt[dt$DAF!=0 & dt$DAF!=1, ]
+# nrow(dtp)
+dtp <- unique(dtp[, c('cp', 'VTYPE')])
+table(dtp$VTYPE)
+(tb <- data.frame(table(dtp$VTYPE), table(fxd$VTYPE)))
+tb$Freq/tb$Freq.1
+
+dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
 
 dtu <- unique(dt[, c('cp', 'VTYPE', 'LG', 'av', 'invRui')])
 table(dtu$VTYPE, dtu$invRui)
