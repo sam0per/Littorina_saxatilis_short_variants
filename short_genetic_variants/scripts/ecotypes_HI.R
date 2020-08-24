@@ -38,6 +38,9 @@ WAVE$SIDE <- unlist(lapply(X = seq_along(zn), FUN = function(x) {
 CW <- rbind(CRAB,WAVE)
 head(CW)
 
+ggplot(data = HI, aes(x = LCmeanDist, y = HI)) +
+  facet_grid(rows = vars(ZONE)) +
+  geom_point()
 ggplot(data = CW, aes(x = LCmeanDist, y = HI, col = SIDE)) +
   facet_grid(rows = vars(ZONE)) +
   geom_point()
