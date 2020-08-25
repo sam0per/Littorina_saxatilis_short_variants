@@ -1,11 +1,11 @@
 rm(list=ls())
 
-.packages = c("tools", "tidyr", "data.table", "optparse", "Rmisc", "dplyr")
+pkgs <- c("tools", "tidyr", "data.table", "optparse", "Rmisc", "dplyr")
 # Install CRAN packages (if not already installed)
-.inst <- .packages %in% installed.packages()
-if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+# .inst <- .packages %in% installed.packages()
+# if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 # Load packages into session
-lapply(.packages, require, character.only=TRUE)
+lapply(pkgs, require, character.only=TRUE)
 ################################################################################################################
 ##### INPUT ####################################################################################################
 option_list = list(
@@ -78,3 +78,5 @@ if (parts[3] == 'WAVE') {
 }
 
 write.csv(x = out_dt, file = paste0(infl, '.', n_smp, 'N.csv'), quote = FALSE, row.names = FALSE)
+
+cat('MISSION COMPLETED.\n')
