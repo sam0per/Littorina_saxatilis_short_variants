@@ -159,3 +159,6 @@ table(all_uni$VTYPE)
 
 # after the filter for a minimum number of individuals, the number of variants decreased slightly.
 rm(list = ls())
+
+dt <- read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv')
+head(dt)
