@@ -1,6 +1,6 @@
 rm(list=ls())
 
-pkgs <- c("tools", "tidyr", "data.table", "optparse", "Rmisc", "dplyr")
+pkgs <- c("tools", "data.table", "optparse", "dplyr")
 # Install CRAN packages (if not already installed)
 # .inst <- .packages %in% installed.packages()
 # if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
