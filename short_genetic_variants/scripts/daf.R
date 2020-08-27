@@ -15,21 +15,35 @@ if(length(.packagesdev[!.instdev]) > 0) devtools::install_github(.packagesdev[!.
 lapply(.packages, require, character.only=TRUE)
 lapply(basename(.packagesdev), require, character.only=TRUE)
 
-rm_inv = TRUE
-franc_dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv.csv")
-head(franc_dt)
+rm_inv = FALSE
+franc_dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv_findv.csv")
 if (rm_inv) {
   franc_dt <- franc_dt[franc_dt$invRui==FALSE, ]
 }
+
+franc_dt <- franc_dt[franc_dt$DAF!=0 & franc_dt$DAF!=1, ]
 table(franc_dt$invRui)
 
 # franc_dt <- read.csv(file = "results/Lsax_short_var_czs_daf.csv")
-# head(franc_dt)
+head(franc_dt)
 
+dtn <- data.frame(CAT = unique(paste(franc_dt$ZONE, franc_dt$ECOT, sep = ':')),
+                  TOT = c(69, 62, 23, 64, 59, 45, 67, 31, 73))
+
+# filter variants by N-3
+dtf <- lapply(levels(dtn$CAT), FUN = function(x) {
+  franc_dt$CAT <- paste(franc_dt$ZONE, franc_dt$ECOT, sep = ':')
+  franc_dt[franc_dt$CAT == x & franc_dt$EFF_INDV >= dtn[dtn$CAT == x, 'TOT'] - 3, ]
+})
+lapply(dtf, head)
+lapply(dtf, function(x) table(x$EFF_INDV))
+
+franc_dt <- as.data.frame(rbindlist(dtf))
 range(franc_dt$DAF)
 franc_dt$DAF_bin <- cut(franc_dt$DAF, breaks = seq(from = 0, to = 1, length.out = 21), include.lowest = TRUE)
 table(franc_dt$DAF_bin)
 head(franc_dt)
+franc_dt$CAT <- NULL
 franc_dt$class <- paste(franc_dt$ZONE, franc_dt$ECOT, franc_dt$VTYPE, sep = ":")
 tot_v <- data.frame(table(franc_dt$class))
 
