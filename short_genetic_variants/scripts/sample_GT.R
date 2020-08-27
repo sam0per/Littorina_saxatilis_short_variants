@@ -24,7 +24,7 @@ if (is.null(opt$genotypes) | is.null(opt$number)){
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# infl <- 'test/GM_CZA_CRAB_INDEL.filt2-1024.012'
+# infl <- 'test/GM_CZA_CRAB_INDEL.filt2-1021.012'
 # gt <- read.table(file = infl, sep = '\t', row.names = 1)
 infl <- opt$genotypes
 gt = read.table(infl, sep = '\t', row.names = 1)
@@ -38,6 +38,11 @@ file.exists("out_sample_GT.log")
 if (nrow(gt) < n_smp) {
   
   cat(paste(infl, ':', nrow(gt), 'individuals are less than', n_smp, 'filter cutoff.'),
+      file = 'out_sample_GT.log', sep = '\n', append = TRUE)
+
+} else if (ncol(gt) == 0) {
+  
+  cat(paste(infl, ': no information available.'),
       file = 'out_sample_GT.log', sep = '\n', append = TRUE)
 
 } else {
