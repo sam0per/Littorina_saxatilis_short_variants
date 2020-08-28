@@ -49,11 +49,16 @@ if (nrow(gt) < n_smp) {
   
   gt_smp <- apply(X = gt, MARGIN = 2, FUN = function(x) {
     pos_idx <- which(x >= 0)
-    pindv <- as.character(indv[pos_idx,])
-    pool <- x[x >= 0]
-    idx_smp <- sample(x = 1:length(pool), size = n_smp, replace = FALSE)
-    data.frame(GT = pool[idx_smp], ID = pindv[idx_smp])
+    if (length(pos_idx) >= n_smp) {
+      pindv <- as.character(indv[pos_idx,])
+      pool <- x[x >= 0]
+      idx_smp <- sample(x = 1:length(pool), size = n_smp, replace = FALSE)
+      data.frame(GT = pool[idx_smp], ID = pindv[idx_smp])
+    }
   })
+  
+  gt_smp <- Filter(function(x) length(x) > 0, gt_smp)
+  pos <- pos[which(colnames(gt) %in% names(gt_smp)), ]
   
   gt_smp <- do.call(what = 'cbind', args = gt_smp)
   

@@ -255,5 +255,14 @@ ggsave(filename = 'figures/N_samples_n_SNP.pdf', plot = N_snp)
 
 # choose N-3
 rm(list = ls())
-dt <- read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv')
+dt <- read.csv(file = 'test/GM_CZA_CRAB_INDEL.filt2.66N.csv')
 head(dt)
+dt <- dt[dt$CHROM!='CHROM', ]
+franc_dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv_findv.csv")
+head(franc_dt)
+
+dta <- merge(x = dt, y = franc_dt[, c('cp', 'ZONE', 'VTYPE', 'ECOT', )])
+
+franc_dt$DAF <- NA
+franc_dt$DAF <- ifelse(test = grepl(pattern = "alt", x = franc_dt$NE_W_Lcomp), yes = franc_dt$RFREQ, no = franc_dt$AFREQ)
+sample_n(tbl = franc_dt, size = 30)
