@@ -24,7 +24,7 @@ if (is.null(opt$genotypes) | is.null(opt$number)){
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# infl <- 'test/GM_CZA_CRAB_INDEL.filt2-1021.012'
+# infl <- 'test/GM_CZA_CRAB_INDEL.filt2-1022.012'
 # gt <- read.table(file = infl, sep = '\t', row.names = 1)
 infl <- opt$genotypes
 gt = read.table(infl, sep = '\t', row.names = 1)
@@ -57,9 +57,13 @@ if (nrow(gt) < n_smp) {
   
   gt_smp <- do.call(what = 'cbind', args = gt_smp)
   
-  gtsmp_sum <- apply(X = gt_smp[, grepl(pattern = 'GT', x = colnames(gt_smp))], MARGIN = 2, FUN = sum)
+  if (ncol(gt_smp) == 2) {
+    gtsmp_sum <- sum(gt_smp[, grepl(pattern = 'GT', x = colnames(gt_smp))])
+  } else {
+    gtsmp_sum <- apply(X = gt_smp[, grepl(pattern = 'GT', x = colnames(gt_smp))], MARGIN = 2, FUN = sum)
+  }
   
-  indv_smp <- gt_smp[, grepl(pattern = 'ID', x = colnames(gt_smp))]
+  indv_smp <- data.frame(ID = gt_smp[, grepl(pattern = 'ID', x = colnames(gt_smp))])
   write.table(x = indv_smp, file = paste0(infl, '.samples.csv'), quote = FALSE, sep = ',', row.names = FALSE, col.names = FALSE)
   
   parts <- strsplit(file_path_sans_ext(basename(infl)), split = "_")[[1]]
