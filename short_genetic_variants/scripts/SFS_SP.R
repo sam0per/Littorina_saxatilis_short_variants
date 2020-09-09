@@ -41,11 +41,15 @@ if (is.null(opt$vone) | is.null(opt$vtwo) | is.null(opt$by) | is.null(opt$types)
 }
 
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
 # head(ic)
 # sum(duplicated(ic))
 ic <- unique(read.csv(file = opt$vone))
 
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
+# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
+# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_RIGHT_SNP_filt2_42N.csv'))
 sc <- unique(read.csv(file = opt$vtwo))
 
 if (unique(ic$N) != unique(sc$N)) {
@@ -53,9 +57,12 @@ if (unique(ic$N) != unique(sc$N)) {
 }
 
 # cnm <- 'VTYPE'
+# cnm <- 'ECOT'
 cnm <- opt$by
 
 # tv <- strsplit(c('INDEL:SNP'), split = ":")[[1]]
+# tv <- strsplit(c('CRAB:WAVE_LEFT'), split = ":")[[1]]
+# tv <- strsplit(c('WAVE_LEFT:WAVE_RIGHT'), split = ":")[[1]]
 tv <- strsplit(opt$types, split = ":")[[1]]
 
 # dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
@@ -97,15 +104,19 @@ dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
 # simple example of SNP data
 
 # snp <- c(1000,200,100,50,40,30,20,10,20) # counts of SNPs in each of the 9 classes
-snp <- data.frame(table(dtp[dtp[, cnm]==tv[2], 'DAC']))
+
+snp <- merge(x = data.frame(Var1=1:((unique(dtp$N)*2)-1)), y = data.frame(table(dtp[dtp[, cnm]==tv[2], 'DAC'])),
+             by = 'Var1', all.x = TRUE)
 # ggplot(data = data.frame(N=1:length(snp), C=snp), aes(x = N, y = C)) +
 #   geom_col(col = 'black')
 
 # and indels
 # indel <- c(180,30,15,10,8,8,8,9,12) # counts of indels in each of the 9 classes
-indel <- merge(x = snp, y = data.frame(table(dtp[dtp[, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)[,3]
+indel <- merge(x = snp, y = data.frame(table(dtp[dtp[, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
+indel <- indel[order(indel$Var1), 3]
 indel <- ifelse(test = is.na(indel), yes = 0.00001, no = indel)
-snp <- snp[,2]
+snp <- snp[order(snp$Var1), 2]
+snp <- ifelse(test = is.na(snp), yes = 0.00001, no = snp)
 # ggplot(data = data.frame(N=1:length(indel), C=indel), aes(x = N, y = C)) +
 #   geom_col(col = 'black')
 
@@ -174,11 +185,11 @@ LL0 <- sum(indel*log(joint_p)) + sum(snp*log(joint_p))
 LL1 <- sum(indel*log(indel_p)) + sum(snp*log(snp_p))
 
 chi_app <- 2*(LL1-LL0)  # now with 16 df (I think)
-chi_app
+cat('Chi-square test statistic =', chi_app, '\n')
 # qchisq(p = 0.05, df = 260)
-(ndf <- ((unique(dtn$N)*2)-1-1)*(length(unique(dtn$VTYPE))-1))
-qchisq(p = 0.05, df = ndf)
-chi_app-qchisq(p = 0.05, df = ndf)
+ndf <- ((unique(dtn$N)*2)-1-1)*(length(unique(dtn[, cnm]))-1)
+cat('Chi-square critical value at 0.05 with', ndf, 'df =', qchisq(p = 0.05, df = ndf), '\n')
+cat('Test statistic - critical value =', chi_app-qchisq(p = 0.05, df = ndf), '\n')
 
 a <- rep(0,(unique(dtn$N)*2)-1)
 for (i in 1:((unique(dtn$N)*2)-1)){a[i] <- indel[i]*log(indel_p[i]) + snp[i]*log(snp_p[i]) + sum(indel[-i])*log(sum(indel_p[-i])) + sum(snp[-i])*log(sum(snp_p[-i]))}
@@ -204,6 +215,8 @@ da_cc <- DAC_h / dDAP_h / contr_p +
   plot_layout(heights = c(2, 1, 1))
 # da_cc
 
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv')), split = "_")[[1]]
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv')), split = "_")[[1]]
 parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
 if (cnm == 'VTYPE') {
   if (parts[3] == 'WAVE') {
@@ -214,9 +227,11 @@ if (cnm == 'VTYPE') {
     # VTYPE <- parts[4]
   }
   if (opt$rminv) {
-    ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2] ,'chi_noinv.pdf', sep = "_"), plot = da_cc)
+    ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2] ,'chi_noinv.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
   } else {
-    ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2] ,'chi.pdf', sep = "_"), plot = da_cc)
+    ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2] ,'chi.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
   }
 } else {
   if (parts[3] == 'WAVE') {
@@ -227,9 +242,11 @@ if (cnm == 'VTYPE') {
     VTYPE <- parts[4]
   }
   if (opt$rminv) {
-    ggsave(filename = paste('figures/SFS', parts[2], tv[1], tv[2], VTYPE,'chi_noinv.pdf', sep = "_"), plot = da_cc)
+    ggsave(filename = paste('figures/SFS', parts[2], tv[1], tv[2], VTYPE,'chi_noinv.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
   } else {
-    ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2], VTYPE,'chi.pdf', sep = "_"), plot = da_cc)
+    ggsave(filename = paste('figures/SFS', parts[2], tv[1], tv[2], VTYPE,'chi.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
   }
 }
 
