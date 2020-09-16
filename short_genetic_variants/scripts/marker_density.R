@@ -1,8 +1,8 @@
 rm(list = ls())
 
 .packagesdev = "thomasp85/patchwork"
-.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape", "plotly",
-              "devtools", "BiocManager", "limma", "optparse", "boot", "pscl", "lmtest", "gridExtra", "MASS")
+.packages = c("ggplot2", "reshape2", "tidyr", "tools", "data.table", "RColorBrewer", "dplyr", "textshape",
+              "devtools", "optparse", "boot", "pscl", "lmtest", "gridExtra", "MASS")
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("snpStats")
 
@@ -161,44 +161,78 @@ tt <- mer[mer$ISL==opt$island & mer$ECOT==opt$ecotype, ]
 # tt[tt$x.x==0 & tt$x.y==0,]
 # tt[tt$prop.x==0 & tt$prop.y==0,]
 
-## POISSON MODEL
+tt <- tt[tt$x.y!=0, ]
+
+## PERMUTATION POISSON MODEL
+bar <- replicate(n = 10000, expr = rbinom(n = nrow(tt), size = tt$x.y, prob = sum(tt$x.x)/sum(tt$x.y)))
+# head(bar)
+mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
+  mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
+  exp(coef(mpoi))
+})
+cexp <- as.data.frame(t(mexp))
+colnames(cexp) <- c('intercept', 'slope')
+# head(cexp)
+cexp$cpal <- 'permutation'
+# with(data = cexp, plot(x = intercept, slope))
 # tt$SUM.x <- sum(tt$x.x)
 # tt.poi <- glm(x.x ~ x.y + offset(log(tt$SUM.x)), data = tt, family=poisson(link = 'log'))
 # tt.poi <- glm(x.x ~ x.y + offset(log(tt$Length)), data = tt, family=poisson(link = 'log'))
 M1 <- glm(x.x ~ x.y, data = tt, family=poisson(link = 'log'))
-# tt.poi <- glm(prop.x ~ prop.y, data = tt, family=poisson(link = 'log'))
-# tt.poi <- glm(prop.x ~ prop.y, data = tt, family = quasibinomial(link = 'logit'))
-# summary(tt.poi)
-# summary(M1)
+cm1 <- as.data.frame(t(exp(coef(M1))))
+colnames(cm1) <- c('intercept', 'slope')
+cm1$cpal <- 'observation'
+ttf <- rbind(cm1, cexp)
+
+g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
+  geom_point(size = 2) +
+  labs(col = '', title = paste(opt$island, opt$ecotype)) +
+  scale_color_manual(values = c('red', 'blue')) +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 14),
+        title = element_text(size = 16)) +
+  guides(col = guide_legend(override.aes = list(size=2)))
+# g
+
+ggsave(filename = paste('figures/marker_dens_perm', opt$island, opt$ecotype, 'slope_intercept.pdf', sep = "_"),
+       plot = g, width = 10, height = 7)
+
+# est1 <- cbind(Estimate = coef(M1), confint(M1))
 
 ## Check for over/underdispersion in the model
-E2 <- resid(M1, type = "pearson")
-N <- nrow(tt)
-p <- length(coef(M1))   
-cat(as.character(M1$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
+# E2 <- resid(M1, type = "pearson")
+# N <- nrow(tt)
+# p <- length(coef(M1))   
+# cat(as.character(M1$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
 
 ## NEGATIVE BINOMIAL
-M2 <- glm.nb(x.x ~ x.y, data = tt)
+# M2 <- glm.nb(x.x ~ x.y, data = tt)
 # summary(M2)
 
 ## Check for over/underdispersion in the model
-E2 <- resid(M2, type = "pearson")
-N <- nrow(tt)
-p <- length(coef(M2))   
-cat(as.character(M2$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
+# E2 <- resid(M2, type = "pearson")
+# N <- nrow(tt)
+# p <- length(coef(M2))   
+# cat(as.character(M2$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
 
-pchisq(2 * (logLik(M2) - logLik(M1)), df = 1, lower.tail = FALSE)
-est <- cbind(Estimate = coef(M2), confint(M2))
+# pchisq(2 * (logLik(M2) - logLik(M1)), df = 1, lower.tail = FALSE)
+# est <- cbind(Estimate = coef(M2), confint(M2))
 # exp(est)
-newdata2 <- data.frame(x.y = seq(from = min(tt$x.y), to = max(tt$x.y), length.out = 1000))
-
-newdata2 <- cbind(newdata2, predict(M2, newdata2, type = "link", se.fit=TRUE))
+# newdata2 <- data.frame(x.y = seq(from = min(tt$x.y), to = max(tt$x.y), length.out = 1000))
+# 
+# newdata2 <- cbind(newdata2,
+#                   M1=predict(M1, newdata2, type = "link", se.fit=TRUE),
+#                   M2=predict(M2, newdata2, type = "link", se.fit=TRUE))
 # head(newdata2)
-newdata2 <- within(newdata2, {
-  INDELc <- exp(fit)
-  LL <- exp(fit - 1.96 * se.fit)
-  UL <- exp(fit + 1.96 * se.fit)
-})
+# newdata2 <- within(newdata2, {
+#   INDEL.M1 <- exp(M1.fit)
+#   LL.M1 <- exp(M1.fit - 1.96 * M1.se.fit)
+#   UL.M1 <- exp(M1.fit + 1.96 * M1.se.fit)
+#   INDEL.M2 <- exp(M2.fit)
+#   LL.M2 <- exp(M2.fit - 1.96 * M2.se.fit)
+#   UL.M2 <- exp(M2.fit + 1.96 * M2.se.fit)
+# })
 
 # ggplot(newdata2, aes(x.y, INDELc)) +
 #   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
@@ -206,7 +240,7 @@ newdata2 <- within(newdata2, {
 
 ## ZERO-INFLATED MODELS
 # library(pscl)
-cat('Percentage of 0 in the y variable =', 100*sum(tt$x.x == 0)/nrow(tt), '\n')
+# cat('Percentage of 0 in the y variable =', 100*sum(tt$x.x == 0)/nrow(tt), '\n')
 
 # 100*sum(tt$x.y == 0)/nrow(tt)
 # sum(tt$x.y == 0)
@@ -216,77 +250,82 @@ cat('Percentage of 0 in the y variable =', 100*sum(tt$x.x == 0)/nrow(tt), '\n')
 # sum(tt$prop.x == 1)
 # sum(tt$prop.x == 0)
 
-model.zi = zeroinfl(x.x ~ x.y,
-                    data = tt,
-                    dist = "poisson")
+# model.zi = zeroinfl(x.x ~ x.y,
+#                     data = tt,
+#                     dist = "poisson")
 ### dist = "negbin" may be used
 # summary(model.zi)
 # model.zi$coefficients
 # fitted(model.zi)[1]
 # tt$x.y[1]
 ## Dispersion statistic
-E2 <- resid(model.zi, type = "pearson")
-N  <- nrow(tt)
-p  <- length(coef(model.zi))
-cat(as.character(model.zi$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-
-M4 <- zeroinfl(x.x ~ x.y, data = tt, dist = "negbin")
+# E2 <- resid(model.zi, type = "pearson")
+# N  <- nrow(tt)
+# p  <- length(coef(model.zi))
+# cat(as.character(model.zi$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
+# 
+# M4 <- zeroinfl(x.x ~ x.y, data = tt, dist = "negbin")
 # summary(M4)
 ## Dispersion Statistic
-E2 <- resid(M4, type = "pearson")
-N  <- nrow(tt)
-p  <- length(coef(M4)) + 1 # '+1' is due to theta
-cat(as.character(M4$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-
-lrtest(model.zi, M4)
-vuong(M1,M4)
-vuong(M2,M4)
-vuong(M2,M1)
+# E2 <- resid(M4, type = "pearson")
+# N  <- nrow(tt)
+# p  <- length(coef(M4)) + 1 # '+1' is due to theta
+# cat(as.character(M4$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
+# 
+# lrtest(model.zi, M4)
+# vuong(M1,M4)
+# vuong(M2,M4)
+# vuong(M2,M1)
 
 # glm(x.x ~ prop.y + offset(log(tt$SUM.x)), data = tt, family=poisson(link = 'log'))
 
-Qx <- quantile(tt$x.x, probs=c(.25, .75), na.rm = FALSE)
-iqrx <- IQR(tt$x.x)
-upx <- Qx[2]+1.5*iqrx # Upper Range  
-lowx <- Qx[1]-1.5*iqrx # Lower Range
-outlx <- subset(tt, tt$x.x < (Qx[1] - 1.5*iqrx) | tt$x.x > (Qx[2]+1.5*iqrx))
+# Qx <- quantile(tt$x.x, probs=c(.25, .75), na.rm = FALSE)
+# iqrx <- IQR(tt$x.x)
+# upx <- Qx[2]+1.5*iqrx # Upper Range  
+# lowx <- Qx[1]-1.5*iqrx # Lower Range
+# outlx <- subset(tt, tt$x.x < (Qx[1] - 1.5*iqrx) | tt$x.x > (Qx[2]+1.5*iqrx))
+# 
+# Qy <- quantile(tt$x.y, probs=c(.25, .75), na.rm = FALSE)
+# iqry <- IQR(tt$x.y)
+# upy <- Qy[2]+1.5*iqry # Upper Range  
+# lowy <- Qy[1]-1.5*iqry # Lower Range
+# outly <- subset(tt, tt$x.y < (Qy[1] - 1.5*iqry) | tt$x.y > (Qy[2]+1.5*iqry))
+# 
+# tt_outl <- unique(rbind(outlx, outly))
+# cat('Count of outliers per contig length:\n')
+# data.frame(table(tt_outl$pal))
 
-Qy <- quantile(tt$x.y, probs=c(.25, .75), na.rm = FALSE)
-iqry <- IQR(tt$x.y)
-upy <- Qy[2]+1.5*iqry # Upper Range  
-lowy <- Qy[1]-1.5*iqry # Lower Range
-outly <- subset(tt, tt$x.y < (Qy[1] - 1.5*iqry) | tt$x.y > (Qy[2]+1.5*iqry))
+# tt1_outl <- tt_outl[, c('CHROM', 'Length')]
+# if (file.exists('results/Lsax_short_var_czs_outliers.csv')) {
+#   outl <- read.csv('results/Lsax_short_var_czs_outliers.csv')
+#   tt1_outl <- merge(tt1_outl, outl)
+# }
+# 
+# write.table(x = tt1_outl, file = 'results/Lsax_short_var_czs_outliers.csv', quote = FALSE,
+#             sep = ',', row.names = FALSE)
 
-tt_outl <- unique(rbind(outlx, outly))
-cat('Count of outliers per contig length:\n')
-data.frame(table(tt_outl$pal))
-
-tt1_outl <- tt_outl[, c('CHROM', 'Length')]
-# tt_outl[order(tt_outl$x.y, decreasing = TRUE), ]
-if (file.exists('results/Lsax_short_var_czs_outliers.csv')) {
-  outl <- read.csv('results/Lsax_short_var_czs_outliers.csv')
-  tt1_outl <- merge(tt1_outl, outl)
-}
-# tt_outl <- tt_outl[with(tt_outl, order(x.x, x.y, decreasing = TRUE)), ]
-write.table(x = tt1_outl, file = 'results/Lsax_short_var_czs_outliers.csv', quote = FALSE,
-            sep = ',', row.names = FALSE)
-
-mytheme <- gridExtra::ttheme_default(
-  core = list(fg_params=list(cex = 1)),
-  colhead = list(fg_params=list(cex = 1)),
-  rowhead = list(fg_params=list(cex = 1)))
-g <- ggplot(data = tt, aes(x = x.y, y = x.x)) +
-  geom_point(col = 'black') +
-  # geom_text(data = tt_outl, aes(x = x.y, y = x.x, label = CHROM),hjust = 0, vjust = 0) +
-  geom_ribbon(data = newdata2, aes(x = x.y, y = INDELc, ymin = LL, ymax = UL), fill = 'blue', alpha = .25) +
-  geom_line(data = newdata2, aes(x = x.y, y = INDELc), col = 'blue') +
-  annotation_custom(tableGrob(round(exp(est), 3), theme = mytheme),
-                    xmin=5, xmax=25, ymin = max(newdata2$INDELc)-10, ymax=max(newdata2$INDELc)) +
-  # annotation_custom(tableGrob(round(data.frame(zero=summary(M4)$coefficients$zero[,1:2]), 3), theme = mytheme),
-  #                   xmin=30, xmax=60, ymin = max(M4$fitted.values)-9, ymax=max(M4$fitted.values)) +
-  labs(x = 'SNP count', y = 'INDEL count', title = paste(opt$island, opt$ecotype))
-ggsave(filename = paste('figures/model', opt$island, opt$ecotype, 'SNP_INDEL_count.pdf', sep = "_"),
-       plot = g)
+# mytheme.r <- gridExtra::ttheme_default(
+#   core = list(fg_params=list(cex = 1)),
+#   colhead = list(fg_params=list(cex = 1, col = 'red')),
+#   rowhead = list(fg_params=list(cex = 1)))
+# mytheme.b <- gridExtra::ttheme_default(
+#   core = list(fg_params=list(cex = 1)),
+#   colhead = list(fg_params=list(cex = 1, col = 'blue')),
+#   rowhead = list(fg_params=list(cex = 1)))
+# g <- ggplot(data = tt, aes(x = x.y, y = x.x)) +
+#   geom_point(col = 'black') +
+#   # geom_text(data = tt_outl, aes(x = x.y, y = x.x, label = CHROM),hjust = 0, vjust = 0) +
+#   geom_ribbon(data = newdata2, aes(x = x.y, y = INDEL.M1, ymin = LL.M1, ymax = UL.M1), fill = 'blue', alpha = .25) +
+#   geom_ribbon(data = newdata2, aes(x = x.y, y = INDEL.M2, ymin = LL.M2, ymax = UL.M2), fill = 'red', alpha = .25) +
+#   geom_line(data = newdata2, aes(x = x.y, y = INDEL.M1), col = 'blue') +
+#   geom_line(data = newdata2, aes(x = x.y, y = INDEL.M2), col = 'red') +
+#   annotation_custom(tableGrob(round(exp(est), 3), theme = mytheme.r),
+#                     xmin=5, xmax=25, ymin = max(newdata2$INDEL.M2)-10, ymax=max(newdata2$INDEL.M2)) +
+#   annotation_custom(tableGrob(round(exp(est1), 3), theme = mytheme.b),
+#                     xmin=30, xmax=60, ymin = max(newdata2$INDEL.M2)-10, ymax=max(newdata2$INDEL.M2)) +
+#   labs(x = 'SNP count', y = 'INDEL count', title = paste(opt$island, opt$ecotype))
+# ggsave(filename = paste('figures/model', opt$island, opt$ecotype, 'SNP_INDEL_count.pdf', sep = "_"),
+#        plot = g, width = 8, height = 7)
 # g <- ggplot(data = tt, aes(x = prop.x, y = prop.y)) + geom_point(col = 'black')
 # geom_abline(slope = M4$coefficients$count[2], intercept = M4$coefficients$count[1], col = 'red') +
 # geom_abline(slope = tt.poi$coefficients[2], intercept = tt.poi$coefficients[1], col = 'red') +

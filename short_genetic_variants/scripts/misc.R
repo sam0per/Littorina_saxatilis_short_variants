@@ -122,3 +122,38 @@ summary(lm(formula = Fertility ~., data = swiss))
 
 confint(model$finalModel)
 confint(object = lm(formula = Fertility ~., data = swiss))
+
+# 
+# 
+# 
+# Generate the site frequency spectrum
+# For a neutral model with two populations and migration:
+install.packages('coala')
+library(coala)
+model <- coal_model(20, 2000) +
+  feat_mutation(2) +
+  feat_recombination(1) +
+  sumstat_tajimas_d()
+stats <- simulate(model, seed = 15)
+plot(density(stats$tajimas_d, na.rm = TRUE), 
+     main = "Neutral Distribution of Tajiam's D")
+
+model2a <- coal_model(c(10, 10), 100) +
+  feat_mutation(10) +
+  feat_recombination(5) +
+  feat_migration(0.5, symmetric = TRUE) +
+  sumstat_sfs(population = "all")
+stats <- simulate(model2a, seed = 20)
+barplot(stats$sfs / sum(stats$sfs), 
+        names.arg = seq_along(stats$sfs), 
+        col = 3)
+
+
+
+install.packages('shallot')
+library(shallot)
+pd1 <- ewens(mass(1),50)
+decay <- decay.exponential(temperature(1.0),dist(scale(USArrests)))
+attraction <- attraction(permutation(n.items=50,fixed=FALSE), decay)
+pd2 <- ewens.pitman.attraction(mass(1), discount(0.05), attraction)
+pd3 <- ddcrp(mass(1), attraction)

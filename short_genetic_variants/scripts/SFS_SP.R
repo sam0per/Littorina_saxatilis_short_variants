@@ -1,6 +1,6 @@
 rm(list=ls())
 
-pkgs <- c("tools", "ggplot2", "data.table", "optparse", "dplyr", "patchwork")
+pkgs <- c("tools", "ggplot2", "data.table", "optparse", "dplyr", "patchwork", "gridExtra")
 # Install CRAN packages (if not already installed)
 # .inst <- .packages %in% installed.packages()
 # if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
@@ -23,6 +23,8 @@ option_list = list(
               metavar = "character"),
   make_option(c("-c", "--csv"), type = "character", default = NULL,
               help = "csv file with other info such as ancestral state.", metavar = "character"),
+  make_option(opt_str = "--Test1", action = 'store_true', default = FALSE,
+              help = "add this flag to perform Test 1 of Nielsen et al 2005."),
   make_option(opt_str = "--rminv", action = 'store_true', default = FALSE,
               help = "add this flag if variants inside inversions must be removed."))
 
@@ -113,10 +115,16 @@ snp <- merge(x = data.frame(Var1=1:((unique(dtp$N)*2)-1)), y = data.frame(table(
 # and indels
 # indel <- c(180,30,15,10,8,8,8,9,12) # counts of indels in each of the 9 classes
 indel <- merge(x = snp, y = data.frame(table(dtp[dtp[, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
-indel <- indel[order(indel$Var1), 3]
-indel <- ifelse(test = is.na(indel), yes = 0.00001, no = indel)
-snp <- snp[order(snp$Var1), 2]
-snp <- ifelse(test = is.na(snp), yes = 0.00001, no = snp)
+indel <- apply(X = indel[,-1], MARGIN = 2, FUN = function(x) {
+  ifelse(test = is.na(x), yes = 0, no = x)
+})
+# indel <- indel[order(indel$Var1), 3] + 1
+snp <- indel[, 1] + 1
+indel <- indel[, 2] + 1
+# snp <- snp[order(snp$Var1), 2]
+
+
+# snp <- ifelse(test = is.na(snp), yes = 0.00001, no = snp)
 # ggplot(data = data.frame(N=1:length(indel), C=indel), aes(x = N, y = C)) +
 #   geom_col(col = 'black')
 
@@ -161,47 +169,62 @@ dDAP_h <- ggplot(data = data.frame(N=1:length(indel), dP=indel_p-snp_p), aes(x =
         panel.grid = element_line(colour = "gray70", size = 0.2))
 # dDAP_h
 
-# LL0 <- sum(indel*log(snp_p)) # log-likelihood given expectations based on SNPs
-# 
-# LL1 <- sum(indel*log(indel_p)) # log-likelihood given expectations based on indels
-# 
-# chi_app <- 2*(LL1-LL0) # chi-square approximation with n_classes-1 = 8 df
-# chi_app
-# # can examine the contributions of different classes to the overall chisquare
-# 
-# class_contrib <- rep(0,9)
-# # i=1
-# for (i in 1:9){class_contrib[i] <- 2*((indel[i]*log(indel_p[i])+sum(indel[-i])*log(sum(indel_p[-i])))-((indel[i]*log(snp_p[i]))+sum(indel[-i])*log(sum(snp_p[-i]))))}
-# 
-# plot(1:9,class_contrib)
+class_contrib <- rep(0,((unique(dtn$N)*2)-1))
+if (opt$Test1) {
+  
+  LL0 <- sum(indel*log(snp_p)) # log-likelihood given expectations based on SNPs
 
+  LL1 <- sum(indel*log(indel_p)) # log-likelihood given expectations based on indels
 
-# alternative (better?) test version (testing whether indels and snps differ, rather than whether indels fit snp expectation)
+  # chi_app <- 2*(LL1-LL0) # chi-square approximation with n_classes-1 = 8 df
+  # chi_app
+  # can examine the contributions of different classes to the overall chisquare
 
-joint_p <- (snp+indel)/sum(snp+indel)
+  # class_contrib <- rep(0,9)
+  # i=1
+  for (i in 1:((unique(dtn$N)*2)-1)){class_contrib[i] <- 2*((indel[i]*log(indel_p[i])+sum(indel[-i])*log(sum(indel_p[-i])))-((indel[i]*log(snp_p[i]))+sum(indel[-i])*log(sum(snp_p[-i]))))}
 
-LL0 <- sum(indel*log(joint_p)) + sum(snp*log(joint_p))
-
-LL1 <- sum(indel*log(indel_p)) + sum(snp*log(snp_p))
+  # plot(1:9,class_contrib)
+  
+} else {
+  
+  # alternative (better?) test version (testing whether indels and snps differ, rather than whether indels fit snp expectation)
+  
+  joint_p <- (snp+indel)/sum(snp+indel)
+  
+  LL0 <- sum(indel*log(joint_p)) + sum(snp*log(joint_p))
+  
+  LL1 <- sum(indel*log(indel_p)) + sum(snp*log(snp_p))
+  
+  a <- rep(0,(unique(dtn$N)*2)-1)
+  for (i in 1:((unique(dtn$N)*2)-1)){a[i] <- indel[i]*log(indel_p[i]) + snp[i]*log(snp_p[i]) + sum(indel[-i])*log(sum(indel_p[-i])) + sum(snp[-i])*log(sum(snp_p[-i]))}
+  b <- rep(0,(unique(dtn$N)*2)-1)
+  for (i in 1:((unique(dtn$N)*2)-1)){b[i] <- (indel[i]*log(joint_p[i])) + (snp[i]*log(joint_p[i])) + sum(indel[-i])*log(sum(joint_p[-i])) + sum(snp[-i])*log(sum(joint_p[-i]))}
+  
+  # class_contrib <- rep(0,((unique(dtn$N)*2)-1))
+  for (i in 1:((unique(dtn$N)*2)-1)){class_contrib[i] <- 2*(a[i]-b[i])}
+  
+}
 
 chi_app <- 2*(LL1-LL0)  # now with 16 df (I think)
 cat('Chi-square test statistic =', chi_app, '\n')
 # qchisq(p = 0.05, df = 260)
 ndf <- ((unique(dtn$N)*2)-1-1)*(length(unique(dtn[, cnm]))-1)
-cat('Chi-square critical value at 0.05 with', ndf, 'df =', qchisq(p = 0.05, df = ndf), '\n')
-cat('Test statistic - critical value =', chi_app-qchisq(p = 0.05, df = ndf), '\n')
+cat('Chi-square critical value at 0.01 with', ndf, 'df =', qchisq(p = 0.01, df = ndf), '\n')
+cat('Test statistic - critical value =', chi_app-qchisq(p = 0.01, df = ndf), '\n')
 
-a <- rep(0,(unique(dtn$N)*2)-1)
-for (i in 1:((unique(dtn$N)*2)-1)){a[i] <- indel[i]*log(indel_p[i]) + snp[i]*log(snp_p[i]) + sum(indel[-i])*log(sum(indel_p[-i])) + sum(snp[-i])*log(sum(snp_p[-i]))}
-b <- rep(0,(unique(dtn$N)*2)-1)
-for (i in 1:((unique(dtn$N)*2)-1)){b[i] <- (indel[i]*log(joint_p[i])) + (snp[i]*log(joint_p[i])) + sum(indel[-i])*log(sum(joint_p[-i])) + sum(snp[-i])*log(sum(joint_p[-i]))}
+chi_tb <- data.frame(chi2_stat=chi_app,
+                     chi2_crit=qchisq(p = 0.01, df = ndf),
+                     diff=chi_app-qchisq(p = 0.01, df = ndf))
 
-class_contrib <- rep(0,((unique(dtn$N)*2)-1))
-for (i in 1:((unique(dtn$N)*2)-1)){class_contrib[i] <- 2*(a[i]-b[i])}
+
 # plot(1:((unique(dtn$N)*2)-1), class_contrib)
 
+mytheme.b <- gridExtra::ttheme_default(
+  core = list(fg_params=list(cex = 0.7)),
+  colhead = list(fg_params=list(cex = 0.7, col = 'black')),
+  rowhead = list(fg_params=list(cex = 0.7)))
 contr_p <- ggplot(data = data.frame(N=1:((unique(dtn$N)*2)-1), CC=class_contrib)) +
-  geom_point(aes(x = N, y = CC)) +
   labs(x = 'Derived allele class', y = 'Contribution') +
   theme(axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
@@ -209,7 +232,11 @@ contr_p <- ggplot(data = data.frame(N=1:((unique(dtn$N)*2)-1), CC=class_contrib)
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2))
+        panel.grid = element_line(colour = "gray70", size = 0.2)) +
+  annotation_custom(tableGrob(round(chi_tb, 3), theme = mytheme.b, rows = NULL),
+                    xmin=((unique(dtn$N)*2)-41), xmax=((unique(dtn$N)*2)-21),
+                    ymin = max(class_contrib)-5, ymax=max(class_contrib)) +
+  geom_point(aes(x = N, y = CC))
 
 da_cc <- DAC_h / dDAP_h / contr_p +
   plot_layout(heights = c(2, 1, 1))
