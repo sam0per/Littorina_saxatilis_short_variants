@@ -1,6 +1,6 @@
 rm(list=ls())
 
-pkgs <- c("tools", "ggplot2", "data.table", "optparse", "dplyr", "patchwork", "gridExtra")
+pkgs <- c("tools", "ggplot2", "data.table", "optparse", "dplyr", "patchwork", "gridExtra", "RColorBrewer")
 # Install CRAN packages (if not already installed)
 # .inst <- .packages %in% installed.packages()
 # if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
@@ -16,7 +16,7 @@ option_list = list(
               help = "csv file with allele count for another type of variant and population (e.g., WAVE INDELs, CRAB SNPs or WAVE non-coding INDELs).",
               metavar = "character"),
   make_option(opt_str = "--by", type = "character", default = NULL,
-              help = "column name that defines what to compare (e.g., VTYPE or ECOT).",
+              help = "column name that defines what to compare (e.g., VTYPE, ECOT, ANN).",
               metavar = "character"),
   make_option(c("-t", "--types"), type = "character", default = NULL,
               help = "two types of comparison (e.g., INDEL:SNP, coding_INDEL:noncoding_INDEL or CRAB:WAVE).",
@@ -30,7 +30,7 @@ option_list = list(
 
 opt_parser = OptionParser(usage = paste("Rscript scripts/SFS_SP.R -i summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv",
                                         "-j summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv",
-                                        "--by variant",
+                                        "--by ANN",
                                         "-t INDEL:SNP",
                                         "-c results/Lsax_short_var_czs_daf_inv_findv.csv"),
                           option_list=option_list,
@@ -42,13 +42,15 @@ if (is.null(opt$vone) | is.null(opt$vtwo) | is.null(opt$by) | is.null(opt$types)
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
+# sc <- ic
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
 # head(ic)
 # sum(duplicated(ic))
 ic <- unique(read.csv(file = opt$vone))
 
+# sc <- unique(read.table(file = 'annotated/AN_CZA_INDEL.filt2.txt', header = TRUE))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_RIGHT_SNP_filt2_42N.csv'))
@@ -60,18 +62,68 @@ if (unique(ic$N) != unique(sc$N)) {
 
 # cnm <- 'VTYPE'
 # cnm <- 'ECOT'
+# cnm <- 'ANN'
 cnm <- opt$by
 
-# tv <- strsplit(c('INDEL:SNP'), split = ":")[[1]]
-# tv <- strsplit(c('CRAB:WAVE_LEFT'), split = ":")[[1]]
-# tv <- strsplit(c('WAVE_LEFT:WAVE_RIGHT'), split = ":")[[1]]
+# tv <- strsplit(c('coding_SNP:noncoding_SNP'), split = ":")[[1]]
 tv <- strsplit(opt$types, split = ":")[[1]]
+if (cnm == 'ANN') {
+  tv2 <- unlist(strsplit(tv, split = "_"))
+}
+
 
 # dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
-dtn <- merge(x = dt, y = rbind(ic,sc))
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv')), split = "_")[[1]]
+parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
+
+
+
+if (cnm == 'ANN') {
+  
+  ann_fl <- list.files(path = 'annotated', pattern = parts[2], full.names = TRUE)
+  
+  if (tv2[2]==tv2[4]) {
+    
+    ann <- read.table(ann_fl[grepl(pattern = tv2[2], x = ann_fl)], header = TRUE)
+    ann$VTYPE <- tv2[2]
+    ann$ZONE <- parts[2]
+    ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
+    # head(ann)
+    dtn <- merge(x = dt, y = ic)
+    
+  } else {
+    
+    ann_ic <- read.table(ann_fl[grepl(pattern = tv[1], x = ann_fl)], header = TRUE)
+    ann_ic$VTYPE <- tv[1]
+    ann_sc <- read.table(ann_fl[grepl(pattern = tv[2], x = ann_fl)], header = TRUE)
+    ann_sc$VTYPE <- tv[2]
+    ann <- rbind(ann_ic, ann_sc)
+    ann$ZONE <- parts[2]
+    ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
+    dtn <- merge(x = dt, y = rbind(ic,sc))
+    
+  }
+  
+  dtn <- unique(merge(x = dtn, y = ann))
+  
+} else {
+  
+  dtn <- merge(x = dt, y = rbind(ic,sc))
+  
+}
+
+# head(dtn)
+# table(dtn$ZONE)
+# table(dtn$VTYPE)
+# table(dtn$ECOT)
+
+# tv <- strsplit(c('CRAB:WAVE_LEFT'), split = ":")[[1]]
+# tv <- strsplit(c('WAVE_LEFT:WAVE_RIGHT'), split = ":")[[1]]
+
+
 if (opt$rminv) {
   cat('1.  Varinats inside inversions will be removed.\n')
   dtn <- dtn[dtn$invRui==FALSE, ]
@@ -86,6 +138,8 @@ dtn$DAC <- ifelse(test = dtn$NE_W_Lcomp=='ref_anc:ref_anc', yes = dtn$AC, no = (
 # head(dtn[dtn$DAC==0, ])
 # head(dtn[dtn$DAC==(unique(dtn$N)*2), ])
 dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
+# str(dtp)
+# dtp$ANN <- as.character(dtp$ANN)
 # table(dtp$DAC)
 # hist(dtp$DAC, breaks = 100)
 # dtp[dtp$DAF==1,]
@@ -97,6 +151,43 @@ dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
 # ggplot(data = dtp, aes(x = DAC, fill = VTYPE)) +
 #   facet_wrap(~VTYPE, scales = 'free_y') +
 #   geom_histogram(col = 'black', binwidth = 2)
+
+## READ TABLE WITH SNPEFF ANNOTATION CLASSES
+snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
+# str(snpeff)
+head(snpeff)
+if (exists('tv2')) {
+  # cidx <- which(colnames(snpeff) %in% tv2)
+  snpeff1 <- as.character(snpeff[snpeff[, tv2[1]]==TRUE, 1])
+  snpeff2 <- as.character(snpeff[snpeff[, tv2[3]]==TRUE, 1])
+  
+  if (length(intersect(snpeff1, snpeff2))!=0) {
+    stop("One class of annotation is shared between the two sets of comparison.\n", call.=FALSE)
+  }
+  
+  eff_tar <- as.data.frame(rbindlist(lapply(dtp$ANN, FUN = function(x) {
+    stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
+    an1 <- sum(stsp %in% snpeff1) > 0
+    an2 <- sum(stsp %in% snpeff2) > 0
+    an_dt <- data.frame(an1, an2)
+    colnames(an_dt) <- tv2[c(1,3)]
+    return(an_dt)
+  })))
+  
+  rm_ann <- eff_tar[rowSums(x = eff_tar)>1, ]
+  write.table(x = dtp[as.integer(row.names(rm_ann)), ], file = paste('results/rm', parts[2],
+                                                                     paste(unique(dtp$ECOT), collapse = '_'),
+                                                                     paste(unique(dtp$VTYPE), collapse = '_'),
+                                                                     'ANN.txt', sep = '_'),
+              quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
+  
+  ## remove variants that appear in both classes of annotation
+  dtp <- dtp[-as.integer(row.names(rm_ann)), ]
+  eff_tar <- eff_tar[-as.integer(row.names(rm_ann)), ]
+  dtp$ANN <- ifelse(test = eff_tar[, 1]==TRUE, yes = tv[1], no = tv[2])
+}
+head(dtp)
+table(dtp$ANN)
 
 
 # Suppose we sample 5 individuals, then there are 10 chromosomes
@@ -128,18 +219,39 @@ indel <- indel[, 2] + 1
 # ggplot(data = data.frame(N=1:length(indel), C=indel), aes(x = N, y = C)) +
 #   geom_col(col = 'black')
 
+## READ COLOUR PALETTES
+ann_pal <- read.csv(file = 'data/ANN_colour_pal.csv')
+# str(ann_pal)
+# as.character(ann_pal$coding)
+ann_pal <- mutate_all(.tbl = ann_pal, .funs = as.character)
+row.names(ann_pal) <- ann_pal$VTYPE
+fac_pal <- as.character(ann_pal[tv2[2], tv2[c(1,3)]])
+# class(fac_pal)
+
+ze_pal <- read.csv(file = 'data/ZONE_ECOT_pal.csv')
+ze_pal <- mutate_all(.tbl = ze_pal, .funs = as.character)
+row.names(ze_pal) <- ze_pal$ZONE
+strip_pal <- ze_pal[parts[2], as.character(unique(dtp$ECOT))]
+
+## ADD ZONE AND ECOTYPE TO FACET LABEL
+ann.labs <- c(paste(parts[2], as.character(unique(dtp$ECOT)), gsub(pattern = '_', replacement = ' ', x = tv[1])),
+              paste(parts[2], as.character(unique(dtp$ECOT)), gsub(pattern = '_', replacement = ' ', x = tv[2])))
+names(ann.labs) <- tv
+
+# FIGURES
 DAC_h <- ggplot(data = data.frame(N=rep(1:length(indel), 2), C=c(indel,snp), V=c(rep(tv[1], length(indel)),
-                                                                        rep(tv[2], length(indel)))), aes(x = N, y = C)) +
-  facet_wrap(facets = ~V, nrow = 2, scales = 'free') +
+                                                                        rep(tv[2], length(indel)))), aes(x = N, y = C-1)) +
+  facet_wrap(facets = ~V, nrow = 2, scales = 'free', labeller = labeller(V=ann.labs)) +
   geom_col(aes(fill = V), col = 'black', position = 'dodge') +
-  scale_fill_manual(values = c("#1B9E77", "#666666")) +
+  # scale_fill_manual(values = c("#1B9E77", "#666666")) +
+  scale_fill_manual(values = fac_pal) +
   labs(x = '', y = 'Derived allele count') +
   theme(legend.position = 'none',
         axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
         strip.text = element_text(size = 10),
         panel.background = element_blank(),
-        strip.background = element_rect(fill = "#91bfdb", color = "black"),
+        strip.background = element_rect(fill = strip_pal, color = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
@@ -158,7 +270,8 @@ indel_p <- indel/sum(indel)   # ML frequencies of the classes based on indel dat
 # 'difference in proportion': (indels in category/all indels) - (SNPs in category/all SNPs).
 dDAP_h <- ggplot(data = data.frame(N=1:length(indel), dP=indel_p-snp_p), aes(x = N, y = dP)) +
   geom_point() +
-  labs(x = '', y = paste(tv[1], 'prop. -', tv[2], 'prop.')) +
+  # labs(x = '', y = paste(tv[1], 'prop. -', tv[2], 'prop.')) +
+  labs(x = '', y = 'Difference in proportion') +
   theme(legend.position = 'none',
         axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
@@ -209,7 +322,7 @@ if (opt$Test1) {
 chi_app <- 2*(LL1-LL0)  # now with 16 df (I think)
 cat('Chi-square test statistic =', chi_app, '\n')
 # qchisq(p = 0.05, df = 260)
-ndf <- ((unique(dtn$N)*2)-1-1)*(length(unique(dtn[, cnm]))-1)
+ndf <- ((unique(dtn$N)*2)-1-1)*(length(unique(dtp[, cnm]))-1)
 cat('Chi-square critical value at 0.01 with', ndf, 'df =', qchisq(p = 0.01, df = ndf), '\n')
 cat('Test statistic - critical value =', chi_app-qchisq(p = 0.01, df = ndf), '\n')
 
@@ -244,7 +357,7 @@ da_cc <- DAC_h / dDAP_h / contr_p +
 
 # parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv')), split = "_")[[1]]
 # parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv')), split = "_")[[1]]
-parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
+# parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
 if (cnm == 'VTYPE') {
   if (parts[3] == 'WAVE') {
     ECOT <- paste(parts[3], parts[4], sep = '_')
@@ -260,7 +373,7 @@ if (cnm == 'VTYPE') {
     ggsave(filename = paste('figures/SFS', parts[2], ECOT, tv[1], tv[2] ,'chi.pdf', sep = "_"), plot = da_cc,
            width = 10, height = 7)
   }
-} else {
+} else if (cnm == 'ECOT') {
   if (parts[3] == 'WAVE') {
     # ECOT <- paste(parts[3], parts[4], sep = '_')
     VTYPE <- parts[5]
@@ -273,6 +386,16 @@ if (cnm == 'VTYPE') {
            width = 10, height = 7)
   } else {
     ggsave(filename = paste('figures/SFS', parts[2], tv[1], tv[2], VTYPE,'chi.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
+  }
+} else {
+  if (opt$rminv) {
+    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtp$ECOT), collapse = '_'), tv[1], tv[2],
+                            'chi_noinv.pdf', sep = "_"), plot = da_cc,
+           width = 10, height = 7)
+  } else {
+    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtp$ECOT), collapse = '_'), tv[1], tv[2],
+                            'chi.pdf', sep = "_"), plot = da_cc,
            width = 10, height = 7)
   }
 }
