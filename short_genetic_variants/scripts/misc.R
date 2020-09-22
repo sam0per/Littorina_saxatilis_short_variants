@@ -188,7 +188,7 @@ nnsyn <- c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE,
            FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE,
            FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE,
            FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE)
-dt_eff <- data.frame(eff, impact, coding, non_coding=!coding, nnsyn)
+dt_eff <- data.frame(eff, impact, coding, noncoding=!coding, nnsyn)
 dt_eff$syn <- ifelse(grepl(pattern = 'synonymous|_retained', x = dt_eff$eff), yes = TRUE, no = FALSE)
 # sum(dt_eff$syn)
 dt_eff$ins <- c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE,
@@ -203,3 +203,39 @@ dt_eff$del <- c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FAL
                 TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE)
 
 write.table(x = dt_eff, file = 'data/ANN_snpeff_classes.csv', quote = FALSE, sep = ',', row.names = FALSE, col.names = TRUE)
+# 
+# 
+# 
+as.character(dtp$ANN)[sapply(dtp$ANN, FUN = function(x) {
+  stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
+  hi <- sum(stsp==snpeff2)>0
+})]
+dtp[sapply(dtp$ANN, FUN = function(x) {
+  stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
+  hi <- sum(stsp==snpeff2)>0
+}),]
+# 
+# 
+# 
+display.brewer.all(colorblindFriendly = TRUE)
+display.brewer.pal(n = 9, name = "Greens")
+brewer.pal(n = 9, name = "Greens")
+
+display.brewer.pal(n = 9, name = "YlGnBu")
+brewer.pal(n = 9, name = "YlGnBu")
+
+display.brewer.pal(n = 9, name = "Greys")
+brewer.pal(n = 9, name = "Greys")
+
+display.brewer.pal(n = 9, name = "Purples")
+brewer.pal(n = 9, name = "Purples")
+
+display.brewer.pal(n = 11, name = "Dark2")
+brewer.pal(n = 8, name = "Dark2")
+
+display.brewer.pal(n = 9, name = "Reds")
+brewer.pal(n = 9, name = "Reds")[c(3,4,5)]
+display.brewer.pal(n = 9, name = "Blues")
+brewer.pal(n = 9, name = "Blues")[c(2,4,5)]
+display.brewer.pal(n = 9, name = "YlOrBr")
+brewer.pal(n = 9, name = "YlOrBr")[c(3,4,5)]
