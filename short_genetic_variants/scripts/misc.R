@@ -206,13 +206,13 @@ write.table(x = dt_eff, file = 'data/ANN_snpeff_classes.csv', quote = FALSE, sep
 # 
 # 
 # 
-as.character(dtp$ANN)[sapply(dtp$ANN, FUN = function(x) {
+as.character(dtn$ANN)[sapply(dtn$ANN, FUN = function(x) {
   stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
-  hi <- sum(stsp==snpeff2)>0
+  hi <- sum(stsp %in% snpeff2)>0
 })]
-dtp[sapply(dtp$ANN, FUN = function(x) {
+dtn[sapply(dtn$ANN, FUN = function(x) {
   stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
-  hi <- sum(stsp==snpeff2)>0
+  hi <- sum(stsp %in% snpeff2)>0
 }),]
 # 
 # 

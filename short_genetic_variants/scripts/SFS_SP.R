@@ -5,7 +5,7 @@ pkgs <- c("tools", "ggplot2", "data.table", "optparse", "dplyr", "patchwork", "g
 # .inst <- .packages %in% installed.packages()
 # if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 # Load packages into session
-lapply(pkgs, require, character.only=TRUE)
+invisible(lapply(pkgs, require, character.only=TRUE))
 ################################################################################################################
 ##### INPUT ####################################################################################################
 option_list = list(
@@ -42,7 +42,7 @@ if (is.null(opt$vone) | is.null(opt$vtwo) | is.null(opt$by) | is.null(opt$types)
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv'))
 # sc <- ic
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
@@ -68,9 +68,12 @@ if (unique(ic$N) != unique(sc$N)) {
 # cnm <- 'VTYPE'
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
+# cnm <- 'ANC'
 cnm <- opt$by
 
-# tv <- strsplit(c('ins_INDEL:del_INDEL'), split = ":")[[1]]
+# tv <- strsplit(c('A:C'), split = ":")[[1]]
+# tv <- strsplit(c('frameshift_INS:inframe_INS'), split = ":")[[1]]
+# tv <- strsplit(c('DEL:INS'), split = ":")[[1]]
 tv <- strsplit(opt$types, split = ":")[[1]]
 if (cnm == 'ANN') {
   tv2 <- unlist(strsplit(tv, split = "_"))
@@ -78,10 +81,11 @@ if (cnm == 'ANN') {
 
 # dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_del_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
-# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv')), split = "_")[[1]]
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv')), split = "_")[[1]]
 parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
 
 
@@ -91,8 +95,19 @@ if (cnm == 'ANN') {
   
   if (tv2[2]==tv2[4]) {
     
-    ann <- read.table(ann_fl[grepl(pattern = tv2[2], x = ann_fl)], header = TRUE)
-    ann$VTYPE <- tv2[2]
+      ann <- read.table(ann_fl[grepl(pattern = substr(x = tv2[2], start = 1, stop = 2), x = ann_fl)], header = TRUE)
+    
+    if (tv2[2]=='DEL' | tv2[2]=='INS') {
+      
+      ann$VTYPE <- 'INDEL'
+      ann$CLASS <- tv2[2]
+      
+    } else {
+      
+      ann$VTYPE <- tv2[2]
+      
+    }
+    
     ann$ZONE <- parts[2]
     ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
     # head(ann)
@@ -115,7 +130,7 @@ if (cnm == 'ANN') {
   
 } else {
   
-  dtn <- merge(x = dt, y = rbind(ic,sc))
+  dtn <- unique(merge(x = dt, y = rbind(ic,sc)))
   
 }
 
@@ -123,6 +138,7 @@ if (cnm == 'ANN') {
 # table(dtn$ZONE)
 # table(dtn$VTYPE)
 # table(dtn$ECOT)
+# table(dtn$CLASS)
 
 # tv <- strsplit(c('CRAB:WAVE_LEFT'), split = ":")[[1]]
 # tv <- strsplit(c('WAVE_LEFT:WAVE_RIGHT'), split = ":")[[1]]
@@ -142,6 +158,14 @@ dtn$DAC <- ifelse(test = dtn$NE_W_Lcomp=='ref_anc:ref_anc', yes = dtn$AC, no = (
 # head(dtn[dtn$DAC==0, ])
 # head(dtn[dtn$DAC==(unique(dtn$N)*2), ])
 dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
+# as.character(dtp$REF)
+dtp$ANC <- ifelse(test = dtp$NE_W_Lcomp=='ref_anc:ref_anc', yes = as.character(dtp$REF), no = as.character(dtp$ALT))
+if (cnm == 'ANC') {
+  dtp <- dtp[dtp$ANC==tv[1] | dtp$ANC==tv[2], ]
+  # table(dtp$ECOT)
+  dtp$ECOT <- dtp$ANC
+}
+# table(dtp$ANC)
 # str(dtp)
 # dtp$ANN <- as.character(dtp$ANN)
 # table(dtp$DAC)
@@ -159,7 +183,7 @@ dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
 ## READ TABLE WITH SNPEFF ANNOTATION CLASSES
 snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
 # str(snpeff)
-head(snpeff)
+# head(snpeff)
 if (exists('tv2')) {
   # colnames(snpeff) %in% tv2
   if (sum(tv2 %in% colnames(snpeff))==0) {
@@ -210,7 +234,8 @@ if (exists('tv2')) {
     # sum(dtp$inframe)
     # sum(dtp$frameshift)
     dtp <- dtp[dtp[, tv2[1]] == TRUE | dtp[, tv2[3]] == TRUE, ]
-    dtp$ANN <- ifelse(test = eff_tar[, 1]==TRUE, yes = tv[1], no = tv[2])
+    # dtp$ANN <- ifelse(test = eff_tar[, 1]==TRUE, yes = tv[1], no = tv[2])
+    dtp$ANN <- ifelse(test = dtp[, tv2[1]]==TRUE, yes = tv[1], no = tv[2])
     
   }
   
@@ -268,11 +293,26 @@ ann_pal <- read.csv(file = 'data/ANN_colour_pal.csv')
 # as.character(ann_pal$coding)
 ann_pal <- mutate_all(.tbl = ann_pal, .funs = as.character)
 row.names(ann_pal) <- ann_pal$VTYPE
-if (tv2[1]==tv2[3]) {
-  fac_pal <- as.character(ann_pal[, tv2[1]])
-  fac_pal <- fac_pal[fac_pal!='FALSE']
+
+if (exists('tv2')) {
+  
+  if (tv2[1]==tv2[3]) {
+    
+    fac_pal <- as.character(ann_pal[, tv2[1]])
+    fac_pal <- fac_pal[fac_pal!='FALSE']
+    
+  } else {
+    
+    fac_pal <- as.character(ann_pal[tv2[2], tv2[c(1,3)]])
+    
+  }
+  
 } else {
-  fac_pal <- as.character(ann_pal[tv2[2], tv2[c(1,3)]])
+  
+  fac_pal <- data.frame(nb = c('A', 'C', 'G', 'T', 'DEL', 'INS'),
+                        pal = c('green', 'blue', 'black', 'red', '#D95F02', '#7570B3'))
+  fac_pal <- as.character(fac_pal[fac_pal$nb==tv, 'pal'])
+  
 }
 
 # class(fac_pal)
@@ -357,7 +397,8 @@ if (length(strip_pal) > 1) {
 } else {
   
   DAC_h <- ggplot(data = data.frame(N=rep(1:length(indel), 2), C=c(indel,snp), V=c(rep(tv[1], length(indel)),
-                                                                                   rep(tv[2], length(indel)))), aes(x = N, y = C-1)) +
+                                                                                   rep(tv[2], length(indel)))),
+                  aes(x = N, y = C-1)) +
     facet_wrap(facets = ~V, nrow = 2, scales = 'free', labeller = labeller(V=ann.labs)) +
     geom_col(aes(fill = V), col = 'black', position = 'dodge') +
     # scale_fill_manual(values = c("#1B9E77", "#666666")) +
@@ -523,11 +564,11 @@ if (cnm == 'VTYPE') {
   }
 } else {
   if (opt$rminv) {
-    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtp$ECOT), collapse = '_'), tv[1], tv[2],
+    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtn$ECOT), collapse = '_'), tv[1], tv[2],
                             'chi_noinv.pdf', sep = "_"), plot = da_cc,
            width = 10, height = 7)
   } else {
-    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtp$ECOT), collapse = '_'), tv[1], tv[2],
+    ggsave(filename = paste('figures/SFS', parts[2], paste(unique(dtn$ECOT), collapse = '_'), tv[1], tv[2],
                             'chi.pdf', sep = "_"), plot = da_cc,
            width = 10, height = 7)
   }
