@@ -239,3 +239,60 @@ display.brewer.pal(n = 9, name = "Blues")
 brewer.pal(n = 9, name = "Blues")[c(2,4,5)]
 display.brewer.pal(n = 9, name = "YlOrBr")
 brewer.pal(n = 9, name = "YlOrBr")[c(3,4,5)]
+# 
+# 
+# 
+## PREPARE TABLE FOR TAJIMA'S D EXPECTATIONS
+vart <- c('INDEL', 'INS', 'DEL', 'SNP')
+cate <- c('noncoding', 'coding', 'frameshift', 'inframe', 'synonymous', 'nonsynonymous')
+vc <- unlist(lapply(X = vart, FUN = function(x) paste(x, cate, sep = '_')))
+
+colClasses = rep(x = "character", length(vc))
+col.names = vc
+df <- read.table(text = "",
+                 colClasses = colClasses,
+                 col.names = col.names, nrows = length(vc))
+row.names(df) <- vc
+
+df <- data.frame(matrix(data = 0, nrow = length(vc), ncol = length(vc),
+                        dimnames = list(vc, vc)),
+                 stringsAsFactors=F)
+
+# write.table(x = df, file = 'data/ANN_expected_tajD.csv', quote = FALSE, sep = ',', row.names = TRUE, col.names = TRUE)
+# 
+# 
+# 
+## TAJIMA'S D
+dtp_or <- dtp
+dtp <- dtp_or[dtp_or$ANN==tv[1],]
+
+pi_n <- 2 * dtp$DAC * ((2*dtp$N) - dtp$DAC)
+# 2*10
+# (2*56)-10
+# 20*102
+pi_d <- (2*dtp$N) * ((2*dtp$N) - 1)
+# 2*56
+# 112*111
+# pi_d[1]
+e_pi <- sum(pi_n / pi_d)
+# sum(c(2,4,1)/c(2,2,10))
+
+head(dtp)
+e_theta <- nrow(dtp) / sum(1/seq(1, 2*unique(dtp$N)-1))
+
+variance.d <- function(n,S) {
+  a1=sum(1/(seq(from=1, to=(n-1), by=1)))
+  a2=sum(1/((seq(from=1, to=(n-1), by=1))**2))
+  b1=(n+1)/(3*(n-1))
+  b2=(2*((n**2)+n+3))/((9*n)*(n-1))
+  c1=b1 - (1/a1)
+  c2=b2-((n+2)/(a1*n)) + (a2/(a1**2))
+  e1=c1/a1
+  e2=c2/((a1**2)+a2)
+  var=(e1*S) + (e2*S*(S-1))
+  return(var)
+}
+varD <- variance.d(n = 2*unique(dtp$N), S = nrow(dtp))
+(e_pi - e_theta) / sqrt(varD)
+
+# (7.120912 - 8.541293) / sqrt(9.629897)

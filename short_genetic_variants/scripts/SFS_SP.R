@@ -42,22 +42,22 @@ if (is.null(opt$vone) | is.null(opt$vtwo) | is.null(opt$by) | is.null(opt$types)
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv'))
 # sc <- ic
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv'))
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_56N.csv'))
 # head(ic)
 # sum(duplicated(ic))
 ic <- unique(read.csv(file = opt$vone))
 
 # sc <- unique(read.table(file = 'annotated/AN_CZA_INDEL.filt2.txt', header = TRUE))
-# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
+# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZD_CRAB_SNP_filt2_64N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_RIGHT_SNP_filt2_42N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_SNP_filt2_70N.csv'))
-# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_CRAB_INDEL_filt2_56N.csv'))
+# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_56N.csv'))
 # head(sc)
 sc <- unique(read.csv(file = opt$vtwo))
 
@@ -72,8 +72,8 @@ if (unique(ic$N) != unique(sc$N)) {
 cnm <- opt$by
 
 # tv <- strsplit(c('A:C'), split = ":")[[1]]
-# tv <- strsplit(c('frameshift_INS:inframe_INS'), split = ":")[[1]]
-# tv <- strsplit(c('DEL:INS'), split = ":")[[1]]
+# tv <- strsplit(c('inframe_DEL:inframe_INS'), split = ":")[[1]]
+# tv <- strsplit(c('INDEL:SNP'), split = ":")[[1]]
 tv <- strsplit(opt$types, split = ":")[[1]]
 if (cnm == 'ANN') {
   tv2 <- unlist(strsplit(tv, split = "_"))
@@ -85,7 +85,7 @@ if (cnm == 'ANN') {
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
-# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv')), split = "_")[[1]]
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv')), split = "_")[[1]]
 parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
 
 
@@ -95,7 +95,7 @@ if (cnm == 'ANN') {
   
   if (tv2[2]==tv2[4]) {
     
-      ann <- read.table(ann_fl[grepl(pattern = substr(x = tv2[2], start = 1, stop = 2), x = ann_fl)], header = TRUE)
+    ann <- read.table(ann_fl[grepl(pattern = substr(x = tv2[2], start = 1, stop = 2), x = ann_fl)], header = TRUE)
     
     if (tv2[2]=='DEL' | tv2[2]=='INS') {
       
@@ -115,10 +115,22 @@ if (cnm == 'ANN') {
     
   } else {
     
-    ann_ic <- read.table(ann_fl[grepl(pattern = tv2[2], x = ann_fl)], header = TRUE)
-    ann_ic$VTYPE <- tv2[2]
-    ann_sc <- read.table(ann_fl[grepl(pattern = tv2[4], x = ann_fl)], header = TRUE)
-    ann_sc$VTYPE <- tv2[4]
+    ann_ic <- read.table(ann_fl[grepl(pattern = substr(x = tv2[2], start = 1, stop = 2), x = ann_fl)], header = TRUE)
+    ann_sc <- read.table(ann_fl[grepl(pattern = substr(x = tv2[4], start = 1, stop = 2), x = ann_fl)], header = TRUE)
+    
+    if (tv2[2]=='DEL' & tv2[4]=='INS') {
+      
+      ann_ic$VTYPE <- 'INDEL'
+      ann_sc$VTYPE <- 'INDEL'
+      # ann$CLASS <- tv2[2]
+      
+    } else {
+      
+      ann_ic$VTYPE <- tv2[2]
+      ann_sc$VTYPE <- tv2[4]
+      
+    }
+    
     ann <- rbind(ann_ic, ann_sc)
     ann$ZONE <- parts[2]
     ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
@@ -211,7 +223,17 @@ if (exists('tv2')) {
     return(an_dt)
   })))
   # head(eff_tar)
-  eff_tar$VTYPE <- dtp$VTYPE
+  
+  if (tv2[2]=='DEL' & tv2[4]=='INS') {
+    
+    eff_tar$VTYPE <- dtp$CLASS
+    
+  } else {
+    
+    eff_tar$VTYPE <- dtp$VTYPE
+    
+  }
+  
   
   # rm_ann <- eff_tar[rowSums(x = eff_tar[, -3])>1, ]
   # write.table(x = dtp[as.integer(row.names(rm_ann)), ], file = paste('results/rm', parts[2],
@@ -298,7 +320,7 @@ if (exists('tv2')) {
   
   if (tv2[1]==tv2[3]) {
     
-    fac_pal <- as.character(ann_pal[, tv2[1]])
+    fac_pal <- as.character(ann_pal[tv2[c(2,4)], tv2[1]])
     fac_pal <- fac_pal[fac_pal!='FALSE']
     
   } else {
@@ -311,7 +333,7 @@ if (exists('tv2')) {
   
   fac_pal <- data.frame(nb = c('A', 'C', 'G', 'T', 'DEL', 'INS'),
                         pal = c('green', 'blue', 'black', 'red', '#D95F02', '#7570B3'))
-  fac_pal <- as.character(fac_pal[fac_pal$nb==tv, 'pal'])
+  fac_pal <- as.character(fac_pal[as.character(fac_pal$nb) %in% tv, 'pal'])
   
 }
 
