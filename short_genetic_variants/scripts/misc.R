@@ -218,6 +218,9 @@ dtn[sapply(dtn$ANN, FUN = function(x) {
 # 
 # 
 display.brewer.all(colorblindFriendly = TRUE)
+display.brewer.pal(n = 12, name = "Paired")
+brewer.pal(n = 12, name = "Paired")[7:8]
+
 display.brewer.pal(n = 9, name = "Greens")
 brewer.pal(n = 9, name = "Greens")
 
@@ -296,3 +299,20 @@ varD <- variance.d(n = 2*unique(dtp$N), S = nrow(dtp))
 (e_pi - e_theta) / sqrt(varD)
 
 # (7.120912 - 8.541293) / sqrt(9.629897)
+# 
+# 
+# 
+## GC-biased gene conversion
+dt$gBGC <- NULL
+dt$ANC <- ifelse(test = dt$NE_W_Lcomp=='ref_anc:ref_anc', yes = as.character(dt$REF), no = as.character(dt$ALT))
+dt$DER <- ifelse(test = dt$NE_W_Lcomp=='ref_anc:ref_anc', yes = as.character(dt$ALT), no = as.character(dt$REF))
+dt$A_gBGC <- ifelse(test = dt$ANC=='A' | dt$ANC=='T', yes = 'W', no = 'S')
+head(dt)
+tail(dt)
+dt$D_gBGC <- ifelse(test = dt$DER=='A' | dt$DER=='T', yes = 'W', no = 'S')
+dt$gBGC <- paste(dt$A_gBGC, dt$D_gBGC, sep = '')
+table(dt$gBGC)
+write.table(x = dt, file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv', quote = FALSE, sep = ',', row.names = FALSE, col.names = TRUE)
+# 
+# 
+# 

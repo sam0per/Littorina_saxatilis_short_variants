@@ -32,16 +32,19 @@ if (is.null(opt$vone) | is.null(opt$by) | is.null(opt$csv)){
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv'))
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_SNP_filt2_59N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_66N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv'))
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_56N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
 # head(ic)
 # sum(duplicated(ic))
 ic <- unique(read.csv(file = opt$vone))
 
-# cnm <- 'INDEL:coding'
+# cnm <- 'INDEL:TEST'
+# cnm <- 'INDEL:noncoding'
+# cnm <- 'SNP:noncoding'
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
 # cnm <- 'ANC'
@@ -58,16 +61,20 @@ tv <- strsplit(cnm, split = ":")[[1]]
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
-ann_fl <- list.files(path = 'annotated', pattern = paste(levels(ic$ZONE), tv[1], sep = '_'), full.names = TRUE)
-ann <- read.table(file = ann_fl, header = TRUE)
-head(ann)
-
 if (tv[1]=='DEL' | tv[1]=='INS') {
+  
+  ann_fl <- list.files(path = 'annotated', pattern = paste(levels(ic$ZONE), 'INDEL',
+                                                           sep = '_'), full.names = TRUE)
+  ann <- read.table(file = ann_fl, header = TRUE)
   
   ann$VTYPE <- 'INDEL'
   ann$CLASS <- tv[1]
   
 } else {
+  
+  ann_fl <- list.files(path = 'annotated', pattern = paste(levels(ic$ZONE), tv[1],
+                                                           sep = '_'), full.names = TRUE)
+  ann <- read.table(file = ann_fl, header = TRUE)
   
   ann$VTYPE <- tv[1]
   
@@ -84,6 +91,7 @@ dtn <- unique(merge(x = dtn, y = ann))
 # table(dtn$VTYPE)
 # table(dtn$ECOT)
 # table(dtn$CLASS)
+# table(dtn$gBGC) 
 
 if (opt$rminv) {
   cat('1.  Varinats inside inversions will be removed.\n')
@@ -96,16 +104,18 @@ if (opt$rminv) {
 dtn$DAC <- ifelse(test = dtn$NE_W_Lcomp=='ref_anc:ref_anc', yes = dtn$AC, no = (unique(dtn$N)*2)-dtn$AC)
 
 dtp <- dtn[!is.na(dtn$av) & dtn$DAC!=0 & dtn$DAC!=(unique(dtn$N)*2), ]
+# dtp[duplicated(dtp$cp), ]
+dtp <- dtp[!duplicated(dtp$cp), ]
 
 # 
 # 
 # 
-dtp$ANC <- ifelse(test = dtp$NE_W_Lcomp=='ref_anc:ref_anc', yes = as.character(dtp$REF), no = as.character(dtp$ALT))
-if (cnm == 'ANC') {
-  dtp <- dtp[dtp$ANC==tv[1] | dtp$ANC==tv[2], ]
-  # table(dtp$ECOT)
-  dtp$ECOT <- dtp$ANC
-}
+# dtp$ANC <- ifelse(test = dtp$NE_W_Lcomp=='ref_anc:ref_anc', yes = as.character(dtp$REF), no = as.character(dtp$ALT))
+# if (cnm == 'ANC') {
+#   dtp <- dtp[dtp$ANC==tv[1] | dtp$ANC==tv[2], ]
+#   # table(dtp$ECOT)
+#   dtp$ECOT <- dtp$ANC
+# }
 # table(dtp$ANC)
 # 
 # 
@@ -116,28 +126,61 @@ snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
 # str(snpeff)
 # head(snpeff)
 
-if (sum(tv[2] %in% colnames(snpeff))==0) {
+if (tv[1] != tv[2]) {
   
-  effcat <- as.character(snpeff[grepl(pattern = tv[2], x = snpeff$eff), 1])
+  if (sum(tv[2] %in% colnames(snpeff))==0) {
+    
+    effcat <- as.character(snpeff[grepl(pattern = tv[2], x = snpeff$eff), 1])
+    
+  } else {
+    
+    effcat <- as.character(snpeff[snpeff[, tv[2]]==TRUE, 1])
+    
+  }
   
-} else {
+  eff_tar <- as.data.frame(rbindlist(lapply(dtp$ANN, FUN = function(x) {
+    stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
+    
+    if (sum(grepl(pattern = '&', x = stsp)) > 0) {
+      
+      tosplit <- stsp[grepl(pattern = '&', x = stsp)]
+      stsp <- c(stsp, as.character(unlist(data.frame(strsplit(tosplit, "&")))))
+      
+    }
+    
+    an1 <- sum(stsp %in% effcat) > 0
+    # an1 <- sum(stsp %in% effcat) == 1
+    an_dt <- data.frame(an1)
+    colnames(an_dt) <- paste(tv[2], tv[1], sep = '_')
+    return(an_dt)
+  })))
+  # head(eff_tar)
+  # sum(eff_tar[,1])
+  eff_tar$VTYPE <- dtp$VTYPE
   
-  effcat <- as.character(snpeff[snpeff[, tv[2]]==TRUE, 1])
+  dtp <- dtp[eff_tar[, 1], ]
   
 }
 
-eff_tar <- as.data.frame(rbindlist(lapply(dtp$ANN, FUN = function(x) {
-  stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
-  an1 <- sum(stsp %in% effcat) > 0
-  an_dt <- data.frame(an1)
-  colnames(an_dt) <- paste(tv[2], tv[1], sep = '_')
-  return(an_dt)
-})))
-# head(eff_tar)
-# sum(eff_tar[,1])
-eff_tar$VTYPE <- dtp$VTYPE
+# eff_tar[eff_tar[,1]==FALSE,]
 
-dtp <- dtp[eff_tar[, 1], ]
+if (tv[2] %in% levels(dt$gBGC)) {
+  
+  if (nrow(dtp) != nrow(eff_tar)) {
+    
+    stop("There are annotation codes missing.\n", call.=FALSE)
+    
+  } else {
+    
+    dtp <- dtp[dtp$gBGC==tv[2], ]
+    
+  }
+  
+}
+
+write.table(x = dtp, file = paste('results/marker_density/MD', unique(dtp$ZONE), levels(ic$ECOT),
+                                  paste(tv, collapse = '_'), 'count.txt', sep = '_'),
+            quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
 
 dac <- dtp[, 'DAC']
 df <- data.frame(matrix(data = 0, nrow = unique(dtp$N)*2, ncol = length(dac),

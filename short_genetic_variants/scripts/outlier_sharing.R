@@ -85,7 +85,7 @@ tail(cl_agg)
 vtype_pal <- c("#1B9E77", "#666666")
 outl_scat <- ggplot(data = cl_agg, aes(y = ZONE, x = av, col = VTYPE)) +
   facet_wrap(~LG) +
-  geom_point(aes(size = prop)) +
+  geom_point(aes(size = prop), position = position_jitter(height = 0.2), alpha = 0.7) +
   scale_color_manual(values = vtype_pal) +
   labs(x = 'map position', y = '', col = '', size = '') +
   theme(legend.text = element_text(size = 12),
@@ -101,6 +101,6 @@ outl_scat <- ggplot(data = cl_agg, aes(y = ZONE, x = av, col = VTYPE)) +
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
   guides(col = guide_legend(override.aes = list(size=3)))
 outl_scat
-ggsave(filename = "figures/outlier_mappos.pdf", plot = outl_scat, width = 10, height = 8, dpi = "print")
+ggsave(filename = "figures/outlier_mappos.pdf", plot = outl_scat, width = 10, height = 8)
 
 

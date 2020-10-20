@@ -33,8 +33,15 @@ if (is.null(opt$island) | is.null(opt$ecotype)){
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# rm_inv = FALSE
+isl <- opt$island
+eco <- opt$ecotype
+# isl <- 'CZA'
+# eco <- 'WAVE_LEFT'
+  
 dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv_findv.csv")
+
+# rm_inv = FALSE
+
 # head(dt)
 if (opt$rminv) {
   dt <- dt[dt$invRui==FALSE, ]
@@ -51,7 +58,7 @@ if (opt$rminv) {
 # tb$Freq/tb$Freq.1
 
 dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
-
+# dt$ANN <- ifelse(test = is.na(dt$ANN), yes = 'coding', no = as.character(dt$ANN))
 # dtu <- unique(dt[, c('cp', 'VTYPE', 'LG', 'av', 'invRui')])
 # table(dtu$VTYPE, dtu$invRui)
 # table(dtu$VTYPE)
@@ -127,9 +134,10 @@ len_pal <- colorRampPalette(c("grey", "black"))
 pprop <- ggplot(data = mer, aes(x = prop.x, y = prop.y)) +
   facet_grid(rows = vars(ISL), cols = vars(ECOT)) +
   geom_abline(slope = 1, linetype = 'dashed') +
-  geom_point(aes(col = as.factor(pal))) +
+  # geom_point(aes(col = as.factor(pal))) +
+  geom_point(alpha = 0.4) +
   # geom_smooth(method='lm', formula= y~x) +
-  scale_color_manual(values = len_pal(10)) +
+  # scale_color_manual(values = len_pal(10)) +
   labs(x = 'INDEL relative proportion', y = 'SNP relative proportion', col = 'bin 50000 bp') +
   theme(legend.text = element_text(size = 12), legend.position = 'top',
         axis.text = element_text(size = 11),
@@ -146,48 +154,174 @@ pprop <- ggplot(data = mer, aes(x = prop.x, y = prop.y)) +
 # pprop
 # mer[which.max(mer$prop.x), ]
 if (opt$rminv) {
-  ggsave(filename = "figures/len_snp_vs_indel_prop_noinv.pdf", plot = pprop, width = 10, height = 10, dpi = "print")
+  ggsave(filename = "figures/MD_snp_vs_indel_prop_noinv.pdf", plot = pprop, width = 10, height = 10)
 } else {
-  ggsave(filename = "figures/len_snp_vs_indel_prop.pdf", plot = pprop, width = 10, height = 10, dpi = "print")
+  ggsave(filename = "figures/MD_snp_vs_indel_prop.pdf", plot = pprop, width = 10, height = 10)
 }
 
+# head(mer)
+mer$IE <- paste(mer$ISL, mer$ECOT, sep = ':')
+get_vratio <- function(data, cm, fac) {
+  dd <- data[data[, cm] == fac, ]
+  rr <- sum(dd$x.x)/sum(dd$x.y)
+  # data[data[, cm] == fac, 'VRATIO'] <- rr
+  return(rr)
+}
+# mer$VRATIO <- 0
+for (i in 1:9) {
+  print(get_vratio(data = mer, cm = 'IE', fac = unique(mer$IE)[i]))
+}
+
+# REMOVE SNP WITH 0 COUNT
+# mer <- mer[mer$x.y!=0, ]
+# sum(mer$x.x)/sum(mer$x.y)
+
+# VARIANT COUNT + 1
+# mer$x.x <- mer$x.x + 1
+# mer$x.y <- mer$x.y + 1
+
+pcount <- ggplot(data = mer, aes(x = x.y, y = x.x)) +
+  facet_grid(rows = vars(ISL), cols = vars(ECOT)) +
+  # geom_abline(slope = 0.2, linetype = 'dashed') +
+  geom_abline(slope = 0.06, linetype = 'dashed') +
+  geom_point(alpha = 0.2) +
+  # geom_abline(slope = 0.06, intercept = -0.16, col = 'blue') +
+  # geom_point(aes(col = as.factor(pal))) +
+  geom_smooth(method = 'lm', formula = y~x) +
+  # scale_color_manual(values = len_pal(10)) +
+  labs(x = 'SNP count', y = 'INDEL count', col = 'bin 50000 bp') +
+  theme(legend.text = element_text(size = 12), legend.position = 'top',
+        axis.text = element_text(size = 11),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 12),
+        # legend.position = "top",
+        panel.background = element_blank(),
+        strip.background = element_rect(fill = "#91bfdb", color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2)) +
+  guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
+# pcount
+
+# summary(lm(formula = x.x~x.y, data = mer))
+
+if (opt$rminv) {
+  ggsave(filename = "figures/MD_indel_vs_snp_count_noinv.pdf", plot = pcount, width = 10, height = 10)
+} else {
+  ggsave(filename = "figures/MD_indel_vs_snp_count.pdf", plot = pcount, width = 10, height = 10)
+}
 # 
 # 
 # 
 ## one island and one ecotype at the time
-tt <- mer[mer$ISL==opt$island & mer$ECOT==opt$ecotype, ]
-# tt <- mer[mer$ISL=='CZA' & mer$ECOT=='CRAB', ]
+tt <- mer[mer$ISL==isl & mer$ECOT==eco, ]
+# tt <- mer
+# tt <- mer[mer$ISL=='CZA' & mer$ECOT=='WAVE_LEFT', ]
 # head(tt)
 # tt[tt$x.x==0 & tt$x.y==0,]
 # tt[tt$prop.x==0 & tt$prop.y==0,]
-
-tt <- tt[tt$x.y!=0, ]
+# table(tt$x.y)
+# REMOVE SNP WITH 0 COUNT
+# tt <- tt[tt$x.y!=0, ]
+# write.table(x = tt, file = 'test/marker_density/CZA_CRAB_marker_density.csv', quote = FALSE, sep = ',', row.names = FALSE, col.names = TRUE)
+# tt <- read.csv(file = 'CZA_CRAB_marker_density.csv')
 
 ## PERMUTATION POISSON MODEL
 bar <- replicate(n = 10000, expr = rbinom(n = nrow(tt), size = tt$x.y, prob = sum(tt$x.x)/sum(tt$x.y)))
 # head(bar)
 mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
-  mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
-  exp(coef(mpoi))
+  mlin <- lm(x ~ tt$x.y)
+  coef(mlin)
+  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
+  # exp(coef(mpoi))
 })
 cexp <- as.data.frame(t(mexp))
 colnames(cexp) <- c('intercept', 'slope')
 # head(cexp)
-cexp$cpal <- 'permutation'
+cexp$cpal <- 'bootstrap'
 # with(data = cexp, plot(x = intercept, slope))
 # tt$SUM.x <- sum(tt$x.x)
 # tt.poi <- glm(x.x ~ x.y + offset(log(tt$SUM.x)), data = tt, family=poisson(link = 'log'))
 # tt.poi <- glm(x.x ~ x.y + offset(log(tt$Length)), data = tt, family=poisson(link = 'log'))
-M1 <- glm(x.x ~ x.y, data = tt, family=poisson(link = 'log'))
-cm1 <- as.data.frame(t(exp(coef(M1))))
+
+# M1 <- glm(x.x ~ x.y, data = tt, family = poisson(link = 'log'))
+M1 <- lm(x.x ~ x.y, data = tt)
+# cm1 <- as.data.frame(t(exp(coef(M1))))
+cm1 <- as.data.frame(t(coef(M1)))
 colnames(cm1) <- c('intercept', 'slope')
 cm1$cpal <- 'observation'
-ttf <- rbind(cm1, cexp)
+
+rm(list = setdiff(x = ls(), y = c('cm1', 'cexp', 'isl', 'eco')))
+
+fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
+ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
+snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
+cs <- intersect(colnames(ind), colnames(snp))
+ind <- ind[, colnames(ind) %in% cs]
+snp <- snp[, colnames(snp) %in% cs]
+dt <- as.data.frame(rbind(ind, snp))
+# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
+
+dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
+
+dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
+tot_v <- data.frame(table(dt$class))
+
+# head(dt)
+pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
+  dt1 <- dt[dt$class==x, ]
+  
+  dt2 <- data.frame(class = x,
+                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
+  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
+  
+  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
+  
+  # head(dt2)
+  return(dt2)
+})))
+# head(pr)
+
+vt <- split(pr, f = pr$VTYPE)
+# lapply(vt, head)
+# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
+
+mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
+# head(mer)
+# sum(is.na(mer$x.x))
+# sum(is.na(mer$x.y))
+
+mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
+mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
+mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
+mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
+# unique(mer$VTYPE.x)
+mer$VTYPE.x <- 'INDEL'
+# unique(mer$VTYPE.y)
+mer$VTYPE.y <- 'SNP'
+
+# table(mer$ECOT)
+# sum(mer$x.x)/sum(mer$x.y)
+
+# summary(lm(formula = x.x~x.y, data = mer))
+
+# VARIANT COUNT + 1
+# mer$x.x <- mer$x.x + 1
+# mer$x.y <- mer$x.y + 1
+
+M2 <- lm(x.x ~ x.y, data = mer)
+cm2 <- as.data.frame(t(coef(M2)))
+colnames(cm2) <- c('intercept', 'slope')
+cm2$cpal <- 'noncoding'
+ttf <- rbind(cm1, cm2, cexp)
 
 g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   geom_point(size = 2) +
-  labs(col = '', title = paste(opt$island, opt$ecotype)) +
-  scale_color_manual(values = c('red', 'blue')) +
+  labs(col = '', title = paste(isl, eco)) +
+  scale_color_manual(values = c('blue', 'black', 'red')) +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 12),
         legend.text = element_text(size = 14),
@@ -197,6 +331,192 @@ g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
 
 ggsave(filename = paste('figures/marker_dens_perm', opt$island, opt$ecotype, 'slope_intercept.pdf', sep = "_"),
        plot = g, width = 10, height = 7)
+
+## PERMUTATION POISSON MODEL WITH NONCODING
+rm(list = setdiff(x = ls(), y = c('isl', 'eco', 'mer', 'ttf')))
+bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
+# head(bar)
+mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
+  mlin <- lm(x ~ mer$x.y)
+  coef(mlin)
+})
+cexp <- as.data.frame(t(mexp))
+colnames(cexp) <- c('intercept', 'slope')
+# head(cexp)
+cexp$cpal <- 'bootstrap-noncoding'
+ttf <- rbind(ttf, cexp)
+
+h <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
+  geom_point(size = 2) +
+  labs(col = '', title = paste(isl, eco)) +
+  scale_color_manual(values = c('blue', 'white', 'black', 'red')) +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 14),
+        title = element_text(size = 16)) +
+  guides(col = guide_legend(override.aes = list(size=2)))
+# h
+ggsave(filename = paste('figures/MD_bootstrap_noncod', isl, eco, 'slope_intercept.pdf', sep = "_"),
+       plot = h, width = 10, height = 7)
+
+
+rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
+
+fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
+fs <- fs[grepl(pattern = '_coding', x = fs)]
+ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
+snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
+cs <- intersect(colnames(ind), colnames(snp))
+ind <- ind[, colnames(ind) %in% cs]
+snp <- snp[, colnames(snp) %in% cs]
+dt <- as.data.frame(rbind(ind, snp))
+# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
+
+dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
+
+dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
+tot_v <- data.frame(table(dt$class))
+
+# head(dt)
+pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
+  dt1 <- dt[dt$class==x, ]
+  
+  dt2 <- data.frame(class = x,
+                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
+  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
+  
+  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
+  
+  # head(dt2)
+  return(dt2)
+})))
+# head(pr)
+
+vt <- split(pr, f = pr$VTYPE)
+# lapply(vt, head)
+# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
+
+mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
+# head(mer)
+# sum(is.na(mer$x.x))
+# sum(is.na(mer$x.y))
+
+mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
+mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
+mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
+mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
+# unique(mer$VTYPE.x)
+mer$VTYPE.x <- 'INDEL'
+# unique(mer$VTYPE.y)
+mer$VTYPE.y <- 'SNP'
+
+# table(mer$ECOT)
+# sum(mer$x.x)/sum(mer$x.y)
+
+# summary(lm(formula = x.x~x.y, data = mer))
+
+# VARIANT COUNT + 1
+# mer$x.x <- mer$x.x + 1
+# mer$x.y <- mer$x.y + 1
+
+M3 <- lm(x.x ~ x.y, data = mer)
+cm3 <- as.data.frame(t(coef(M3)))
+colnames(cm3) <- c('intercept', 'slope')
+cm3$cpal <- 'coding'
+ttf <- rbind(cm3, ttf)
+
+f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
+  geom_point(size = 2) +
+  labs(col = '', title = paste(isl, eco)) +
+  scale_color_manual(values = c('blue', 'white', 'green', 'black', 'red')) +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 14),
+        title = element_text(size = 16)) +
+  guides(col = guide_legend(override.aes = list(size=2)))
+# f
+
+rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
+
+fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
+fs <- fs[grepl(pattern = '_control', x = fs)]
+ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
+snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
+cs <- intersect(colnames(ind), colnames(snp))
+ind <- ind[, colnames(ind) %in% cs]
+snp <- snp[, colnames(snp) %in% cs]
+dt <- as.data.frame(rbind(ind, snp))
+# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
+
+dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
+
+dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
+tot_v <- data.frame(table(dt$class))
+
+# head(dt)
+pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
+  dt1 <- dt[dt$class==x, ]
+  
+  dt2 <- data.frame(class = x,
+                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
+  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
+  
+  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
+  
+  # head(dt2)
+  return(dt2)
+})))
+# head(pr)
+
+vt <- split(pr, f = pr$VTYPE)
+# lapply(vt, head)
+# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
+# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
+
+mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
+# head(mer)
+# sum(is.na(mer$x.x))
+# sum(is.na(mer$x.y))
+
+mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
+mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
+mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
+mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
+# unique(mer$VTYPE.x)
+mer$VTYPE.x <- 'INDEL'
+# unique(mer$VTYPE.y)
+mer$VTYPE.y <- 'SNP'
+
+# table(mer$ECOT)
+# sum(mer$x.x)/sum(mer$x.y)
+
+# summary(lm(formula = x.x~x.y, data = mer))
+
+# VARIANT COUNT + 1
+# mer$x.x <- mer$x.x + 1
+# mer$x.y <- mer$x.y + 1
+
+M4 <- lm(x.x ~ x.y, data = mer)
+cm4 <- as.data.frame(t(coef(M4)))
+colnames(cm4) <- c('intercept', 'slope')
+cm4$cpal <- 'control'
+ttf <- rbind(cm4, ttf)
+
+f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
+  geom_point(size = 2) +
+  labs(col = '', title = paste(isl, eco)) +
+  scale_color_manual(values = c('blue', 'white', 'green', 'violet', 'black', 'red')) +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 14),
+        title = element_text(size = 16)) +
+  guides(col = guide_legend(override.aes = list(size=2)))
+# f
+ggsave(filename = paste('figures/MD_bootstrap_in_near', isl, eco, 'slope_intercept.pdf', sep = "_"),
+       plot = f, width = 10, height = 7)
 
 # est1 <- cbind(Estimate = coef(M1), confint(M1))
 
