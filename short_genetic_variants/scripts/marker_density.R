@@ -108,7 +108,7 @@ mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
 # range(mer$Len)
 # head(mer)
 
-fai_path <- "/Users/samuelperini/Documents/research/projects/3.indels/data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
+fai_path <- "data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked.fasta.fai"
 fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
 colnames(fai) <- c("CHROM", "Length")
 # head(fai)
@@ -183,7 +183,7 @@ for (i in 1:9) {
 pcount <- ggplot(data = mer, aes(x = x.y, y = x.x)) +
   facet_grid(rows = vars(ISL), cols = vars(ECOT)) +
   # geom_abline(slope = 0.2, linetype = 'dashed') +
-  geom_abline(slope = 0.06, linetype = 'dashed') +
+  geom_abline(slope = 0.2, linetype = 'dashed', size = 1.2) +
   geom_point(alpha = 0.2) +
   # geom_abline(slope = 0.06, intercept = -0.16, col = 'blue') +
   # geom_point(aes(col = as.factor(pal))) +
@@ -203,7 +203,7 @@ pcount <- ggplot(data = mer, aes(x = x.y, y = x.x)) +
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
   guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
 # pcount
-
+# ggsave(filename = "figures/MD_indel_vs_snp_count_lm_noinv.pdf", plot = pcount, width = 10, height = 10, dpi = "screen")
 # summary(lm(formula = x.x~x.y, data = mer))
 
 if (opt$rminv) {
@@ -252,9 +252,26 @@ cm1 <- as.data.frame(t(coef(M1)))
 colnames(cm1) <- c('intercept', 'slope')
 cm1$cpal <- 'observation'
 
+ttf <- rbind(cm1, cexp)
+
+g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
+  geom_point(size = 2) +
+  labs(col = '', title = paste(isl, eco)) +
+  scale_color_manual(values = c('black', 'blue')) +
+  theme(axis.title = element_text(size = 18),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 18),
+        title = element_text(size = 16)) +
+  guides(col = guide_legend(override.aes = list(size=2)))
+# g
+
+ggsave(filename = paste('figures/MD_boot', isl, eco, 'all_slope_intercept.pdf', sep = "_"),
+       plot = g, width = 10, height = 7, dpi = "screen")
+
 rm(list = setdiff(x = ls(), y = c('cm1', 'cexp', 'isl', 'eco')))
 
 fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
+fs <- fs[grepl(pattern = 'nongenic', x = fs)]
 ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
 snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
 cs <- intersect(colnames(ind), colnames(snp))
@@ -267,6 +284,7 @@ dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
 
 dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
 tot_v <- data.frame(table(dt$class))
+tot_v[1,2]/tot_v[2,2]
 
 # head(dt)
 pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
@@ -315,13 +333,29 @@ mer$VTYPE.y <- 'SNP'
 M2 <- lm(x.x ~ x.y, data = mer)
 cm2 <- as.data.frame(t(coef(M2)))
 colnames(cm2) <- c('intercept', 'slope')
-cm2$cpal <- 'noncoding'
-ttf <- rbind(cm1, cm2, cexp)
+cm2$cpal <- 'nongenic'
+
+## PERMUTATION POISSON MODEL
+bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
+# head(bar)
+mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
+  mlin <- lm(x ~ mer$x.y)
+  coef(mlin)
+  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
+  # exp(coef(mpoi))
+})
+cexp <- as.data.frame(t(mexp))
+colnames(cexp) <- c('intercept', 'slope')
+# head(cexp)
+cexp$cpal <- 'bootstrap nongenic'
+
+# ttf <- rbind(cm1, cm2, cexp)
+ttf <- rbind(cm2, cexp)
 
 g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   geom_point(size = 2) +
   labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('blue', 'black', 'red')) +
+  scale_color_manual(values = c('black', 'red')) +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 12),
         legend.text = element_text(size = 14),
@@ -329,41 +363,13 @@ g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   guides(col = guide_legend(override.aes = list(size=2)))
 # g
 
-ggsave(filename = paste('figures/marker_dens_perm', opt$island, opt$ecotype, 'slope_intercept.pdf', sep = "_"),
-       plot = g, width = 10, height = 7)
-
-## PERMUTATION POISSON MODEL WITH NONCODING
-rm(list = setdiff(x = ls(), y = c('isl', 'eco', 'mer', 'ttf')))
-bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
-# head(bar)
-mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
-  mlin <- lm(x ~ mer$x.y)
-  coef(mlin)
-})
-cexp <- as.data.frame(t(mexp))
-colnames(cexp) <- c('intercept', 'slope')
-# head(cexp)
-cexp$cpal <- 'bootstrap-noncoding'
-ttf <- rbind(ttf, cexp)
-
-h <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
-  geom_point(size = 2) +
-  labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('blue', 'white', 'black', 'red')) +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 14),
-        title = element_text(size = 16)) +
-  guides(col = guide_legend(override.aes = list(size=2)))
-# h
-ggsave(filename = paste('figures/MD_bootstrap_noncod', isl, eco, 'slope_intercept.pdf', sep = "_"),
-       plot = h, width = 10, height = 7)
-
+# ggsave(filename = paste('figures/marker_dens_perm', opt$island, opt$ecotype, 'slope_intercept.pdf', sep = "_"),
+#        plot = g, width = 10, height = 7)
 
 rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
 
 fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
-fs <- fs[grepl(pattern = '_coding', x = fs)]
+fs <- fs[grepl(pattern = 'nonsyn', x = fs)]
 ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
 snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
 cs <- intersect(colnames(ind), colnames(snp))
@@ -376,6 +382,7 @@ dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
 
 dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
 tot_v <- data.frame(table(dt$class))
+tot_v[1,2]/tot_v[2,2]
 
 # head(dt)
 pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
@@ -424,24 +431,42 @@ mer$VTYPE.y <- 'SNP'
 M3 <- lm(x.x ~ x.y, data = mer)
 cm3 <- as.data.frame(t(coef(M3)))
 colnames(cm3) <- c('intercept', 'slope')
-cm3$cpal <- 'coding'
+cm3$cpal <- 'nonsyn'
 ttf <- rbind(cm3, ttf)
+table(ttf$cpal)
+
+## PERMUTATION POISSON MODEL
+bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
+# head(bar)
+mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
+  mlin <- lm(x ~ mer$x.y)
+  coef(mlin)
+  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
+  # exp(coef(mpoi))
+})
+cexp <- as.data.frame(t(mexp))
+colnames(cexp) <- c('intercept', 'slope')
+# head(cexp)
+cexp$cpal <- 'bootstrap nonsyn'
+ttf <- rbind(cexp, ttf)
+table(ttf$cpal)
+ttf$cpal <- factor(ttf$cpal, levels = c('bootstrap nongenic', 'nongenic', 'bootstrap nonsyn', 'nonsyn'))
 
 f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   geom_point(size = 2) +
   labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('blue', 'white', 'green', 'black', 'red')) +
+  scale_color_manual(values = brewer.pal(n = length(levels(ttf$cpal)), name = 'Paired')) +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 12),
         legend.text = element_text(size = 14),
         title = element_text(size = 16)) +
   guides(col = guide_legend(override.aes = list(size=2)))
-# f
+f
 
 rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
 
 fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
-fs <- fs[grepl(pattern = '_control', x = fs)]
+fs <- fs[grepl(pattern = '_syn', x = fs)]
 ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
 snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
 cs <- intersect(colnames(ind), colnames(snp))
@@ -454,6 +479,7 @@ dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
 
 dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
 tot_v <- data.frame(table(dt$class))
+tot_v[1,2]/tot_v[2,2]
 
 # head(dt)
 pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
@@ -502,19 +528,38 @@ mer$VTYPE.y <- 'SNP'
 M4 <- lm(x.x ~ x.y, data = mer)
 cm4 <- as.data.frame(t(coef(M4)))
 colnames(cm4) <- c('intercept', 'slope')
-cm4$cpal <- 'control'
+cm4$cpal <- 'syn'
 ttf <- rbind(cm4, ttf)
+
+## PERMUTATION POISSON MODEL
+bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
+# head(bar)
+mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
+  mlin <- lm(x ~ mer$x.y)
+  coef(mlin)
+  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
+  # exp(coef(mpoi))
+})
+cexp <- as.data.frame(t(mexp))
+colnames(cexp) <- c('intercept', 'slope')
+# head(cexp)
+cexp$cpal <- 'bootstrap syn'
+ttf <- rbind(cexp, ttf)
+table(ttf$cpal)
+ttf$cpal <- factor(ttf$cpal, levels = c('bootstrap nongenic', 'nongenic', 'bootstrap nonsyn', 'nonsyn',
+                                        'bootstrap syn', 'syn'))
 
 f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   geom_point(size = 2) +
   labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('blue', 'white', 'green', 'violet', 'black', 'red')) +
+  scale_color_manual(values = brewer.pal(n = length(levels(ttf$cpal)), name = 'Paired')) +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 12),
         legend.text = element_text(size = 14),
         title = element_text(size = 16)) +
   guides(col = guide_legend(override.aes = list(size=2)))
-# f
+f
+
 ggsave(filename = paste('figures/MD_bootstrap_in_near', isl, eco, 'slope_intercept.pdf', sep = "_"),
        plot = f, width = 10, height = 7)
 
