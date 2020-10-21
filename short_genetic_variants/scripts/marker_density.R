@@ -560,8 +560,8 @@ f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
   guides(col = guide_legend(override.aes = list(size=2)))
 f
 
-ggsave(filename = paste('figures/MD_bootstrap_in_near', isl, eco, 'slope_intercept.pdf', sep = "_"),
-       plot = f, width = 10, height = 7)
+ggsave(filename = paste('figures/MD_boot', isl, eco, 'ann_slope_intercept.pdf', sep = "_"),
+       plot = f, width = 10, height = 7, dpi = "screen")
 
 # est1 <- cbind(Estimate = coef(M1), confint(M1))
 
