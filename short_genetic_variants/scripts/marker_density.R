@@ -112,6 +112,7 @@ fai_path <- "data/reference/Littorina_scaffolded_PacBio_run2_7_Oct_2016_unmasked
 fai <- read.table(file = fai_path, header = FALSE, sep = "\t")[, 1:2]
 colnames(fai) <- c("CHROM", "Length")
 # head(fai)
+fai <- fai[fai$Length >= 250, ]
 
 mer <- merge(mer, fai, by = 'CHROM')
 

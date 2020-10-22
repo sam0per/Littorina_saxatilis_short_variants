@@ -43,7 +43,8 @@ if (is.null(opt$vone) | is.null(opt$by) | is.null(opt$csv)){
 ic <- unique(read.csv(file = opt$vone))
 
 # cnm <- 'INDEL:TEST'
-# cnm <- 'INDEL:noncoding'
+# cnm <- 'INDEL:syn'
+# cnm <- 'INDEL:nongenic'
 # cnm <- 'SNP:noncoding'
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
@@ -148,7 +149,17 @@ if (tv[1] != tv[2]) {
       
     }
     
-    an1 <- sum(stsp %in% effcat) > 0
+    if (tv[2] != 'nonsyn') {
+      
+      tan <- stsp[stsp %in% as.character(snpeff[,1])] %in% unique(c(effcat, as.character(snpeff[snpeff$nongenic==TRUE, 1])))
+      an1 <- sum(tan) == length(tan)
+      
+    } else {
+      
+      an1 <- sum(stsp %in% effcat) > 0
+      
+    }
+    
     # an1 <- sum(stsp %in% effcat) == 1
     an_dt <- data.frame(an1)
     colnames(an_dt) <- paste(tv[2], tv[1], sep = '_')
