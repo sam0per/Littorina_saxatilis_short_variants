@@ -45,7 +45,7 @@ ic <- unique(read.csv(file = opt$vone))
 # cnm <- 'INDEL:TEST'
 # cnm <- 'INDEL:syn'
 # cnm <- 'INDEL:nongenic'
-# cnm <- 'SNP:noncoding'
+# cnm <- 'SNP:nongenic'
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
 # cnm <- 'ANC'
@@ -61,6 +61,13 @@ tv <- strsplit(cnm, split = ":")[[1]]
 # dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
+
+if (tv[1] == 'INDEL') {
+  
+  dt$SIZE <- abs(dt$SIZE)
+  dt <- dt[dt$SIZE <= 50, ]
+  
+}
 
 if (tv[1]=='DEL' | tv[1]=='INS') {
   
@@ -151,8 +158,31 @@ if (tv[1] != tv[2]) {
     
     if (tv[2] != 'nonsyn') {
       
-      tan <- stsp[stsp %in% as.character(snpeff[,1])] %in% unique(c(effcat, as.character(snpeff[snpeff$nongenic==TRUE, 1])))
-      an1 <- sum(tan) == length(tan)
+      ancat <- stsp[stsp %in% as.character(snpeff[,1])]
+      tan <- ancat %in% effcat
+      # unique(c(effcat, as.character(snpeff[snpeff$nongenic==TRUE, 1])))
+      
+      if (tv[2] == 'nongenic') {
+        
+        an1 <- sum(tan) == length(tan)
+        
+      } else {
+        
+        if (sum(ancat %in% as.character(snpeff[snpeff$nonsyn==TRUE, 1])) > 0) {
+          
+          an1 <- FALSE
+          
+        } else if (sum(ancat %in% as.character(snpeff[snpeff$nongenic==TRUE, 1])) == length(ancat)) {
+          
+          an1 <- FALSE
+          
+        } else {
+          
+          an1 <- TRUE
+          
+        }
+        
+      }
       
     } else {
       
