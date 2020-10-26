@@ -42,7 +42,7 @@ if (is.null(opt$vone) | is.null(opt$vtwo) | is.null(opt$by) | is.null(opt$types)
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
 
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
 # sc <- ic
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_INDEL_filt2_59N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
@@ -54,7 +54,7 @@ ic <- unique(read.csv(file = opt$vone))
 
 # sc <- unique(read.table(file = 'annotated/AN_CZA_INDEL.filt2.txt', header = TRUE))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZD_CRAB_SNP_filt2_64N.csv'))
-# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
+# sc <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_SNP_filt2_59N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_RIGHT_SNP_filt2_42N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_SNP_filt2_70N.csv'))
 # sc <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_56N.csv'))
@@ -72,7 +72,7 @@ if (unique(ic$N) != unique(sc$N)) {
 cnm <- opt$by
 
 # tv <- strsplit(c('A:C'), split = ":")[[1]]
-# tv <- strsplit(c('inframe_DEL:inframe_INS'), split = ":")[[1]]
+# tv <- strsplit(c('nongenic_INDEL:nongenic_SNP'), split = ":")[[1]]
 # tv <- strsplit(c('INDEL:SNP'), split = ":")[[1]]
 tv <- strsplit(opt$types, split = ":")[[1]]
 if (cnm == 'ANN') {
@@ -85,7 +85,7 @@ if (cnm == 'ANN') {
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
-# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZB_WAVE_LEFT_INDEL_filt2_56N.csv')), split = "_")[[1]]
+# parts <- strsplit(file_path_sans_ext(basename('summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv')), split = "_")[[1]]
 parts <- strsplit(file_path_sans_ext(basename(opt$vone)), split = "_")[[1]]
 
 
@@ -274,27 +274,43 @@ if (exists('tv2')) {
 # simple example of SNP data
 
 # snp <- c(1000,200,100,50,40,30,20,10,20) # counts of SNPs in each of the 9 classes
+rm(list = setdiff(ls(), c('parts', 'cnm')))
 
-if (length(unique(dtp$ECOT)) > 1) {
-  
-  dtp <- split(x = dtp, f = dtp$ECOT)
-  snp <- merge(x = data.frame(Var1=1:((unique(dtp[[2]]$N)*2)-1)),
-               y = data.frame(table(dtp[[2]][dtp[[2]][, cnm]==tv[2], 'DAC'])),
-               by = 'Var1', all.x = TRUE)
-  indel <- merge(x = snp, y = data.frame(table(dtp[[1]][dtp[[1]][, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
-  
-} else {
-  
-  snp <- merge(x = data.frame(Var1=1:((unique(dtp$N)*2)-1)), y = data.frame(table(dtp[dtp[, cnm]==tv[2], 'DAC'])),
-               by = 'Var1', all.x = TRUE)
-  # ggplot(data = data.frame(N=1:length(snp), C=snp), aes(x = N, y = C)) +
-  #   geom_col(col = 'black')
-  
-  # and indels
-  # indel <- c(180,30,15,10,8,8,8,9,12) # counts of indels in each of the 9 classes
-  indel <- merge(x = snp, y = data.frame(table(dtp[dtp[, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
-  
+tv <- strsplit(c('nonsyn_INDEL:nonsyn_SNP'), split = ":")[[1]]
+if (cnm == 'ANN') {
+  tv2 <- unlist(strsplit(tv, split = "_"))
 }
+
+snp <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_SNP_nonsyn_count.txt', header = TRUE, sep = '\t')
+head(snp)
+indel <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_INDEL_nonsyn_count.txt', header = TRUE, sep = '\t')
+head(indel)
+
+snp <- merge(x = data.frame(Var1=1:((unique(snp$N)*2)-1)), y = data.frame(table(snp$DAC)),
+             by = 'Var1', all.x = TRUE)
+indel <- merge(x = snp, y = data.frame(table(indel$DAC)), by = 'Var1', all.x = TRUE)
+
+
+# if (length(unique(dtp$ECOT)) > 1) {
+#   
+#   dtp <- split(x = dtp, f = dtp$ECOT)
+#   snp <- merge(x = data.frame(Var1=1:((unique(dtp[[2]]$N)*2)-1)),
+#                y = data.frame(table(dtp[[2]][dtp[[2]][, cnm]==tv[2], 'DAC'])),
+#                by = 'Var1', all.x = TRUE)
+#   indel <- merge(x = snp, y = data.frame(table(dtp[[1]][dtp[[1]][, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
+#   
+# } else {
+#   
+#   snp <- merge(x = data.frame(Var1=1:((unique(dtp$N)*2)-1)), y = data.frame(table(dtp[dtp[, cnm]==tv[2], 'DAC'])),
+#                by = 'Var1', all.x = TRUE)
+#   # ggplot(data = data.frame(N=1:length(snp), C=snp), aes(x = N, y = C)) +
+#   #   geom_col(col = 'black')
+#   
+#   # and indels
+#   # indel <- c(180,30,15,10,8,8,8,9,12) # counts of indels in each of the 9 classes
+#   indel <- merge(x = snp, y = data.frame(table(dtp[dtp[, cnm]==tv[1], 'DAC'])), by = 'Var1', all.x = TRUE)
+#   
+# }
 indel <- apply(X = indel[,-1], MARGIN = 2, FUN = function(x) {
   ifelse(test = is.na(x), yes = 0, no = x)
 })

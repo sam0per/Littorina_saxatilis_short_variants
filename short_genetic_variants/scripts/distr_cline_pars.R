@@ -26,7 +26,7 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 #                     sep=",", header=T, stringsAsFactors=F)
 # invRui$LG = gsub("LG", "", invRui$LG)
 
-n <- 2
+n <- 1
 
 # Get cline fits
 (cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE))
@@ -48,13 +48,34 @@ head(cl_dt)
 
 vtype_pal <- c("#1B9E77", "#666666")
 
+
 cpars <- c("Centre", "Width", "slope", "p_diff", "Var.Ex")
+
+library(dgof)
+np <- 5
+cpars[np]
+vt <- split(x = cl_dt, f = cl_dt$VTYPE)
+vt$INDEL <- vt$INDEL[!is.na(vt$INDEL[, cpars[np]]), ]
+vt$SNP <- vt$SNP[!is.na(vt$SNP[, cpars[np]]), ]
+ks.test(x = unique(vt$INDEL[, cpars[np]]), unique(vt$SNP[, cpars[np]]))
 
 if (n==1) {
   lapply(X = cpars, function(x) {
-    ggplot(data = cl_dt, aes_string(x = x, fill = "VTYPE")) +
+    hm <- ggplot(data = cl_dt, aes_string(x = x, fill = "VTYPE")) +
       geom_histogram(bins = 40, position = "dodge") +
-      scale_fill_manual(values = vtype_pal)
+      scale_fill_manual(values = vtype_pal) +
+      labs(fill = '') +
+      theme(legend.position = 'none',
+            # legend.text = element_text(size = 12),
+            axis.text = element_text(size = 16),
+            axis.title = element_text(size = 20),
+            panel.background = element_blank(),
+            panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+            axis.line = element_line(size = 0.2, linetype = "solid",
+                                     colour = "black"),
+            panel.grid = element_line(colour = "gray70", size = 0.2)) +
+      guides(col = guide_legend(override.aes = list(size=3)))
+    ggsave(filename = paste('figures/HB', x, 'indel_snp.pdf', sep = '_'), plot = hm, scale = 2/3, dpi = 'screen')
   })
 }
 
