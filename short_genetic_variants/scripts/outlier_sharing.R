@@ -48,10 +48,10 @@ cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
 head(cl_dt)
 
 table(cl_dt$ZONE, cl_dt$VTYPE)
-table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1,,,]
-table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)['CZA_left',,,]
-table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1:2,,,]
-table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)
+# table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1,,,]
+# table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)['CZA_left',,,]
+# table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1:2,,,]
+# table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)
 
 # ggplot(data = cl_dt, aes(x = Var1, y = sqrt(Freq), fill = VTYPE)) +
 #   facet_wrap(~ZONE) +
@@ -104,3 +104,31 @@ outl_scat
 ggsave(filename = "figures/outlier_mappos.pdf", plot = outl_scat, width = 10, height = 8)
 
 
+cl_agg <- aggregate(x = cl_dt$cp, by = list(LG = cl_dt$LG, av = cl_dt$av, VTYPE = cl_dt$VTYPE), length)
+head(cl_agg)
+sum(cl_agg[cl_agg$VTYPE=='INDEL', 'x'])
+sum(cl_agg[cl_agg$VTYPE=='SNP', 'x'])
+cl_agg$prop <- ifelse(test = cl_agg$VTYPE=='INDEL', yes = cl_agg$x/528, no = cl_agg$x/3366)
+
+vt <- split(cl_agg, f = cl_agg$VTYPE)
+# lapply(vt, head)
+
+mer <- merge(vt$INDEL, vt$SNP, by = c('LG', 'av'), all = TRUE)
+mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
+mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
+mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
+mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
+# unique(mer$VTYPE.x)
+mer$VTYPE.x <- 'INDEL'
+# unique(mer$VTYPE.y)
+mer$VTYPE.y <- 'SNP'
+
+outl_vt <- ggplot(data = mer, aes(x = prop.y, y = prop.x)) +
+  facet_wrap(~LG) +
+  geom_abline(slope = 1, linetype = 'dashed') +
+  geom_point() +
+  labs(x = 'Proportion of SNPs', y = 'Proportion of INDELs')
+outl_vt
+mer[mer$LG==6,]
+cor(x = mer$x.x, y = mer$x.y)
+cor(x = mer$prop.x, y = mer$prop.y)
