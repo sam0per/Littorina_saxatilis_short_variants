@@ -58,6 +58,7 @@ tv <- strsplit(cnm, split = ":")[[1]]
 
 # dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_del_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_ins_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
@@ -93,9 +94,15 @@ ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
 
 dtn <- unique(merge(x = dt, y = ic))
 dtn <- unique(merge(x = dtn, y = ann))
-
+if (tv[1] == 'INDEL') {
+  
+  dtn$VAR <- dtn$VTYPE
+  dtn$VTYPE <- dtn$CLASS
+  
+}
 # head(dtn)
 # table(dtn$ZONE)
+# table(dtn$CLASS)
 # table(dtn$VTYPE)
 # table(dtn$ECOT)
 # table(dtn$CLASS)
@@ -192,7 +199,7 @@ if (tv[1] != tv[2]) {
     
     # an1 <- sum(stsp %in% effcat) == 1
     an_dt <- data.frame(an1)
-    colnames(an_dt) <- paste(tv[2], tv[1], sep = '_')
+    colnames(an_dt) <- paste(tv[2], unique(dtn$VTYPE), sep = '_')
     return(an_dt)
   })))
   # head(eff_tar)
@@ -220,7 +227,7 @@ if (tv[2] %in% levels(dt$gBGC)) {
 }
 
 write.table(x = dtp, file = paste('results/marker_density/MD', unique(dtp$ZONE), levels(ic$ECOT),
-                                  paste(tv, collapse = '_'), 'count.txt', sep = '_'),
+                                  colnames(eff_tar)[1], 'count.txt', sep = '_'),
             quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
 
 dac <- dtp[, 'DAC']
@@ -234,13 +241,13 @@ for (i in 1:ncol(df)) {
 # colSums(df)
 
 fileConn <- file(paste('summary/haplotypes/HAP', levels(ic$ZONE), levels(ic$ECOT),
-                       paste(tv, collapse = '_'), 'DH.txt', sep = '_'))
-writeLines(c('# ', paste(tv, collapse = '_'), '\n//\nsegsites: ', length(dac),
+                       colnames(eff_tar)[1], 'DH.txt', sep = '_'))
+writeLines(c('# ', colnames(eff_tar)[1], '\n//\nsegsites: ', length(dac),
              '\npositions: ', paste(round(1:length(dac)/length(dac), 4), collapse = ' '), '\n'),
            con = fileConn, sep = '')
 close(fileConn)
 
 write.table(x = df,
             file = paste('summary/haplotypes/HAP', levels(ic$ZONE), levels(ic$ECOT),
-                         paste(tv, collapse = '_'), 'DH.txt', sep = '_'),
+                         colnames(eff_tar)[1], 'DH.txt', sep = '_'),
             quote = FALSE, sep = '', row.names = FALSE, col.names = FALSE, append = TRUE)

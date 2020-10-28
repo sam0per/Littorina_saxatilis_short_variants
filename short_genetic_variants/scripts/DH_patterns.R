@@ -27,6 +27,7 @@ an <- c('nongenic', 'synonymous', 'nonsynonymous')
 # an <- 'coding'
 
 dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN %in% an, ]
+dh_sub[dh_sub$ANN=='nongenic',]
 
 library(ggplot2)
 DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type)) +
@@ -112,17 +113,20 @@ btw <- ggplot(data = dh_vt, aes(x = ANN, y = Estimate, col = Pal)) +
   geom_errorbar(aes(ymin = Estimate - Std..Error, ymax = Estimate + Std..Error), width=.1, size = 1) +
   geom_point(size = 4) +
   scale_color_manual(values = c("#1B9E77", "#666666")) +
-  labs(col = '', x = '') +
-  theme(legend.text = element_text(size = 11),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 14),
-        strip.text = element_text(size = 10),
+  labs(col = '', x = '', y = 'Fitted value') +
+  theme(legend.text = element_text(size = 16),
+        axis.text = element_text(size = 20),
+        axis.text.x = element_text(angle = 320, hjust = 0),
+        axis.title.y = element_text(size = 20),
+        strip.text = element_text(size = 14),
         panel.background = element_blank(),
-        strip.background = element_rect(fill = '#91bfdb', color = 'black'),
+        # strip.background = element_rect(fill = '#91bfdb', color = 'black'),
+        strip.background = element_rect(fill = 'white', color = 'black'),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
+btw
 ggsave(filename = 'figures/DH_between_variants.pdf', plot = btw, width = 8, height = 6, dpi = "screen")
 # 
 # 

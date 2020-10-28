@@ -26,11 +26,13 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 #                     sep=",", header=T, stringsAsFactors=F)
 # invRui$LG = gsub("LG", "", invRui$LG)
 
-n <- 1
+# n <- 1
+TF_sel <- FALSE
 
 # Get cline fits
 (cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE))
-(cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
+(cl_fl <- cl_fl[grep(pattern = "NoInv", x = cl_fl)])
+# (cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
 cl_ls <- lapply(cl_fl, read.table, header = TRUE)
 # lapply(cl_ls, head)
 
@@ -46,39 +48,115 @@ cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
 })))
 head(cl_dt)
 
-vtype_pal <- c("#1B9E77", "#666666")
+table(cl_dt$sel)
+table(cl_dt$ZONE)
+cl_dt$VT_sel <- ifelse(test = cl_dt$sel==TRUE, yes = paste0('noneu_', cl_dt$VTYPE), no = paste0('neu_', cl_dt$VTYPE))
+table(cl_dt$VT_sel)
 
+vtype_pal <- c(brewer.pal(n = 8, name = 'Set2')[c(5, 3)], "#1B9E77", "#666666")
+
+isl <- 'CZA'
+isl_dt <- cl_dt[grepl(pattern = isl, x = cl_dt$ZONE), ]
+table(isl_dt$ZONE)
+zs <- split(x = isl_dt, f = isl_dt$ZONE)
+lapply(zs, head)
 
 cpars <- c("Centre", "Width", "slope", "p_diff", "Var.Ex")
+np <- 1
+cpars[np]
+pzs <- merge(x = zs[[1]][, c('ZONE', 'cp', cpars[np], 'VTYPE', 'VT_sel', 'invRui', 'sel')],
+             y = zs[[2]][, c('ZONE', 'cp', cpars[np], 'VTYPE', 'VT_sel', 'invRui', 'sel')], by = 'cp', all = TRUE)
+identical(pzs$VT_sel.x, pzs$VT_sel.y)
+setdiff(pzs$VT_sel.x, pzs$VT_sel.y)
+table(pzs$VT_sel.x)
+table(pzs$VT_sel.y)
+table(pzs$VTYPE.x)
+table(pzs$VTYPE.y)
+
+# pzs$VT <- ifelse(test = is.na(pzs$VTYPE.x), yes = pzs$VTYPE.y, no = pzs$VTYPE.x)
+
+hm <- ggplot(data = pzs, aes_string(x = paste0(cpars[np], '.x'), y = paste0(cpars[np], '.y'),
+                                    col = 'VT_sel.x', shape = 'VTYPE.x')) +
+  geom_point(alpha = 0.6, size = 2) +
+  scale_color_manual(values = vtype_pal) +
+  labs(col = '', x = unique(zs[[1]]$ZONE), y = unique(zs[[2]]$ZONE), title = cpars[np]) +
+  theme(title = element_text(size = 20),
+        # legend.text = element_text(size = 12),
+        axis.text = element_text(size = 16),
+        axis.title = element_text(size = 20),
+        panel.background = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2)) +
+  guides(col = guide_legend(override.aes = list(size=3)))
+hm
+
+cl_dt <- cl_dt[cl_dt$sel==TF_sel & grepl(pattern = isl, x = cl_dt$ZONE), ]
+table(cl_dt$VT_sel)
+table(cl_dt$VTYPE)
+table(cl_dt$ZONE)
+# cl_dt <- cl_dt[cl_dt$sel==TRUE, ]
+
+if (sum(cl_dt$sel)==0) {
+  vtype_pal <- brewer.pal(n = 8, name = 'Set2')[c(5, 3)]
+} else {
+  vtype_pal <- c("#1B9E77", "#666666")
+}
 
 library(dgof)
-np <- 5
+np <- 4
 cpars[np]
 vt <- split(x = cl_dt, f = cl_dt$VTYPE)
 vt$INDEL <- vt$INDEL[!is.na(vt$INDEL[, cpars[np]]), ]
 vt$SNP <- vt$SNP[!is.na(vt$SNP[, cpars[np]]), ]
 ks.test(x = unique(vt$INDEL[, cpars[np]]), unique(vt$SNP[, cpars[np]]))
 
-if (n==1) {
-  lapply(X = cpars, function(x) {
-    hm <- ggplot(data = cl_dt, aes_string(x = x, fill = "VTYPE")) +
-      geom_histogram(bins = 40, position = "dodge") +
-      scale_fill_manual(values = vtype_pal) +
-      labs(fill = '') +
-      theme(legend.position = 'none',
-            # legend.text = element_text(size = 12),
-            axis.text = element_text(size = 16),
-            axis.title = element_text(size = 20),
-            panel.background = element_blank(),
-            panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-            axis.line = element_line(size = 0.2, linetype = "solid",
-                                     colour = "black"),
-            panel.grid = element_line(colour = "gray70", size = 0.2)) +
-      guides(col = guide_legend(override.aes = list(size=3)))
-    ggsave(filename = paste('figures/HB', x, 'indel_snp.pdf', sep = '_'), plot = hm, scale = 2/3, dpi = 'screen')
-  })
-}
+lapply(X = cpars, function(x) {
+  hm <- ggplot(data = cl_dt, aes_string(x = x, fill = "VT_sel")) +
+    geom_histogram(bins = 40, position = "dodge") +
+    scale_fill_manual(values = vtype_pal) +
+    labs(fill = '', title = unique(substr(x = cl_dt$ZONE, start = 1, stop = 3))) +
+    theme(title = element_text(size = 20),
+          legend.text = element_text(size = 12),
+          axis.text = element_text(size = 16),
+          axis.title = element_text(size = 20),
+          panel.background = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+          axis.line = element_line(size = 0.2, linetype = "solid",
+                                   colour = "black"),
+          panel.grid = element_line(colour = "gray70", size = 0.2)) +
+    guides(col = guide_legend(override.aes = list(size=3)))
+  # hm
+  if (sum(cl_dt$sel)==0) {
+    ggsave(filename = paste('figures/HZ', isl, x, 'neu_indel_snp_noinv.pdf', sep = '_'), plot = hm, scale = 2/3, dpi = 'screen')
+  } else {
+    ggsave(filename = paste('figures/HZ', isl, x, 'non_neu_indel_snp_noinv.pdf', sep = '_'), plot = hm, scale = 2/3, dpi = 'screen')
+  }
+  
+})
 
+(an_fl <- list.files(path = 'results/marker_density', pattern = isl, full.names = TRUE))
+(an_fl <- an_fl[4:6])
+an_dt <- data.frame(rbindlist(lapply(an_fl, read.table, header = TRUE)))
+table(an_dt$VTYPE)
+# lapply(an_dt, head)
+head(an_dt)
+head(cl_dt)
+table(cl_dt$VTYPE)
+table(cl_dt$ZONE)
+length(unique(as.character(cl_dt$cp)))
+length(unique(as.character(an_dt$cp)))
+
+length(intersect(cl_dt$cp, an_dt$cp))/nrow(an_dt)
+# length(intersect(an_dt$cp, cl_dt$cp))
+
+unique(an_dt[an_dt$cp %in% intersect(cl_dt$cp, an_dt$cp), 'VTYPE'])
+length(an_dt[an_dt$cp %in% intersect(cl_dt$cp, an_dt$cp), 'cp'])
+strsplit(x = as.character(an_dt[an_dt$cp %in% intersect(cl_dt$cp, an_dt$cp), 'ANN']), split = '\\|')
+# 
+# 
+# 
 (cpar <- cpars[n])
 cl_dt_na <- cl_dt[!is.na(cl_dt[, cpar]), ]
 

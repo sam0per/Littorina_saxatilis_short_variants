@@ -20,10 +20,62 @@ lapply(basename(.packagesdev), require, character.only=TRUE)
 ################################################################################################################
 # Get cline fits
 (cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE))
-(cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
+(cl_fl <- cl_fl[grep(pattern = "NoInv", x = cl_fl)])
+# (cl_fl <- cl_fl[grep(pattern = "ANG|NoInv", x = cl_fl, invert = TRUE)])
 cl_ls <- lapply(cl_fl, read.table, header = TRUE)
 # lapply(cl_ls, head)
+# lapply(cl_ls, nrow)
 
+cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
+  island <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][2]
+  side <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][3]
+  zone <- paste(island, side, sep = "_")
+  vtype <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][4]
+  # paste(zone, vtype)
+  
+  odt <- mutate(cl_ls[[x]], ZONE = zone, VTYPE = vtype)
+  sorted <- odt[order(odt$Var.Ex, decreasing = TRUE), ]
+  # head(sorted)
+  # n_outl <- round((5 * nrow(sorted)) / 100)
+  # cat('5% of', nrow(sorted), 'is', n_outl, '\n')
+  # sorted$sel[1:n_outl] <- TRUE
+  
+  # out_dt <- data.frame(table(sorted[sorted$sel==TRUE, 'invRui']),
+  #                      ZONE = zone, VTYPE = vtype)
+  out_dt <- data.frame(sorted[, c('cp', 'LG', 'av', 'invRui', 'Var.Ex')],
+                       ZONE = zone, VTYPE = vtype)
+  out_dt$av <- round(out_dt$av)
+  return(out_dt)
+})))
+head(cl_dt)
+data.frame(table(cl_dt$ZONE, cl_dt$VTYPE))
+table(cl_dt[is.na(cl_dt$Var.Ex), 'VTYPE'])
+table(cl_dt[is.na(cl_dt$Var.Ex), 'ZONE'])
+# cl_dt <- cl_dt[!is.na(cl_dt$Var.Ex), ]
+
+comm <- as.character(data.frame(table(cl_dt$cp))[which(data.frame(table(cl_dt$cp))[,2] == 6), 1])
+head(comm)
+cl_dt[cl_dt$cp==comm[2],]
+# cl_dt[cl_dt$cp=='Contig3584_9146',]
+comm_vx <- cl_dt[cl_dt$cp %in% comm, c('cp', 'ZONE', 'VTYPE', 'Var.Ex')]
+# table(unique(cl_dt[cl_dt$cp %in% comm, c('cp', 'VTYPE', 'Var.Ex')])[, 2])
+zone_vx <- split(x = comm_vx, f = comm_vx$ZONE)
+
+for (i in 1:length(zone_vx)) {
+  ze <- zone_vx[[i]]
+  
+  sorted <- ze[order(ze$Var.Ex, decreasing = TRUE), ]
+  head(sorted)
+  max(ze$Var.Ex, na.rm = TRUE)
+  n_outl <- round((5 * nrow(sorted)) / 100)
+  outl_c <- data.frame(table(sorted[1:n_outl, 'VTYPE']))
+  print(outl_c[1,2]/outl_c[2,2])
+}
+
+
+# 
+# 
+# 
 cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
   island <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][2]
   side <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][3]
@@ -40,14 +92,17 @@ cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
   
   # out_dt <- data.frame(table(sorted[sorted$sel==TRUE, 'invRui']),
   #                      ZONE = zone, VTYPE = vtype)
-  out_dt <- data.frame(sorted[sorted$sel==TRUE, c('cp', 'LG', 'av', 'invRui')],
+  out_dt <- data.frame(sorted[sorted$sel==TRUE, c('cp', 'LG', 'av', 'invRui', 'Var.Ex')],
                        ZONE = zone, VTYPE = vtype)
   out_dt$av <- round(out_dt$av)
   return(out_dt)
 })))
 head(cl_dt)
+comm <- as.character(data.frame(table(cl_dt$cp))[which(data.frame(table(cl_dt$cp))[,2] == 6), 1])
+cl_dt[cl_dt$cp=='Contig3192_9124',]
+table(unique(cl_dt[cl_dt$cp %in% comm, c('cp', 'VTYPE')])[, 2])
 
-table(cl_dt$ZONE, cl_dt$VTYPE)
+data.frame(table(cl_dt$ZONE, cl_dt$VTYPE))
 # table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1,,,]
 # table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)['CZA_left',,,]
 # table(cl_dt$ZONE, cl_dt$sel, cl_dt$VTYPE, cl_dt$invRui)[1:2,,,]
@@ -108,7 +163,8 @@ cl_agg <- aggregate(x = cl_dt$cp, by = list(LG = cl_dt$LG, av = cl_dt$av, VTYPE 
 head(cl_agg)
 sum(cl_agg[cl_agg$VTYPE=='INDEL', 'x'])
 sum(cl_agg[cl_agg$VTYPE=='SNP', 'x'])
-cl_agg$prop <- ifelse(test = cl_agg$VTYPE=='INDEL', yes = cl_agg$x/528, no = cl_agg$x/3366)
+cl_agg$prop <- ifelse(test = cl_agg$VTYPE=='INDEL', yes = cl_agg$x/354, no = cl_agg$x/2268)
+# cl_agg$prop <- ifelse(test = cl_agg$VTYPE=='INDEL', yes = cl_agg$x/528, no = cl_agg$x/3366)
 
 vt <- split(cl_agg, f = cl_agg$VTYPE)
 # lapply(vt, head)

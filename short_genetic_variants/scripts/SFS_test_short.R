@@ -2,9 +2,9 @@ rm(list = setdiff(ls(), c('parts', 'cnm')))
 
 # tv <- strsplit(c('syn_INDEL:syn_SNP'), split = ":")[[1]]
 tv <- strsplit(c('nongenic_INDEL:nongenic_SNP'), split = ":")[[1]]
-if (cnm == 'ANN') {
-  tv2 <- unlist(strsplit(tv, split = "_"))
-}
+
+tv2 <- unlist(strsplit(tv, split = "_"))
+
 
 # sc <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_SNP_syn_count.txt', header = TRUE, sep = '\t')
 sc <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_SNP_nongenic_count.txt', header = TRUE, sep = '\t')
@@ -47,6 +47,8 @@ DAC_h
 
 snp_p <- snp/sum(snp)   # ML frequencies of the classes based on SNP data
 indel_p <- indel/sum(indel)   # ML frequencies of the classes based on indel data
+sum(snp_p[1:round(10/length(indel)*100)])
+sum(indel_p[1:round(10/length(indel)*100)])
 indel_p-snp_p
 
 # 'difference in proportion': (indels in category/all indels) - (SNPs in category/all SNPs).
