@@ -60,6 +60,7 @@ tv <- strsplit(cnm, split = ":")[[1]]
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_del_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
@@ -94,12 +95,10 @@ ann$cp <- paste(ann$CHROM, ann$POS, sep = '_')
 
 dtn <- unique(merge(x = dt, y = ic))
 dtn <- unique(merge(x = dtn, y = ann))
-if (tv[1] == 'INDEL') {
+
+dtn$VAR <- dtn$VTYPE
+dtn$VTYPE <- dtn$CLASS
   
-  dtn$VAR <- dtn$VTYPE
-  dtn$VTYPE <- dtn$CLASS
-  
-}
 # head(dtn)
 # table(dtn$ZONE)
 # table(dtn$CLASS)

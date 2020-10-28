@@ -22,13 +22,14 @@ do
     n_dhi=$(echo $pti | cut -d '_' -f 7 | head -c 2)
   fi
 
-	dhi_b=$(echo "$ptb" | tr : _)
-	dhi=$(echo HAP_${dhi_a}_${dhi_b}_DH.txt)
+	# dhi_b=$(echo "$ptb" | tr : _)
+	dhi_b=$(echo "$ptb" | cut -d ':' -f 2)
+	dhi=$(echo HAP_${dhi_a}_${dhi_b}_WWSS_DH.txt)
 
 	n2_dhi=$(( 2*${n_dhi} ))
 
 	java -cp .:/Users/samuelperini/Documents/research/projects/3.indels/software/dh/dh.jar dh.Readms \
 	/Users/samuelperini/Documents/research/projects/3.indels/summary/haplotypes/${dhi} ${n2_dhi} > \
-	/Users/samuelperini/Documents/research/projects/3.indels/summary/DH/DH_${dhi_a}_${dhi_b}_est.txt
+	/Users/samuelperini/Documents/research/projects/3.indels/summary/DH/DH_${dhi_a}_${dhi_b}_WWSS_est.txt
 	
 done
