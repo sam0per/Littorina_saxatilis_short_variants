@@ -61,6 +61,7 @@ tv <- strsplit(cnm, split = ":")[[1]]
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv'))
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 

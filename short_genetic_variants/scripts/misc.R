@@ -313,6 +313,219 @@ dt$D_gBGC <- ifelse(test = dt$DER=='A' | dt$DER=='T', yes = 'W', no = 'S')
 dt$gBGC <- paste(dt$A_gBGC, dt$D_gBGC, sep = '')
 table(dt$gBGC)
 write.table(x = dt, file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv', quote = FALSE, sep = ',', row.names = FALSE, col.names = TRUE)
+
+
+dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
+table(dt$gBGC)
+head(dt[dt$gBGC=='WW', ])
+
+sum(paste0(dt$REF, dt$ALT)=='AA')
+sum(paste0(dt$REF, dt$ALT)=='AT')
+sum(paste0(dt$REF, dt$ALT)=='TA')
+sum(paste0(dt$REF, dt$ALT)=='TT')
+
+sum(paste0(dt$REF, dt$ALT)=='GG')
+sum(paste0(dt$REF, dt$ALT)=='GC')
+sum(paste0(dt$REF, dt$ALT)=='CG')
+sum(paste0(dt$REF, dt$ALT)=='CC')
+
+dt$CLASS <- dt$gBGC
+table(dt[dt$gBGC=='WW' | dt$gBGC=='SS', 'gBGC'])
+table(dt[dt$gBGC=='WW' | dt$gBGC=='SS', 'CLASS'])
+write.table(x = dt[dt$gBGC=='WW' | dt$gBGC=='SS', ], file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv', quote = FALSE,
+            sep = ',', row.names = FALSE, col.names = TRUE)
+
+dt <- unique(read.csv(file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv'))
+head(dt)
+dt$CLASS <- 'WWSS'
+table(dt$CLASS)
+table(dt$gBGC)
+write.table(x = dt, file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv', quote = FALSE,
+            sep = ',', row.names = FALSE, col.names = TRUE)
+
+table(dt$gBGC)
+table(dt[dt$gBGC=='SW' | dt$gBGC=='WS', 'gBGC'])
+dt <- split(x = dt, f = dt$gBGC)
+write.table(x = dt$SW, file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv', quote = FALSE,
+            sep = ',', row.names = FALSE, col.names = TRUE)
+write.table(x = dt$WS, file = 'results/Lsax_short_WS_czs_daf_inv_findv.csv', quote = FALSE,
+            sep = ',', row.names = FALSE, col.names = TRUE)
+
+dt <- unique(read.csv(file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv'))
+head(dt)
+dt$CLASS <- dt$gBGC
+table(dt$CLASS)
+table(dt$gBGC)
+write.table(x = dt, file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv', append = FALSE, quote = FALSE,
+            sep = ',', row.names = FALSE, col.names = TRUE)
 # 
 # 
 # 
+# 
+ACns_WWSS <- read.table('results/marker_density/MD_CZA_CRAB_nonsyn_WWSS_count.txt', header = TRUE)
+head(ACns_WWSS)
+length(unique(as.character(ACns_WWSS$CHROM)))
+p <- ggplot(data = ACns_WWSS, aes(x = DAC)) +
+  geom_histogram(binwidth = 1, fill = 'grey', col ='black') +
+  labs(title = 'CZA CRAB nonsyn WWSS') +
+  theme(title = element_text(size = 20))
+p
+ggsave(filename = 'test/figures/SFS_CZA_CRAB_nonsyn_WWSS.pdf', plot = p, dpi = 'screen')
+
+Ad <- unique(as.character(ACns_WWSS[duplicated(ACns_WWSS$CHROM), 'CHROM']))
+unique(Ad)
+nrow(ACns_WWSS[ACns_WWSS$CHROM %in% unique(Ad), ])
+pos_dac <- ACns_WWSS[ACns_WWSS$CHROM %in% Ad, c('CHROM', 'POS', 'cp', 'LG', 'av','DAC', 'ZONE')]
+data.frame(table(pos_dac$CHROM))
+cor(x = pos_dac$POS, y = pos_dac$DAC)
+ggplot(data = pos_dac, aes(x = POS, y = DAC)) +
+  facet_wrap(~CHROM) +
+  geom_point(alpha = 0.3)
+ggplot(data = pos_dac, aes(x = av, y = DAC)) +
+  facet_wrap(~LG) +
+  geom_point(alpha = 0.3)
+# plot(x = pos_dac$POS, y = pos_dac$DAC)
+# diff(x = pos_dac$POS)
+data.frame(table(ACns_WWSS[ACns_WWSS$CHROM %in% Ad, 'DAC']))
+
+# hist(ACns_WWSS$DAC, breaks = unique(ACns_WWSS$N)*2+1, include.lowest = TRUE)
+ggplot(data = ACns_WWSS, aes(x = DAC)) +
+  geom_histogram(binwidth = 1, fill = 'grey', col ='black') +
+  geom_histogram(data = ACns_WWSS[ACns_WWSS$CHROM %in% Ad, ], aes(x = DAC), fill = 'blue', col = 'black', binwidth = 1)
+data.frame(table(ACns_WWSS$DAC))
+ACns_WWSS[ACns_WWSS$DAC==82, 'cp']
+ACns_WWSS[ACns_WWSS$CHROM=='Contig40948', ]
+ACns_WWSS[ACns_WWSS$CHROM=='Contig9412', ]
+
+BCns_WWSS <- read.table('results/marker_density/MD_CZB_CRAB_nonsyn_WWSS_count.txt', header = TRUE)
+head(BCns_WWSS)
+length(unique(as.character(BCns_WWSS$CHROM)))
+# hist(BCns_WWSS$DAC, breaks = unique(BCns_WWSS$N)*2)
+ggplot(data = BCns_WWSS, aes(x = DAC)) +
+  geom_histogram(binwidth = 1)
+
+Bd <- unique(as.character(BCns_WWSS[duplicated(BCns_WWSS$CHROM), 'CHROM']))
+unique(Bd)
+nrow(BCns_WWSS[BCns_WWSS$CHROM %in% unique(Bd), ])
+Bpos_dac <- BCns_WWSS[BCns_WWSS$CHROM %in% Bd, c('CHROM', 'POS', 'cp', 'LG', 'av','DAC', 'ZONE')]
+
+
+
+
+DCns_WWSS <- read.table('results/marker_density/MD_CZD_CRAB_nonsyn_WWSS_count.txt', header = TRUE)
+head(DCns_WWSS)
+length(unique(as.character(DCns_WWSS$CHROM)))
+# hist(DCns_WWSS$DAC, breaks = unique(DCns_WWSS$N)*2)
+ggplot(data = DCns_WWSS, aes(x = DAC)) +
+  geom_histogram(binwidth = 1)
+data.frame(table(DCns_WWSS$DAC))
+DCns_WWSS[DCns_WWSS$DAC==1, ]
+DCns_WWSS[DCns_WWSS$DAC==1, 'cp']
+
+DCns_WWSS[DCns_WWSS$cp=='Contig40948_77418', 'DAC']
+DCns_WWSS[DCns_WWSS$cp=='Contig9412_15107', 'DAC']
+
+BCns_WWSS[BCns_WWSS$cp=='Contig40948_77418', 'DAC']
+BCns_WWSS[BCns_WWSS$cp=='Contig9412_15107', 'DAC']
+
+Dd <- unique(as.character(DCns_WWSS[duplicated(DCns_WWSS$CHROM), 'CHROM']))
+unique(Dd)
+nrow(DCns_WWSS[DCns_WWSS$CHROM %in% unique(Dd), ])
+Dpos_dac <- DCns_WWSS[DCns_WWSS$CHROM %in% Dd, c('CHROM', 'POS', 'cp', 'LG', 'av','DAC', 'ZONE')]
+
+pd <- rbind(pos_dac, Bpos_dac, Dpos_dac)
+
+ggplot(data = pd, aes(x = POS, y = DAC, col = ZONE)) +
+  facet_wrap(~CHROM) +
+  geom_point(alpha = 0.4, size = 3)
+ggplot(data = pd, aes(x = av, y = DAC, col = ZONE)) +
+  facet_wrap(~LG) +
+  geom_point(alpha = 0.3)
+
+rm(list = ls())
+(fl <- list.files(path = 'results/marker_density', pattern = 'nonsyn_WWSS', full.names = TRUE))
+
+ll <- list()
+for (i in 1:length(fl)) {
+  dt <- read.table(file = fl[i], header = TRUE)
+  dd <- unique(as.character(dt[duplicated(dt$CHROM), 'CHROM']))
+  ll[[i]] <- dd
+}
+sum(sapply(ll, length))
+length(unlist(ll))
+cc <- data.frame(table(unlist(ll)))
+sum(cc$Freq)
+dc <- as.character(cc[cc$Freq==length(fl), 1])
+
+library(data.table)
+dt <- as.data.frame(rbindlist(lapply(fl, read.table, header = TRUE)))
+# ds <- split(x = dt, f = dt$ZONE)
+pos_dac <- dt[dt$CHROM %in% dc, c('CHROM', 'POS', 'cp', 'LG', 'av','DAC', 'ZONE', 'ECOT')]
+
+dd <- unique(as.character(dt[duplicated(dt$CHROM), 'CHROM']))
+length(unique(dd))
+# nrow(DCns_WWSS[DCns_WWSS$CHROM %in% unique(Dd), ])
+pos_dac <- dt[dt$CHROM %in% dd, c('CHROM', 'POS', 'cp', 'LG', 'av','DAC', 'ZONE', 'ECOT')]
+pos_dac$ZE <- paste(pos_dac$ZONE, pos_dac$ECOT)
+
+p <- ggplot(data = pos_dac, aes(x = POS, y = DAC, col = ZONE)) +
+  facet_wrap(~CHROM) +
+  geom_point(alpha = 0.4, size = 3) +
+  theme(title = element_text(size = 20), text = element_text(size = 14))
+ggsave(filename = 'test/figures/pos_dac_czs_dup.pdf', plot = p, dpi = 'screen')
+q <- ggplot(data = pos_dac, aes(x = av, y = DAC, col = ZONE)) +
+  facet_wrap(~LG) +
+  geom_point(alpha = 0.4, size = 3) +
+  labs(x = 'Map position') +
+  theme(title = element_text(size = 20), text = element_text(size = 14))
+ggsave(filename = 'test/figures/av_dac_czs_dup.pdf', plot = q, dpi = 'screen')
+
+aa <- read.table('results/marker_density/MD_CZD_CRAB_nonsyn_WWSS_count.txt', header = TRUE)
+aa[aa$CHROM=='Contig8325',]
+aa[aa$DAC==82,]
+
+# ggplot(data = pos_dac, aes(x = av, y = ZE, col = DAC)) +
+#   facet_wrap(~LG) +
+#   geom_point(alpha = 0.3, size = 2)
+
+ff <- list.files(path = 'CZCLI006_comp', pattern = 'NoInv_SNP', full.names = TRUE)
+et <- as.data.frame(rbindlist(lapply(ff, read.table, header = TRUE)))
+table(et$sel)
+cl <- et[et$Contig %in% dc, ]
+table(cl$sel)
+table(cl$Type)
+
+plot(x = pos_dac$POS, y = pos_dac$DAC)
+
+pd <- split(x = pos_dac, f = pos_dac$ZONE)
+pd <- merge(x = pd$CZA, y = pd$CZB, by = 'CHROM')
+plot(x = pd$DAC.x, y = pd$DAC.y)
+cor.test(x = pd$DAC.x, y = pd$DAC.y)
+
+pd <- split(x = pos_dac, f = pos_dac$ZONE)
+pd <- merge(x = pd$CZA, y = pd$CZD, by = 'CHROM')
+plot(x = pd$DAC.x, y = pd$DAC.y)
+cor.test(x = pd$DAC.x, y = pd$DAC.y)
+
+pd <- split(x = pos_dac, f = pos_dac$ZONE)
+pd <- merge(x = pd$CZB, y = pd$CZD, by = 'CHROM')
+plot(x = pd$DAC.x, y = pd$DAC.y)
+cor.test(x = pd$DAC.x, y = pd$DAC.y)
+summary(lm(formula = DAC.x ~ DAC.y * ZE.y, data = pd))
+ggplot(data = pd, aes(x = DAC.x, y = DAC.y)) +
+  geom_abline(slope = 1) +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y~x)
+
+
+aa <- read.table('results/marker_density/MD_CZB_CRAB_nonsyn_WWSS_count.txt', header = TRUE)
+head(aa)
+p <- ggplot(data = aa, aes(x = DAC)) +
+  geom_histogram(binwidth = 1, fill = 'grey', col ='black') +
+  labs(title = 'CZB CRAB nonsyn WWSS') +
+  theme(title = element_text(size = 20))
+p
+ggsave(filename = 'test/figures/SFS_CZB_CRAB_nonsyn_WWSS.pdf', plot = p, dpi = 'screen')
+
+
+

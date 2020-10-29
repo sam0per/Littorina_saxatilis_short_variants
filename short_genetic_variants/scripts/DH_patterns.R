@@ -4,13 +4,16 @@ dh_res <- read.csv('results/DH_estimates.csv')
 head(dh_res)
 str(dh_res)
 dh_res$ECOT <- factor(dh_res$ECOT, levels = c("WAVE_LEFT", "CRAB", "WAVE_RIGHT"))
-dh_res$Variant_type <- factor(dh_res$Variant_type, levels = c("INDEL", "DELETION", "INSERTION", "SNP"))
+levels(dh_res$Variant_type)
+# dh_res$Variant_type <- factor(dh_res$Variant_type, levels = c("INDEL", "DELETION", "INSERTION", "SNP"))
 levels(dh_res$ANN)
-dh_res$ANN <- factor(dh_res$ANN, levels = c("all", "noncoding", "nongenic", "coding", "inframe",
-                                            "synonymous", "nonsynonymous", "frameshift",
-                                            "WW", "SW", "WS", "SS"))
+dh_res$ANN <- factor(dh_res$ANN, levels = c("nongenic", "syn", "nonsyn", "INDEL", "SNP"))
+# dh_res$ANN <- factor(dh_res$ANN, levels = c("all", "noncoding", "nongenic", "coding", "inframe",
+#                                             "synonymous", "nonsynonymous", "frameshift",
+#                                             "WW", "SW", "WS", "SS"))
 
-vt <- c('INDEL', 'SNP')
+vt <- c('INS', 'DEL')
+# vt <- c('INDEL', 'SNP')
 # vt <- c('SNP')
 
 library(RColorBrewer)
@@ -19,7 +22,7 @@ display.brewer.pal(n = 8, name = "Dark2")
 vpal <- brewer.pal(n = 3, name = "Dark2")
 # display.brewer.pal(n = 12, name = "Paired")
 # vpal <- brewer.pal(n = 12, name = "Paired")[5:8]
-an <- c('nongenic', 'synonymous', 'nonsynonymous')
+an <- c('nongenic', 'syn', 'nonsyn')
 # an <- intersect(as.character(unique(dh_res[dh_res$Variant_type==vt[1], 'ANN'])),
 #                 as.character(unique(dh_res[dh_res$Variant_type==vt[2], 'ANN'])))
 # an <- levels(dh_res$ANN)[8:length(levels(dh_res$ANN))]
@@ -74,13 +77,24 @@ DHp
 # ggplot(data = dh_sub, aes(x = Variant_type, y = H)) +
 #   geom_point()
 
-# BETWEEN INDELS AND SNPS
+# BETWEEN
 lapply(X = an, FUN = function(x) {
   
   dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN==x, ]
   
-  Dlm <- summary(lm(formula = D~Variant_type, data = dh_sub, weights = sqrt(segsites)))
-  Hlm <- summary(lm(formula = H~Variant_type, data = dh_sub, weights = sqrt(segsites)))
+  Dlm <- summary(lm(formula = D~-1+Variant_type, data = dh_sub, weights = sqrt(segsites)))
+  Hlm <- summary(lm(formula = H~-1+Variant_type, data = dh_sub, weights = sqrt(segsites)))
+  
+  return(list(x, Dlm, Hlm))
+  
+})
+
+lapply(X = an, FUN = function(x) {
+  
+  dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN==x, ]
+  
+  Dlm <- summary(lm(formula = D~Variant_type*ZONE, data = dh_sub, weights = sqrt(segsites)))
+  Hlm <- summary(lm(formula = H~Variant_type*ZONE, data = dh_sub, weights = sqrt(segsites)))
   
   return(list(x, Dlm, Hlm))
   
@@ -105,7 +119,7 @@ dh_vt <- rbind(data.frame(rbindlist(dh_vt[[1]])),
                data.frame(rbindlist(dh_vt[[2]])),
                data.frame(rbindlist(dh_vt[[3]])))
 str(dh_vt)
-dh_vt$Pal <- ifelse(test = dh_vt$Par == levels(dh_vt$Par)[1], yes = 'INDELs', no = 'SNPs')
+dh_vt$Pal <- ifelse(test = dh_vt$Par == levels(dh_vt$Par)[1], yes = 'DELETION', no = 'INSERTION')
 dh_vt$Estimate <- as.numeric(as.character(dh_vt$Estimate))
 dh_vt$Std..Error <- as.numeric(as.character(dh_vt$Std..Error))
 btw <- ggplot(data = dh_vt, aes(x = ANN, y = Estimate, col = Pal)) +
