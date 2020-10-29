@@ -7,10 +7,10 @@ tv2 <- unlist(strsplit(tv, split = "_"))
 
 
 # sc <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_SNP_syn_count.txt', header = TRUE, sep = '\t')
-sc <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_SNP_nongenic_count.txt', header = TRUE, sep = '\t')
+sc <- read.table(file = 'results/marker_density/MD_CZD_CRAB_syn_WWSS_count.txt', header = TRUE, sep = '\t')
 head(sc)
 # ic <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_INDEL_syn_count.txt', header = TRUE, sep = '\t')
-ic <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_INDEL_nongenic_count.txt', header = TRUE, sep = '\t')
+ic <- read.table(file = 'results/marker_density/MD_CZA_CRAB_nonsyn_DEL_count.txt', header = TRUE, sep = '\t')
 head(ic)
 
 snp <- merge(x = data.frame(Var1=1:((unique(sc$N)*2)-1)), y = data.frame(table(sc$DAC)),
