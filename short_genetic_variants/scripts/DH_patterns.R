@@ -95,8 +95,8 @@ lapply(X = an, FUN = function(x) {
 
   dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN==x, ]
 
-  Dlm <- summary(lm(formula = D~Variant_type*ZONE, data = dh_sub, weights = sqrt(segsites)))
-  Hlm <- summary(lm(formula = H~Variant_type*ZONE, data = dh_sub, weights = sqrt(segsites)))
+  Dlm <- summary(lm(formula = D~Variant_type*ECOT, data = dh_sub, weights = sqrt(segsites)))
+  Hlm <- summary(lm(formula = H~Variant_type*ECOT, data = dh_sub, weights = sqrt(segsites)))
 
   return(list(x, Dlm, Hlm))
 
