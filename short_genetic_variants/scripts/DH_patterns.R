@@ -7,23 +7,27 @@ dh_res$ECOT <- factor(dh_res$ECOT, levels = c("WAVE_LEFT", "CRAB", "WAVE_RIGHT")
 levels(dh_res$Variant_type)
 # dh_res$Variant_type <- factor(dh_res$Variant_type, levels = c("INDEL", "DELETION", "INSERTION", "SNP"))
 levels(dh_res$ANN)
-dh_res$ANN <- factor(dh_res$ANN, levels = c("nongenic", "syn", "nonsyn", "INDEL", "SNP"))
+# dh_res$ANN <- factor(dh_res$ANN, levels = c("nongenic", "syn", "nonsyn", "INDEL", "SNP"))
 # dh_res$ANN <- factor(dh_res$ANN, levels = c("all", "noncoding", "nongenic", "coding", "inframe",
 #                                             "synonymous", "nonsynonymous", "frameshift",
 #                                             "WW", "SW", "WS", "SS"))
-
-vt <- c('INS', 'DEL')
+# 
+# 
+# 
+vt <- c('DEL', 'INS')
 # vt <- c('INDEL', 'SNP')
 # vt <- c('SNP')
-vt <- c('DELETION', 'INSERTION', 'WWSS')
+vt <- c('SW', 'WS', 'WWSS')
 
 library(RColorBrewer)
 # vpal <- c("#1B9E77", "#666666")
-display.brewer.pal(n = 8, name = "Dark2")
+# display.brewer.pal(n = 8, name = "Dark2")
+vpal <- brewer.pal(n = 6, name = "Dark2")[4:5]
 vpal <- brewer.pal(n = 3, name = "Dark2")
 # display.brewer.pal(n = 12, name = "Paired")
 # vpal <- brewer.pal(n = 12, name = "Paired")[5:8]
-an <- c('nongenic', 'syn', 'nonsyn')
+an <- levels(dh_res$ANN)[1:6]
+an <- c('nongenic', 'nonsyn', 'syn')
 # an <- intersect(as.character(unique(dh_res[dh_res$Variant_type==vt[1], 'ANN'])),
 #                 as.character(unique(dh_res[dh_res$Variant_type==vt[2], 'ANN'])))
 # an <- levels(dh_res$ANN)[8:length(levels(dh_res$ANN))]
@@ -32,7 +36,7 @@ an <- c('nongenic', 'syn', 'nonsyn')
 
 dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN %in% an, ]
 table(dh_sub$Variant_type)
-dh_sub[dh_sub$ANN=='nongenic',]
+# dh_sub[dh_sub$ANN=='nongenic',]
 
 library(ggplot2)
 DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type)) +
@@ -50,7 +54,7 @@ DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type))
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
 DHp
-ggsave(filename = 'figures/DH_var_ann_czs.pdf', plot = DHp, width = 8, height = 6, dpi = "screen")
+# ggsave(filename = 'figures/DH_var_ann_czs.pdf', plot = DHp, width = 8, height = 6, dpi = "screen")
 
 DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN)) +
   facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
@@ -120,9 +124,18 @@ dh_vt <- lapply(X = an, FUN = function(x) {
 dh_vt <- rbind(data.frame(rbindlist(dh_vt[[1]])),
                data.frame(rbindlist(dh_vt[[2]])),
                data.frame(rbindlist(dh_vt[[3]])))
+
+dh_vt <- rbind(data.frame(rbindlist(dh_vt[[1]])),
+               data.frame(rbindlist(dh_vt[[2]])),
+               data.frame(rbindlist(dh_vt[[3]])),
+               data.frame(rbindlist(dh_vt[[4]])),
+               data.frame(rbindlist(dh_vt[[5]])),
+               data.frame(rbindlist(dh_vt[[6]])))
 str(dh_vt)
 # dh_vt$Pal <- ifelse(test = dh_vt$Par == levels(dh_vt$Par)[1], yes = 'INDELs', no = 'SNPs')
 dh_vt$Pal <- substr(x = as.character(dh_vt$Par), start = 13, stop = nchar(as.character(dh_vt$Par)))
+levels(dh_vt$ANN)
+dh_vt$ANN <- factor(x = dh_vt$ANN, levels = c('nongenic', 'syn', 'nonsyn'))
 
 dh_vt$Estimate <- as.numeric(as.character(dh_vt$Estimate))
 dh_vt$Std..Error <- as.numeric(as.character(dh_vt$Std..Error))
@@ -146,6 +159,10 @@ btw <- ggplot(data = dh_vt, aes(x = ANN, y = Estimate, col = Pal)) +
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
 btw
+ggsave(filename = paste('figures/DH_noncoding', paste(vt, collapse = '_'),'fit.pdf', sep = '_'),
+       plot = btw, width = 8, height = 6, dpi = "screen")
+ggsave(filename = paste('figures/DH_annotated', paste(vt, collapse = '_'),'fit.pdf', sep = '_'),
+       plot = btw, width = 8, height = 6, dpi = "screen")
 ggsave(filename = 'figures/DH_between_variants.pdf', plot = btw, width = 8, height = 6, dpi = "screen")
 #
 #

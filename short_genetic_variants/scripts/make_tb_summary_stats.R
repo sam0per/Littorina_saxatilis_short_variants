@@ -37,13 +37,16 @@ pD <- as.numeric(substr(x = lines[9],start = 24, stop = nchar(lines[9])))
 H <- as.numeric(substr(x = lines[11],start = 18, stop = nchar(lines[11])))
 pH <- as.numeric(substr(x = lines[12],start = 24, stop = nchar(lines[12])))
 pv <- as.numeric(substr(x = lines[14],start = 26, stop = nchar(lines[14])))
+E <- as.numeric(substr(x = lines[16],start = 10, stop = nchar(lines[16])))
+pE <- as.numeric(substr(x = lines[17],start = 24, stop = nchar(lines[17])))
 
 if (fl[3]=='CRAB') {
-  ot <- data.frame(ZONE = fl[2], ECOT = fl[3], Variant_type = fl[5], ANN = fl[4],
-                   segsites = seg, D = D, pD = pD, H = H, pH = pH, pvalue_DH = pv, n = n)
+  ot <- data.frame(ZONE = fl[2], ECOT = fl[3], Variant_type = fl[length(fl)-1], ANN = paste(fl[4:(length(fl)-2)], collapse = '_'),
+                   segsites = seg, D = D, pD = pD, H = H, pH = pH, pvalue_DH = pv, E = E, pE = pE, n = n)
 } else {
-  ot <- data.frame(ZONE = fl[2], ECOT = paste(fl[3], fl[4], sep = '_'), Variant_type = fl[6], ANN = fl[5],
-                   segsites = seg, D = D, pD = pD, H = H, pH = pH, pvalue_DH = pv, n = n)
+  ot <- data.frame(ZONE = fl[2], ECOT = paste(fl[3], fl[4], sep = '_'), Variant_type = fl[length(fl)-1],
+                   ANN = paste(fl[5:(length(fl)-2)], collapse = '_'),
+                   segsites = seg, D = D, pD = pD, H = H, pH = pH, pvalue_DH = pv, E = E, pE = pE, n = n)
 }
 
 if (file.exists('results/DH_estimates.csv')) {

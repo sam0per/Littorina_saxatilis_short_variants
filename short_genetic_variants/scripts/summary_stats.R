@@ -45,6 +45,7 @@ ic <- unique(read.csv(file = opt$vone))
 # cnm <- 'INDEL:TEST'
 # cnm <- 'INDEL:syn'
 # cnm <- 'INDEL:nongenic'
+# cnm <- 'INDEL:nonsyn'
 # cnm <- 'SNP:nongenic'
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
@@ -58,7 +59,7 @@ tv <- strsplit(cnm, split = ":")[[1]]
 
 # dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_ins_del_czs_daf_inv_findv.csv'))
-# dt <- unique(read.csv(file = 'results/Lsax_short_ins_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_del_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv'))
 # dt <- unique(read.csv(file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv'))
@@ -109,7 +110,7 @@ dtn$VTYPE <- dtn$CLASS
 # table(dtn$gBGC) 
 
 if (opt$rminv) {
-  cat('1.  Varinats inside inversions will be removed.\n')
+  cat('1.  Variants inside inversions will be removed.\n')
   dtn <- dtn[dtn$invRui==FALSE, ]
 }
 
@@ -138,96 +139,120 @@ dtp <- dtp[!duplicated(dtp$cp), ]
 
 ## READ TABLE WITH SNPEFF ANNOTATION CLASSES
 snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
+snpeff$impact <- as.character(snpeff$impact)
 # str(snpeff)
 # head(snpeff)
+imp <- as.character(snpeff$impact)
+# snpeff <- snpeff$impact[snpeff[, tv[2]]]
 
-if (tv[1] != tv[2]) {
-  
-  if (sum(tv[2] %in% colnames(snpeff))==0) {
-    
-    effcat <- as.character(snpeff[grepl(pattern = tv[2], x = snpeff$eff), 1])
-    
-  } else {
-    
-    effcat <- as.character(snpeff[snpeff[, tv[2]]==TRUE, 1])
-    
-  }
-  
-  eff_tar <- as.data.frame(rbindlist(lapply(dtp$ANN, FUN = function(x) {
-    stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
-    
-    if (sum(grepl(pattern = '&', x = stsp)) > 0) {
-      
-      tosplit <- stsp[grepl(pattern = '&', x = stsp)]
-      stsp <- c(stsp, as.character(unlist(data.frame(strsplit(tosplit, "&")))))
-      
-    }
-    
-    if (tv[2] != 'nonsyn') {
-      
-      ancat <- stsp[stsp %in% as.character(snpeff[,1])]
-      tan <- ancat %in% effcat
-      # unique(c(effcat, as.character(snpeff[snpeff$nongenic==TRUE, 1])))
-      
-      if (tv[2] == 'nongenic') {
-        
-        an1 <- sum(tan) == length(tan)
-        
-      } else {
-        
-        if (sum(ancat %in% as.character(snpeff[snpeff$nonsyn==TRUE, 1])) > 0) {
-          
-          an1 <- FALSE
-          
-        } else if (sum(ancat %in% as.character(snpeff[snpeff$nongenic==TRUE, 1])) == length(ancat)) {
-          
-          an1 <- FALSE
-          
-        } else {
-          
-          an1 <- TRUE
-          
-        }
-        
-      }
-      
-    } else {
-      
-      an1 <- sum(stsp %in% effcat) > 0
-      
-    }
-    
-    # an1 <- sum(stsp %in% effcat) == 1
-    an_dt <- data.frame(an1)
-    colnames(an_dt) <- paste(tv[2], unique(dtn$VTYPE), sep = '_')
-    return(an_dt)
-  })))
-  # head(eff_tar)
-  # sum(eff_tar[,1])
-  eff_tar$VTYPE <- dtp$VTYPE
-  
-  dtp <- dtp[eff_tar[, 1], ]
-  
+dtp$IMP <- NA
+for (i in 1:nrow(dtp)) {
+  stsp <- strsplit(x = as.character(dtp$ANN[i]), split = '\\|')[[1]]
+  uim <- paste(unique(stsp[stsp %in% imp]), collapse = ':')
+  dtp$IMP[i] <- uim
 }
+# table(dtp$IMP)
+
+if (tv[2]=='syn') {
+  eff_tar <- c(paste('HIGH', snpeff$impact, sep = ':'),
+               paste(snpeff$impact, 'HIGH', sep = ':'), 'MODIFIER', 'HIGH')
+  dtp$CAT <- ifelse(test = dtp$IMP %in% eff_tar == TRUE, yes = FALSE, no = TRUE)
+} else if (tv[2]=='nonsyn') {
+  dtp$CAT <- ifelse(test = grepl(pattern = 'HIGH', x = dtp$IMP), yes = TRUE, no = FALSE)
+} else if (tv[2]=='nongenic') {
+  dtp$CAT <- ifelse(test = dtp$IMP %in% 'MODIFIER' == TRUE, yes = TRUE, no = FALSE)
+}
+# table(dtp$CAT)
+
+dtp <- dtp[dtp$CAT==TRUE, ]
+
+# if (tv[1] != tv[2]) {
+#   
+#   if (sum(tv[2] %in% colnames(snpeff))==0) {
+#     
+#     effcat <- as.character(snpeff[grepl(pattern = tv[2], x = snpeff$eff), 1])
+#     
+#   } else {
+#     
+#     effcat <- as.character(snpeff[snpeff[, tv[2]]==TRUE, 1])
+#     
+#   }
+#   
+#   eff_tar <- as.data.frame(rbindlist(lapply(dtp$ANN, FUN = function(x) {
+#     stsp <- strsplit(x = as.character(x), split = '\\|')[[1]]
+#     
+#     if (sum(grepl(pattern = '&', x = stsp)) > 0) {
+#       
+#       tosplit <- stsp[grepl(pattern = '&', x = stsp)]
+#       stsp <- c(stsp, as.character(unlist(data.frame(strsplit(tosplit, "&")))))
+#       
+#     }
+#     
+#     if (tv[2] != 'nonsyn') {
+#       
+#       ancat <- stsp[stsp %in% as.character(snpeff[,1])]
+#       tan <- ancat %in% effcat
+#       # unique(c(effcat, as.character(snpeff[snpeff$nongenic==TRUE, 1])))
+#       
+#       if (tv[2] == 'nongenic') {
+#         
+#         an1 <- sum(tan) == length(tan)
+#         
+#       } else {
+#         
+#         if (sum(ancat %in% as.character(snpeff[snpeff$nonsyn==TRUE, 1])) > 0) {
+#           
+#           an1 <- FALSE
+#           
+#         } else if (sum(ancat %in% as.character(snpeff[snpeff$nongenic==TRUE, 1])) == length(ancat)) {
+#           
+#           an1 <- FALSE
+#           
+#         } else {
+#           
+#           an1 <- TRUE
+#           
+#         }
+#         
+#       }
+#       
+#     } else {
+#       
+#       an1 <- sum(stsp %in% effcat) > 0
+#       
+#     }
+#     
+#     # an1 <- sum(stsp %in% effcat) == 1
+#     an_dt <- data.frame(an1)
+#     colnames(an_dt) <- paste(tv[2], unique(dtn$VTYPE), sep = '_')
+#     return(an_dt)
+#   })))
+#   # head(eff_tar)
+#   # sum(eff_tar[,1])
+#   eff_tar$VTYPE <- dtp$VTYPE
+#   
+#   dtp <- dtp[eff_tar[, 1], ]
+#   
+# }
 
 # eff_tar[eff_tar[,1]==FALSE,]
 
-if (tv[2] %in% levels(dt$gBGC)) {
-  
-  if (nrow(dtp) != nrow(eff_tar)) {
-    
-    stop("There are annotation codes missing.\n", call.=FALSE)
-    
-  } else {
-    
-    dtp <- dtp[dtp$gBGC==tv[2], ]
-    
-  }
-  
-}
-
+# if (tv[2] %in% levels(dt$gBGC)) {
+#   
+#   if (nrow(dtp) != nrow(eff_tar)) {
+#     
+#     stop("There are annotation codes missing.\n", call.=FALSE)
+#     
+#   } else {
+#     
+#     dtp <- dtp[dtp$gBGC==tv[2], ]
+#     
+#   }
+#   
+# }
+an_vt <- paste(tv[2], unique(dtn$VTYPE), sep = '_')
 write.table(x = dtp, file = paste('results/marker_density/MD', unique(dtp$ZONE), levels(ic$ECOT),
-                                  colnames(eff_tar)[1], 'count.txt', sep = '_'),
+                                  an_vt, 'count.txt', sep = '_'),
             quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
 
 dac <- dtp[, 'DAC']
@@ -241,13 +266,13 @@ for (i in 1:ncol(df)) {
 # colSums(df)
 
 fileConn <- file(paste('summary/haplotypes/HAP', levels(ic$ZONE), levels(ic$ECOT),
-                       colnames(eff_tar)[1], 'DH.txt', sep = '_'))
-writeLines(c('# ', colnames(eff_tar)[1], '\n//\nsegsites: ', length(dac),
+                       an_vt, 'DH.txt', sep = '_'))
+writeLines(c('# ', an_vt, '\n//\nsegsites: ', length(dac),
              '\npositions: ', paste(round(1:length(dac)/length(dac), 4), collapse = ' '), '\n'),
            con = fileConn, sep = '')
 close(fileConn)
 
 write.table(x = df,
             file = paste('summary/haplotypes/HAP', levels(ic$ZONE), levels(ic$ECOT),
-                         colnames(eff_tar)[1], 'DH.txt', sep = '_'),
+                         an_vt, 'DH.txt', sep = '_'),
             quote = FALSE, sep = '', row.names = FALSE, col.names = FALSE, append = TRUE)

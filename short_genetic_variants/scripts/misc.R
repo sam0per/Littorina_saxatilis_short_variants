@@ -526,6 +526,162 @@ p <- ggplot(data = aa, aes(x = DAC)) +
   theme(title = element_text(size = 20))
 p
 ggsave(filename = 'test/figures/SFS_CZB_CRAB_nonsyn_WWSS.pdf', plot = p, dpi = 'screen')
+# 
+# 
+# 
+# INDEL SIZE
+(ff <- list.files(path = 'results/marker_density', pattern = '_nonsyn_DEL', full.names = TRUE))
+for (i in 1:9) {
+  dd <- read.table(file = ff[i], header = TRUE)
+  # dd <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_DEL_count.txt', header = TRUE)
+  # ggplot(data = rbind(dd,ii), aes(x = SIZE, fill = VTYPE)) +
+  #   geom_histogram(binwidth = 1, col = 'black', position = 'dodge')
+  slices <- data.frame(table(dd$SIZE))[, 2]
+  # lbls <- c("US", "UK", "Australia", "Germany", "France")
+  # lbls <- c('SW','WS', 'WWSS')
+  lbls <- data.frame(table(dd$SIZE))[, 1]
+  pct <- round(slices/sum(slices)*100, digits = 1)
+  lbls <- paste(lbls, pct) # add percents to labels
+  lbls <- paste(lbls,"%",sep="") # ad % to labels
+  pie(slices,labels = lbls, col=rainbow(length(lbls)),
+      main='DEL')
+  # sum(pct[1:9])
+  # sum(pct[1:6])
+  # sum(pct[1:3])
+  print(sum(pct[1:2]))
+}
+
+
+(ff <- list.files(path = 'results/marker_density', pattern = '_nonsyn_INS', full.names = TRUE))
+for (i in 1:9) {
+  dd <- read.table(file = ff[i], header = TRUE)
+  slices <- data.frame(table(dd$SIZE))[, 2]
+  # lbls <- c("US", "UK", "Australia", "Germany", "France")
+  # lbls <- c('SW','WS', 'WWSS')
+  lbls <- data.frame(table(dd$SIZE))[, 1]
+  pct <- round(slices/sum(slices)*100, digits = 1)
+  lbls <- paste(lbls, pct) # add percents to labels
+  lbls <- paste(lbls,"%",sep="") # ad % to labels
+  pie(slices,labels = lbls, col=rainbow(length(lbls)),
+      main='INS')
+  # print(sum(pct[1:9]))
+  # print(sum(pct[1:6]))
+  # print(sum(pct[1:3]))
+  print(sum(pct[1:2]))
+}
+
+# 
+# 
+# 
+ee <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_syn_DEL_count.txt', header = TRUE)
+er <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_DEL_count.txt', header = TRUE)
+et <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_syn_INS_count.txt', header = TRUE)
+ey <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_INS_count.txt', header = TRUE)
+ee <- rbind(ee, er, et, ey)
+we <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_syn_DEL_count.txt', header = TRUE)
+wr <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_nonsyn_DEL_count.txt', header = TRUE)
+wt <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_syn_INS_count.txt', header = TRUE)
+wy <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_nonsyn_INS_count.txt', header = TRUE)
+we <- rbind(we, wr, wt, wy)
+length(intersect(ee$cp, we$cp))
+length(ee$cp)
+length(we$cp)
+
+ee <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_syn_SW_count.txt', header = TRUE)
+er <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_SW_count.txt', header = TRUE)
+et <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_syn_WS_count.txt', header = TRUE)
+ey <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_WS_count.txt', header = TRUE)
+eu <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_syn_WWSS_count.txt', header = TRUE)
+ei <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_WWSS_count.txt', header = TRUE)
+ee <- rbind(ee, er, et, ey, eu, ei)
+we <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_syn_SW_count.txt', header = TRUE)
+wr <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_nonsyn_SW_count.txt', header = TRUE)
+wt <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_syn_WS_count.txt', header = TRUE)
+wy <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_nonsyn_WS_count.txt', header = TRUE)
+wu <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_syn_WWSS_count.txt', header = TRUE)
+wi <- read.table(file = 'results/marker_density/MD_CZB_WAVE_LEFT_nonsyn_WWSS_count.txt', header = TRUE)
+we <- rbind(we, wr, wt, wy, wu, wi)
+length(intersect(ee$cp, we$cp))/length(ee$cp)
+length(intersect(ee$cp, we$cp))/length(we$cp)
+# 
+# 
+# 
+# COUNT OF DIFFERENT TYPES OF VARIANTS
+get_ro <- function(z, e, v, a) {
+  s <- dh_sub[dh_sub$ZONE %in% z & dh_sub$ECOT==e & dh_sub$Variant_type %in% v & dh_sub$ANN %in% a, 'segsites']
+  return(s)
+}
+levels(dh_sub$ANN)
+vv <- 'INS'
+aa <- c('nongenic', 'nonsyn', 'syn')
+# Pie Chart with Percentages
+# slices <- c(10, 12, 4, 16, 8)
+slices <- get_ro(z = 'CZD', e = 'WAVE_LEFT', v = vv, a = aa)
+# lbls <- c("US", "UK", "Australia", "Germany", "France")
+# lbls <- c('SW','WS', 'WWSS')
+lbls <- aa
+pct <- round(slices/sum(slices)*100, digits = 1)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=rainbow(length(lbls)),
+    main=vv)
+
+an <- c('nongenic', 'nonsyn', 'syn')
+dh_sub <- dh_res[dh_res$ANN %in% an, ]
+
+ggplot(data = dh_sub, aes(x = Variant_type, y = segsites, fill = ANN)) +
+  facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
+  geom_col()
+
+ggplot(data = dh_sub, aes(x = Variant_type, y = segsites)) +
+  # facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
+  geom_col()
+
+tt <- aggregate(x = dh_sub$segsites, by = list(dh_sub$Variant_type, dh_sub$ANN), sum)
+slices <- tt$x
+# lbls <- c("US", "UK", "Australia", "Germany", "France")
+# lbls <- c('SW','WS', 'WWSS')
+lbls <- paste(tt$Group.1, tt$Group.2)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=rainbow(length(lbls)))
+
+isl <- 'CZD'
+eco <- 'CRAB'
+dd <- dh_sub[dh_sub$ZONE==isl & dh_sub$ECOT==eco,]
+dd <- dd[6:10,]
+slices <- dd$segsites
+# lbls <- c("US", "UK", "Australia", "Germany", "France")
+# lbls <- c('SW','WS', 'WWSS')
+lbls <- paste(dd$Variant_type, dd$ANN)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=rainbow(length(lbls)), main = paste(isl, eco))
+
+aggregate(x = dh_sub$segsites, by = list(dh_sub$ZONE, dh_sub$ECOT, dh_sub$Variant_type), sum)
+
+isl <- 'CZD'
+dd <- dh_sub[dh_sub$ZONE==isl,]
+dd <- split(x = dd, f = dd$ECOT)
+d1 <- merge(x = dd$WAVE_LEFT, y = dd$CRAB, by = c('Variant_type', 'ANN'))
+d2 <- merge(x = dd$WAVE_LEFT, y = dd$WAVE_RIGHT, by = c('Variant_type', 'ANN'))
+d3 <- merge(x = dd$CRAB, y = dd$WAVE_RIGHT, by = c('Variant_type', 'ANN'))
+ggplot(data = d1, aes(x = segsites.x, y = segsites.y, col = ANN, shape = Variant_type)) +
+  geom_abline(slope = 1) +
+  geom_point(size = 3)
+ggplot(data = d2, aes(x = segsites.x, y = segsites.y, col = ANN, shape = Variant_type)) +
+  geom_abline(slope = 1) +
+  geom_point(size = 3)
+ggplot(data = d3, aes(x = segsites.x, y = segsites.y, col = ANN, shape = Variant_type)) +
+  geom_abline(slope = 1) +
+  geom_point(size = 3)
+
+
+
+
+
 
 
 
