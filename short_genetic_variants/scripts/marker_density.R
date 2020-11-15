@@ -35,13 +35,13 @@ if (is.null(opt$island) | is.null(opt$ecotype)){
 
 isl <- opt$island
 eco <- opt$ecotype
-isl <- 'CZA'
-eco <- 'WAVE_LEFT'
+# isl <- 'CZD'
+# eco <- 'CRAB'
   
 dt <- read.csv(file = "results/Lsax_short_var_czs_daf_inv_findv.csv")
 dt$SIZE <- abs(nchar(as.character(dt$REF)) - nchar(as.character(dt$ALT)))
 dt <- dt[dt$SIZE <= 50, ]
-range(dt$SIZE)
+# range(dt$SIZE)
 # rm_inv = FALSE
 
 # head(dt)
@@ -230,8 +230,8 @@ mer$ECOT <- factor(mer$ECOT, levels = c("WAVE_LEFT", "CRAB", "WAVE_RIGHT"))
 tt <- as.data.frame(mer[mer$ISL==isl & mer$ECOT==eco, ])
 tt$ZONE <- tt$ISL
 tt$ISL <- NULL
-head(tt)
-str(tt)
+# head(tt)
+# str(tt)
 tt$av <- as.integer(tt$AV)
 tt$LG <- factor(tt$LG, levels = 1:17)
 tt <- merge(x = tt, y = unique(dt[, c(intersect(colnames(tt), colnames(dt)), 'invRui')]), all.x = TRUE)
@@ -240,52 +240,51 @@ tt <- merge(x = tt, y = unique(dt[, c(intersect(colnames(tt), colnames(dt)), 'in
 tt$pal <- ifelse(test = is.infinite(tt$RATIO), yes = 'red', no = 'black')
 tt$pal <- ifelse(test = tt$invRui==FALSE, yes = tt$pal, no = 'green')
 
-pratio <- ggplot(data = tt, aes(x = av, y = RATIO)) +
-  facet_wrap(~ LG) +
-  geom_point(alpha = 0.5, size = 2, col = tt$pal) +
-  # geom_abline(slope = 0.06, intercept = -0.16, col = 'blue') +
-  labs(x = 'Map position', y = 'SNP to INDEL') +
-  theme(legend.text = element_text(size = 12), legend.position = 'top',
-        axis.text = element_text(size = 11),
-        axis.title = element_text(size = 16),
-        strip.text = element_text(size = 12),
-        # legend.position = "top",
-        panel.background = element_blank(),
-        strip.background = element_rect(fill = "#91bfdb", color = "black"),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        axis.line = element_line(size = 0.2, linetype = "solid",
-                                 colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2)) +
-  guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
-pratio
-ggsave(filename = "figures/MD_mappos_snp_to_indel_count.pdf", plot = pratio, width = 10, height = 10)
+# pratio <- ggplot(data = tt, aes(x = av, y = RATIO)) +
+#   facet_wrap(~ LG) +
+#   geom_point(alpha = 0.5, size = 2, col = tt$pal) +
+#   labs(x = 'Map position', y = 'SNP to INDEL') +
+#   theme(legend.text = element_text(size = 12), legend.position = 'top',
+#         axis.text = element_text(size = 11),
+#         axis.title = element_text(size = 16),
+#         strip.text = element_text(size = 12),
+#         # legend.position = "top",
+#         panel.background = element_blank(),
+#         strip.background = element_rect(fill = "#91bfdb", color = "black"),
+#         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+#         axis.line = element_line(size = 0.2, linetype = "solid",
+#                                  colour = "black"),
+#         panel.grid = element_line(colour = "gray70", size = 0.2)) +
+#   guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
+# pratio
+# ggsave(filename = "figures/MD_mappos_snp_to_indel_count.pdf", plot = pratio, width = 10, height = 10)
 
-sum(tt$x.x)/sum(tt$x.y)
+sl <- sum(tt$x.x)/sum(tt$x.y)
 pcount <- ggplot(data = tt, aes(x = x.y, y = x.x)) +
   facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
-  # geom_abline(slope = 0.2, linetype = 'dashed') +
-  geom_abline(slope = 0.2, linetype = 'dashed', size = 1.2) +
-  geom_point(alpha = 0.2, col = tt$pal) +
-  # geom_abline(slope = 0.06, intercept = -0.16, col = 'blue') +
-  # geom_point(aes(col = as.factor(pal))) +
+  geom_abline(slope = sl, linetype = 'dashed', size = 1.2) +
+  geom_point(alpha = 0.2, size = 2, col = tt$pal) +
   geom_smooth(method = 'lm', formula = y~x) +
-  # scale_color_manual(values = len_pal(10)) +
   labs(x = 'SNP count', y = 'INDEL count') +
-  theme(legend.text = element_text(size = 12), legend.position = 'top',
-        axis.text = element_text(size = 11),
-        axis.title = element_text(size = 16),
-        strip.text = element_text(size = 12),
-        # legend.position = "top",
+  theme(axis.text = element_text(size = 14),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 16),
         panel.background = element_blank(),
-        strip.background = element_rect(fill = "#91bfdb", color = "black"),
+        strip.background = element_rect(fill = "white", color = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
   guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
-pcount
+ggsave(filename = paste('figures/MD_lm', isl, eco, 'noinv_indel_snp_count.pdf', sep = "_"),
+       plot = pcount, scale = 0.8, dpi = "screen")
 
-summary(lm(formula = x.x ~ x.y, data = tt[tt$invRui==FALSE, ]))
+lms <- summary(lm(formula = x.x ~ x.y, data = tt[tt$invRui==FALSE, ]))
+lmsd <- data.frame(lms$coefficients)
+lmsd$Par <- row.names(lmsd)
+lmsd <- lmsd[, c(ncol(lmsd), 1:(ncol(lmsd)-1))]
+lmsd$ISL <- isl
+lmsd$ECOT <- eco
 # tt <- mer
 # tt <- mer[mer$ISL=='CZA' & mer$ECOT=='WAVE_LEFT', ]
 # head(tt)
@@ -297,9 +296,10 @@ summary(lm(formula = x.x ~ x.y, data = tt[tt$invRui==FALSE, ]))
 # write.table(x = tt, file = 'test/marker_density/CZA_CRAB_marker_density.csv', quote = FALSE, sep = ',', row.names = FALSE, col.names = TRUE)
 # tt <- read.csv(file = 'CZA_CRAB_marker_density.csv')
 
-## PERMUTATION POISSON MODEL
+## PERMUTATION LINEAR MODEL
 bar <- replicate(n = 10000, expr = rbinom(n = nrow(tt), size = tt$x.y, prob = sum(tt$x.x)/sum(tt$x.y)))
-# head(bar)
+# bar[1:10,1:10]
+# dim(bar)
 mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
   mlin <- lm(x ~ tt$x.y)
   coef(mlin)
@@ -310,6 +310,8 @@ cexp <- as.data.frame(t(mexp))
 colnames(cexp) <- c('intercept', 'slope')
 # head(cexp)
 cexp$cpal <- 'bootstrap'
+cexp$ZONE <- isl
+cexp$ECOT <- eco
 # with(data = cexp, plot(x = intercept, slope))
 # tt$SUM.x <- sum(tt$x.x)
 # tt.poi <- glm(x.x ~ x.y + offset(log(tt$SUM.x)), data = tt, family=poisson(link = 'log'))
@@ -323,563 +325,28 @@ colnames(cm1) <- c('intercept', 'slope')
 cm1$cpal <- 'observation'
 
 ttf <- rbind(cm1, cexp)
-
-g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
-  geom_point(size = 2) +
-  labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('black', 'blue')) +
-  theme(axis.title = element_text(size = 18),
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 18),
-        title = element_text(size = 16)) +
-  guides(col = guide_legend(override.aes = list(size=2)))
+ttf$cpal <- factor(x = ttf$cpal, levels = c('observation', 'bootstrap'))
+g <- ggplot(data = cexp, aes(x = intercept, y = slope)) +
+  facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
+  geom_point(size = 2, col = 'black', alpha = 0.8) +
+  geom_point(data = cm1, size = 2, col = 'red', alpha = 0.8) +
+  # labs(col = '', title = paste(isl, eco)) +
+  # scale_color_manual(values = c('black', 'blue')) +
+  theme(axis.text = element_text(size = 14),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 16),
+        panel.background = element_blank(),
+        strip.background = element_rect(fill = "white", color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2))
+        # legend.text = element_text(size = 18),
+        # title = element_text(size = 16)) +
+  # guides(col = guide_legend(override.aes = list(size=2)))
 # g
 
-ggsave(filename = paste('figures/MD_boot', isl, eco, 'all_slope_intercept.pdf', sep = "_"),
-       plot = g, width = 10, height = 7, dpi = "screen")
-
-rm(list = setdiff(x = ls(), y = c('cm1', 'cexp', 'isl', 'eco')))
-
-fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
-fs <- fs[grepl(pattern = 'nongenic', x = fs)]
-ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
-snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
-cs <- intersect(colnames(ind), colnames(snp))
-ind <- ind[, colnames(ind) %in% cs]
-snp <- snp[, colnames(snp) %in% cs]
-dt <- as.data.frame(rbind(ind, snp))
-# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
-
-dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
-
-dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
-tot_v <- data.frame(table(dt$class))
-tot_v[1,2]/tot_v[2,2]
-
-# head(dt)
-pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
-  dt1 <- dt[dt$class==x, ]
-  
-  dt2 <- data.frame(class = x,
-                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
-  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
-  
-  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
-  
-  # head(dt2)
-  return(dt2)
-})))
-# head(pr)
-
-vt <- split(pr, f = pr$VTYPE)
-# lapply(vt, head)
-# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
-
-mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
-# head(mer)
-# sum(is.na(mer$x.x))
-# sum(is.na(mer$x.y))
-
-mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
-mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
-mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
-mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
-# unique(mer$VTYPE.x)
-mer$VTYPE.x <- 'INDEL'
-# unique(mer$VTYPE.y)
-mer$VTYPE.y <- 'SNP'
-
-# table(mer$ECOT)
-# sum(mer$x.x)/sum(mer$x.y)
-
-# summary(lm(formula = x.x~x.y, data = mer))
-
-# VARIANT COUNT + 1
-# mer$x.x <- mer$x.x + 1
-# mer$x.y <- mer$x.y + 1
-
-M2 <- lm(x.x ~ x.y, data = mer)
-cm2 <- as.data.frame(t(coef(M2)))
-colnames(cm2) <- c('intercept', 'slope')
-cm2$cpal <- 'nongenic'
-
-## PERMUTATION POISSON MODEL
-bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
-# head(bar)
-mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
-  mlin <- lm(x ~ mer$x.y)
-  coef(mlin)
-  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
-  # exp(coef(mpoi))
-})
-cexp <- as.data.frame(t(mexp))
-colnames(cexp) <- c('intercept', 'slope')
-# head(cexp)
-cexp$cpal <- 'bootstrap nongenic'
-
-# ttf <- rbind(cm1, cm2, cexp)
-ttf <- rbind(cm2, cexp)
-
-g <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
-  geom_point(size = 2) +
-  labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = c('black', 'red')) +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 14),
-        title = element_text(size = 16)) +
-  guides(col = guide_legend(override.aes = list(size=2)))
-# g
-
-# ggsave(filename = paste('figures/marker_dens_perm', opt$island, opt$ecotype, 'slope_intercept.pdf', sep = "_"),
-#        plot = g, width = 10, height = 7)
-
-rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
-
-fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
-fs <- fs[grepl(pattern = 'nonsyn', x = fs)]
-ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
-snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
-cs <- intersect(colnames(ind), colnames(snp))
-ind <- ind[, colnames(ind) %in% cs]
-snp <- snp[, colnames(snp) %in% cs]
-dt <- as.data.frame(rbind(ind, snp))
-# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
-
-dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
-
-dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
-tot_v <- data.frame(table(dt$class))
-tot_v[1,2]/tot_v[2,2]
-
-# head(dt)
-pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
-  dt1 <- dt[dt$class==x, ]
-  
-  dt2 <- data.frame(class = x,
-                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
-  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
-  
-  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
-  
-  # head(dt2)
-  return(dt2)
-})))
-# head(pr)
-
-vt <- split(pr, f = pr$VTYPE)
-# lapply(vt, head)
-# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
-
-mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
-# head(mer)
-# sum(is.na(mer$x.x))
-# sum(is.na(mer$x.y))
-
-mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
-mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
-mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
-mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
-# unique(mer$VTYPE.x)
-mer$VTYPE.x <- 'INDEL'
-# unique(mer$VTYPE.y)
-mer$VTYPE.y <- 'SNP'
-
-# table(mer$ECOT)
-# sum(mer$x.x)/sum(mer$x.y)
-
-# summary(lm(formula = x.x~x.y, data = mer))
-
-# VARIANT COUNT + 1
-# mer$x.x <- mer$x.x + 1
-# mer$x.y <- mer$x.y + 1
-
-M3 <- lm(x.x ~ x.y, data = mer)
-cm3 <- as.data.frame(t(coef(M3)))
-colnames(cm3) <- c('intercept', 'slope')
-cm3$cpal <- 'nonsyn'
-ttf <- rbind(cm3, ttf)
-table(ttf$cpal)
-
-## PERMUTATION POISSON MODEL
-bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
-# head(bar)
-mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
-  mlin <- lm(x ~ mer$x.y)
-  coef(mlin)
-  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
-  # exp(coef(mpoi))
-})
-cexp <- as.data.frame(t(mexp))
-colnames(cexp) <- c('intercept', 'slope')
-# head(cexp)
-cexp$cpal <- 'bootstrap nonsyn'
-ttf <- rbind(cexp, ttf)
-table(ttf$cpal)
-ttf$cpal <- factor(ttf$cpal, levels = c('bootstrap nongenic', 'nongenic', 'bootstrap nonsyn', 'nonsyn'))
-
-f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
-  geom_point(size = 2) +
-  labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = brewer.pal(n = length(levels(ttf$cpal)), name = 'Paired')) +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 14),
-        title = element_text(size = 16)) +
-  guides(col = guide_legend(override.aes = list(size=2)))
-f
-
-rm(list = setdiff(x = ls(), y = c('ttf', 'isl', 'eco')))
-
-fs <- list.files(path = 'results/marker_density', pattern = paste(isl, eco, sep = '_'), full.names = TRUE)
-fs <- fs[grepl(pattern = '_syn', x = fs)]
-ind <- read.table(file = fs[1], header = TRUE, sep = '\t')
-snp <- read.table(file = fs[2], header = TRUE, sep = '\t')
-cs <- intersect(colnames(ind), colnames(snp))
-ind <- ind[, colnames(ind) %in% cs]
-snp <- snp[, colnames(snp) %in% cs]
-dt <- as.data.frame(rbind(ind, snp))
-# dt <- merge(x = as.data.frame(rbind(ind, snp)), y = dt, all.y = TRUE)
-
-dt <- dt[!is.na(dt$av) & dt$DAF!=0 & dt$DAF!=1, ]
-
-dt$class <- paste(dt$ZONE, dt$ECOT, dt$VTYPE, sep = ":")
-tot_v <- data.frame(table(dt$class))
-tot_v[1,2]/tot_v[2,2]
-
-# head(dt)
-pr <- as.data.frame(rbindlist(lapply(tot_v$Var1, function(x) {
-  dt1 <- dt[dt$class==x, ]
-  
-  dt2 <- data.frame(class = x,
-                    aggregate(dt1$cp, by = list(CHROM = dt1$CHROM), length))
-  dt2$prop <- dt2$x / tot_v[tot_v$Var1==x, 'Freq']
-  
-  dt2 <- separate(data = dt2, col = class, into = c('ISL', 'ECOT', 'VTYPE'), sep = ":")
-  
-  # head(dt2)
-  return(dt2)
-})))
-# head(pr)
-
-vt <- split(pr, f = pr$VTYPE)
-# lapply(vt, head)
-# identical(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$INDEL$CHROM, vt$SNP$CHROM)
-# setdiff(vt$SNP$CHROM, vt$INDEL$CHROM)
-
-mer <- merge(vt$INDEL, vt$SNP, by = c('ISL', 'ECOT', 'CHROM'), all = TRUE)
-# head(mer)
-# sum(is.na(mer$x.x))
-# sum(is.na(mer$x.y))
-
-mer$prop.x <- ifelse(test = is.na(mer$prop.x), yes = 0, no = mer$prop.x)
-mer$prop.y <- ifelse(test = is.na(mer$prop.y), yes = 0, no = mer$prop.y)
-mer$x.x <- ifelse(test = is.na(mer$x.x), yes = 0, no = mer$x.x)
-mer$x.y <- ifelse(test = is.na(mer$x.y), yes = 0, no = mer$x.y)
-# unique(mer$VTYPE.x)
-mer$VTYPE.x <- 'INDEL'
-# unique(mer$VTYPE.y)
-mer$VTYPE.y <- 'SNP'
-
-# table(mer$ECOT)
-# sum(mer$x.x)/sum(mer$x.y)
-
-# summary(lm(formula = x.x~x.y, data = mer))
-
-# VARIANT COUNT + 1
-# mer$x.x <- mer$x.x + 1
-# mer$x.y <- mer$x.y + 1
-
-M4 <- lm(x.x ~ x.y, data = mer)
-cm4 <- as.data.frame(t(coef(M4)))
-colnames(cm4) <- c('intercept', 'slope')
-cm4$cpal <- 'syn'
-ttf <- rbind(cm4, ttf)
-
-## PERMUTATION POISSON MODEL
-bar <- replicate(n = 10000, expr = rbinom(n = nrow(mer), size = mer$x.y, prob = sum(mer$x.x)/sum(mer$x.y)))
-# head(bar)
-mexp <- apply(X = bar, MARGIN = 2, FUN = function(x) {
-  mlin <- lm(x ~ mer$x.y)
-  coef(mlin)
-  # mpoi <- glm(x ~ tt$x.y, family = poisson(link = 'log'))
-  # exp(coef(mpoi))
-})
-cexp <- as.data.frame(t(mexp))
-colnames(cexp) <- c('intercept', 'slope')
-# head(cexp)
-cexp$cpal <- 'bootstrap syn'
-ttf <- rbind(cexp, ttf)
-table(ttf$cpal)
-ttf$cpal <- factor(ttf$cpal, levels = c('bootstrap nongenic', 'nongenic', 'bootstrap nonsyn', 'nonsyn',
-                                        'bootstrap syn', 'syn'))
-
-f <- ggplot(data = ttf, aes(x = intercept, y = slope, col = cpal)) +
-  geom_point(size = 2) +
-  labs(col = '', title = paste(isl, eco)) +
-  scale_color_manual(values = brewer.pal(n = length(levels(ttf$cpal)), name = 'Paired')) +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 14),
-        title = element_text(size = 16)) +
-  guides(col = guide_legend(override.aes = list(size=2)))
-f
-
-ggsave(filename = paste('figures/MD_boot', isl, eco, 'ann_slope_intercept.pdf', sep = "_"),
-       plot = f, width = 10, height = 7, dpi = "screen")
-
-# est1 <- cbind(Estimate = coef(M1), confint(M1))
-
-## Check for over/underdispersion in the model
-# E2 <- resid(M1, type = "pearson")
-# N <- nrow(tt)
-# p <- length(coef(M1))   
-# cat(as.character(M1$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-
-## NEGATIVE BINOMIAL
-# M2 <- glm.nb(x.x ~ x.y, data = tt)
-# summary(M2)
-
-## Check for over/underdispersion in the model
-# E2 <- resid(M2, type = "pearson")
-# N <- nrow(tt)
-# p <- length(coef(M2))   
-# cat(as.character(M2$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-
-# pchisq(2 * (logLik(M2) - logLik(M1)), df = 1, lower.tail = FALSE)
-# est <- cbind(Estimate = coef(M2), confint(M2))
-# exp(est)
-# newdata2 <- data.frame(x.y = seq(from = min(tt$x.y), to = max(tt$x.y), length.out = 1000))
-# 
-# newdata2 <- cbind(newdata2,
-#                   M1=predict(M1, newdata2, type = "link", se.fit=TRUE),
-#                   M2=predict(M2, newdata2, type = "link", se.fit=TRUE))
-# head(newdata2)
-# newdata2 <- within(newdata2, {
-#   INDEL.M1 <- exp(M1.fit)
-#   LL.M1 <- exp(M1.fit - 1.96 * M1.se.fit)
-#   UL.M1 <- exp(M1.fit + 1.96 * M1.se.fit)
-#   INDEL.M2 <- exp(M2.fit)
-#   LL.M2 <- exp(M2.fit - 1.96 * M2.se.fit)
-#   UL.M2 <- exp(M2.fit + 1.96 * M2.se.fit)
-# })
-
-# ggplot(newdata2, aes(x.y, INDELc)) +
-#   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
-#   geom_line()
-
-## ZERO-INFLATED MODELS
-# library(pscl)
-# cat('Percentage of 0 in the y variable =', 100*sum(tt$x.x == 0)/nrow(tt), '\n')
-
-# 100*sum(tt$x.y == 0)/nrow(tt)
-# sum(tt$x.y == 0)
-# sum(tt$x.x == 0)
-# sum(tt$prop.y == 1)
-# sum(tt$prop.y == 0)
-# sum(tt$prop.x == 1)
-# sum(tt$prop.x == 0)
-
-# model.zi = zeroinfl(x.x ~ x.y,
-#                     data = tt,
-#                     dist = "poisson")
-### dist = "negbin" may be used
-# summary(model.zi)
-# model.zi$coefficients
-# fitted(model.zi)[1]
-# tt$x.y[1]
-## Dispersion statistic
-# E2 <- resid(model.zi, type = "pearson")
-# N  <- nrow(tt)
-# p  <- length(coef(model.zi))
-# cat(as.character(model.zi$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-# 
-# M4 <- zeroinfl(x.x ~ x.y, data = tt, dist = "negbin")
-# summary(M4)
-## Dispersion Statistic
-# E2 <- resid(M4, type = "pearson")
-# N  <- nrow(tt)
-# p  <- length(coef(M4)) + 1 # '+1' is due to theta
-# cat(as.character(M4$call), ': Dispersion =', sum(E2^2) / (N - p), '\n')
-# 
-# lrtest(model.zi, M4)
-# vuong(M1,M4)
-# vuong(M2,M4)
-# vuong(M2,M1)
-
-# glm(x.x ~ prop.y + offset(log(tt$SUM.x)), data = tt, family=poisson(link = 'log'))
-
-# Qx <- quantile(tt$x.x, probs=c(.25, .75), na.rm = FALSE)
-# iqrx <- IQR(tt$x.x)
-# upx <- Qx[2]+1.5*iqrx # Upper Range  
-# lowx <- Qx[1]-1.5*iqrx # Lower Range
-# outlx <- subset(tt, tt$x.x < (Qx[1] - 1.5*iqrx) | tt$x.x > (Qx[2]+1.5*iqrx))
-# 
-# Qy <- quantile(tt$x.y, probs=c(.25, .75), na.rm = FALSE)
-# iqry <- IQR(tt$x.y)
-# upy <- Qy[2]+1.5*iqry # Upper Range  
-# lowy <- Qy[1]-1.5*iqry # Lower Range
-# outly <- subset(tt, tt$x.y < (Qy[1] - 1.5*iqry) | tt$x.y > (Qy[2]+1.5*iqry))
-# 
-# tt_outl <- unique(rbind(outlx, outly))
-# cat('Count of outliers per contig length:\n')
-# data.frame(table(tt_outl$pal))
-
-# tt1_outl <- tt_outl[, c('CHROM', 'Length')]
-# if (file.exists('results/Lsax_short_var_czs_outliers.csv')) {
-#   outl <- read.csv('results/Lsax_short_var_czs_outliers.csv')
-#   tt1_outl <- merge(tt1_outl, outl)
-# }
-# 
-# write.table(x = tt1_outl, file = 'results/Lsax_short_var_czs_outliers.csv', quote = FALSE,
-#             sep = ',', row.names = FALSE)
-
-# mytheme.r <- gridExtra::ttheme_default(
-#   core = list(fg_params=list(cex = 1)),
-#   colhead = list(fg_params=list(cex = 1, col = 'red')),
-#   rowhead = list(fg_params=list(cex = 1)))
-# mytheme.b <- gridExtra::ttheme_default(
-#   core = list(fg_params=list(cex = 1)),
-#   colhead = list(fg_params=list(cex = 1, col = 'blue')),
-#   rowhead = list(fg_params=list(cex = 1)))
-# g <- ggplot(data = tt, aes(x = x.y, y = x.x)) +
-#   geom_point(col = 'black') +
-#   # geom_text(data = tt_outl, aes(x = x.y, y = x.x, label = CHROM),hjust = 0, vjust = 0) +
-#   geom_ribbon(data = newdata2, aes(x = x.y, y = INDEL.M1, ymin = LL.M1, ymax = UL.M1), fill = 'blue', alpha = .25) +
-#   geom_ribbon(data = newdata2, aes(x = x.y, y = INDEL.M2, ymin = LL.M2, ymax = UL.M2), fill = 'red', alpha = .25) +
-#   geom_line(data = newdata2, aes(x = x.y, y = INDEL.M1), col = 'blue') +
-#   geom_line(data = newdata2, aes(x = x.y, y = INDEL.M2), col = 'red') +
-#   annotation_custom(tableGrob(round(exp(est), 3), theme = mytheme.r),
-#                     xmin=5, xmax=25, ymin = max(newdata2$INDEL.M2)-10, ymax=max(newdata2$INDEL.M2)) +
-#   annotation_custom(tableGrob(round(exp(est1), 3), theme = mytheme.b),
-#                     xmin=30, xmax=60, ymin = max(newdata2$INDEL.M2)-10, ymax=max(newdata2$INDEL.M2)) +
-#   labs(x = 'SNP count', y = 'INDEL count', title = paste(opt$island, opt$ecotype))
-# ggsave(filename = paste('figures/model', opt$island, opt$ecotype, 'SNP_INDEL_count.pdf', sep = "_"),
-#        plot = g, width = 8, height = 7)
-# g <- ggplot(data = tt, aes(x = prop.x, y = prop.y)) + geom_point(col = 'black')
-# geom_abline(slope = M4$coefficients$count[2], intercept = M4$coefficients$count[1], col = 'red') +
-# geom_abline(slope = tt.poi$coefficients[2], intercept = tt.poi$coefficients[1], col = 'red') +
-# geom_abline(slope = 1, linetype = 'dashed')
-# geom_smooth(method = 'lm', formula = y~x)
-
-# library(lmtest)
-# library(sandwich)
-
-# tt.ols <- lm(prop.x ~ prop.y, data = tt)
-# tt.ols <- lm(x.x ~ x.y, data = tt)
-# round(summary(tt.ols)$coefficients, 3)
-# ggplot(data = tt, aes(x = x.y, y = x.x)) +
-#   geom_point() +
-#   geom_smooth(method = 'lm', formula = y~x) +
-#   geom_abline(slope = 1, linetype = 'dashed')
-# tt.ols <- lm(prop.y ~ prop.x, data = tt)
-# tt.ols <- lm(x.y ~ x.x, data = tt)
-# summary(tt.ols)
-# round(summary(tt.ols)$coefficients, 3)
-# ggplot(data = tt, aes(x = x.x, y = x.y)) +
-#   geom_point() +
-#   geom_smooth(method = 'lm', formula = y~x) +
-#   geom_abline(slope = 1, linetype = 'dashed')
-# 
-# ggplot(data = tt, aes(x = prop.y, y = prop.x)) +
-#   geom_point() +
-#   geom_smooth(method = 'lm', formula = y~x) +
-#   geom_abline(slope = 1, linetype = 'dashed')
-# ggplot(data = tt, aes(x = prop.x, y = prop.y)) +
-#   geom_point() +
-#   geom_smooth(method = 'lm', formula = y~x) +
-#   geom_abline(slope = 1, linetype = 'dashed')
-# 
-# summary(tt.ols)$coefficients[2, 1]
-# summary(tt.ols)$coefficients[2, 2]
-# confint(tt.ols)[2,1]
-# confint(tt.ols)[2,2]
-# tt.white <- coeftest(tt.ols, vcov = vcovHC(tt.ols, "HC1"))   # HC1 gives us the White standard errors
-# tt.white[2,1]
-# tt.white[2,2]
-# confint(tt.white)[2,1]
-# confint(tt.white)[2,2]
-# 
-# 
-# library(caret)
-# # Define training control
-# train.control <- trainControl(method = "repeatedcv", 
-#                               number = 10, repeats = 5)
-# # Train the model
-# model <- train(prop.x ~ prop.y, data = tt, method = "lm",
-#                trControl = train.control)
-# # model <- train(prop.y ~ prop.x, data = tt, method = "lm",
-# #                trControl = train.control)
-# # Summarize the results
-# print(model)
-# summary(model)
-# str(model)
-# summary(model$finalModel)
-# identical(fitted(model), fitted(model$finalModel))
-# model$call
-# str(model$finalModel)
-# tt$FIT_REPCV <- fitted(model)
-# g <- ggplot(data = tt, aes(x = prop.y, y = prop.x)) + geom_point(col = 'black')
-# # g <- ggplot(data = tt, aes(x = prop.x, y = prop.y)) + geom_point(col = 'black')
-# g + geom_abline(slope = model$finalModel$coefficients[2], intercept = model$finalModel$coefficients[1], col = 'red') +
-#   geom_abline(slope = 1, linetype = 'dashed') +
-#   geom_smooth(method = 'lm', formula = y~x)
-# confint(model$finalModel)
-# confint(object = lm(formula = prop.x~prop.y, data = tt))
-# summary(lm(formula = prop.x~prop.y, data = tt))
-# summary(model)
-# 
-# # install.packages('lmtest')
-# library(lmtest)
-# 
-# tt.ols <- lm(prop.y ~ prop.x, data = tt)
-# 
-# # test heteroskedasticity
-# bptest(tt.ols)
-# 
-# # Generalized Least Squares With Unknown Form of Variance
-# tt$resi <- tt.ols$residuals
-# tt$prop.x <- ifelse(test = tt$prop.x==0, yes = 0.00000001, no = tt$prop.x)
-# varfunc.ols <- lm(log(resi^2) ~ log(prop.x), data = tt)
-# tt$varfunc <- exp(varfunc.ols$fitted.values)
-# tt.gls <- lm(prop.y ~ prop.x, weights = 1/sqrt(varfunc), data = tt)
-# 
-# tt.wlm <- lm(prop.y ~ prop.x, weights = Length, data = tt)
-# 
-# summary(tt.ols)
-# summary(tt.gls)
-# summary(tt.wlm)
-# 
-# g <- ggplot(data = tt, aes(y = prop.y, x = prop.x)) + geom_point(col = 'black')
-# g + geom_abline(slope = tt.ols$coefficients[2], intercept = tt.ols$coefficients[1], col = 'red') + 
-#   geom_abline(slope = tt.gls$coefficients[2], intercept = tt.gls$coefficients[1], col = 'green') +
-#   geom_abline(slope = tt.wlm$coefficients[2], intercept = tt.wlm$coefficients[1], col = 'blue')
-# 
-# head(mer)
-mer$class <- paste(mer$ISL, mer$ECOT, sep = ":")
-# invisible(lapply(unique(mer$class), function(x) {
-#   dt1 <- mer[mer$class==x, ]
-#   # val <- lm(formula = prop.y ~ prop.x, data = dt1)
-#   # val <- sum(dt1$prop.x, dt1$prop.y)
-#   # cat(x, val, '\n')
-#   order(dt1)
-# }))
-
-# 
-# 
-# 
-## CORRELATION INDEL-SNP PROPORTIONS
-# head(mer)
-invisible(lapply(unique(mer$class), function(x) {
-  dt1 <- mer[mer$class==x, ]
-  val <- cor(dt1$prop.x, dt1$prop.y)
-  # val <- sum(dt1$prop.x, dt1$prop.y)
-  cat(x, round(val,3), '\n')
-}))
+ggsave(filename = paste('figures/MD_boot', isl, eco, 'noinv_slope_intercept.pdf', sep = "_"),
+       plot = g, scale = 0.8, dpi = "screen")
 
 
