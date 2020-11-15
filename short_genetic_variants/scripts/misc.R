@@ -266,8 +266,11 @@ df <- data.frame(matrix(data = 0, nrow = length(vc), ncol = length(vc),
 # 
 # 
 ## TAJIMA'S D
-dtp_or <- dtp
-dtp <- dtp_or[dtp_or$ANN==tv[1],]
+# dtp_or <- dtp
+# dtp <- dtp_or[dtp_or$ANN==tv[1],]
+dtp <- read.table(file = 'results/marker_density/MD_CZA_CRAB_coding_WWSS_count.txt', header = TRUE)
+dtp <- read.table(file = 'results/marker_density/MD_CZA_CRAB_noncoding_WWSS_count.txt', header = TRUE)
+head(dtp)
 
 pi_n <- 2 * dtp$DAC * ((2*dtp$N) - dtp$DAC)
 # 2*10
@@ -529,10 +532,98 @@ ggsave(filename = 'test/figures/SFS_CZB_CRAB_nonsyn_WWSS.pdf', plot = p, dpi = '
 # 
 # 
 # 
+# INDEL VS SNP COUNT
+rm(list = ls())
+(ff <- list.files(path = 'results/marker_density', pattern = 'noncoding', full.names = TRUE))
+(ff <- ff[grepl(pattern = "DEL|INS", x = ff)])
+# INDEL
+tt <- vector(mode = "integer", length = length(ff))
+for (i in seq(from = 1, to = 18, by = 2)) {
+  dd <- read.table(file = ff[i], header = TRUE)
+  ee <- read.table(file = ff[i+1], header = TRUE)
+  oo <- c(as.character(dd$cp), as.character(ee$cp))
+  # print(length(unique(oo)))
+  tt[i] <- length(unique(oo))
+}
+tt
+nonc <- tt[tt!=0]
+pop <- c('CZA_C', 'CZA_WL', 'CZA_WR', 'CZB_C', 'CZB_WL', 'CZB_WR', 'CZD_C', 'CZD_WL', 'CZD_WR')
+# 
+# 
+# 
+# NON-CODING VS CODING
+(ff <- list.files(path = 'results/marker_density', pattern = '_coding', full.names = TRUE))
+(ff <- ff[grepl(pattern = "DEL|INS", x = ff)])
+
+tt <- vector(mode = "integer", length = length(ff))
+tt
+for (i in seq(from = 1, to = 18, by = 2)) {
+  dd <- read.table(file = ff[i], header = TRUE)
+  ee <- read.table(file = ff[i+1], header = TRUE)
+  oo <- c(as.character(dd$cp), as.character(ee$cp))
+  # print(length(unique(oo)))
+  tt[i] <- length(unique(oo))
+}
+cod <- tt[tt!=0]
+da <- data.frame(pop, nonc, cod)
+da$rat <- da$nonc/da$cod
+da[which.min(da$rat),]
+da[which.max(da$rat),]
+da$vt <- 'INDEL'
+ind <- da[, c(-1,-4)]
+# SNP
+rm(list = setdiff(ls(), 'ind'))
+(ff <- list.files(path = 'results/marker_density', pattern = 'noncoding', full.names = TRUE))
+(ff <- ff[!grepl(pattern = "DEL|INS", x = ff)])
+tt <- vector(mode = "integer", length = length(ff))
+for (i in seq(from = 1, to = 27, by = 3)) {
+  # i <- 4
+  dd <- read.table(file = ff[i], header = TRUE)
+  ee <- read.table(file = ff[i+1], header = TRUE)
+  gg <- read.table(file = ff[i+2], header = TRUE)
+  oo <- c(as.character(dd$cp), as.character(ee$cp), as.character(gg$cp))
+  # print(length(unique(oo)))
+  tt[i] <- length(unique(oo))
+}
+nonc <- tt[tt!=0]
+pop <- c('CZA_C', 'CZA_WL', 'CZA_WR', 'CZB_C', 'CZB_WL', 'CZB_WR', 'CZD_C', 'CZD_WL', 'CZD_WR')
+# 
+# 
+# 
+# NON-CODING VS CODING
+(ff <- list.files(path = 'results/marker_density', pattern = '_coding', full.names = TRUE))
+(ff <- ff[!grepl(pattern = "DEL|INS", x = ff)])
+
+tt <- vector(mode = "integer", length = length(ff))
+tt
+for (i in seq(from = 1, to = 27, by = 3)) {
+  # i <- 4
+  dd <- read.table(file = ff[i], header = TRUE)
+  ee <- read.table(file = ff[i+1], header = TRUE)
+  gg <- read.table(file = ff[i+2], header = TRUE)
+  oo <- c(as.character(dd$cp), as.character(ee$cp), as.character(gg$cp))
+  # print(length(unique(oo)))
+  tt[i] <- length(unique(oo))
+}
+cod <- tt[tt!=0]
+da <- data.frame(pop, nonc, cod)
+da$rat <- da$nonc/da$cod
+mean(da$rat)
+da[which.min(da$rat),]
+da[which.max(da$rat),]
+da$vt <- 'SNP'
+vv <- rbind(ind, da[, c(-1,-4)])
+cq <- chisq.test(vv[,1:2])
+cq$observed
+cq$expected
+# 
+# 
+# 
 # INDEL SIZE
-(ff <- list.files(path = 'results/marker_density', pattern = '_nonsyn_DEL', full.names = TRUE))
+(ff <- list.files(path = 'results/marker_density', pattern = '_noncoding_DEL', full.names = TRUE))
 for (i in 1:9) {
   dd <- read.table(file = ff[i], header = TRUE)
+  dd <- dd[dd$SIZE %in% c(1, 2, 3, 6), ]
   # dd <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_DEL_count.txt', header = TRUE)
   # ggplot(data = rbind(dd,ii), aes(x = SIZE, fill = VTYPE)) +
   #   geom_histogram(binwidth = 1, col = 'black', position = 'dodge')
@@ -540,34 +631,58 @@ for (i in 1:9) {
   # lbls <- c("US", "UK", "Australia", "Germany", "France")
   # lbls <- c('SW','WS', 'WWSS')
   lbls <- data.frame(table(dd$SIZE))[, 1]
+  size <- as.character(lbls) %in% c("1", "2", "3", "6")
   pct <- round(slices/sum(slices)*100, digits = 1)
   lbls <- paste(lbls, pct) # add percents to labels
   lbls <- paste(lbls,"%",sep="") # ad % to labels
   pie(slices,labels = lbls, col=rainbow(length(lbls)),
       main='DEL')
-  # sum(pct[1:9])
+  # print(sum(pct[1:9]))
   # sum(pct[1:6])
-  # sum(pct[1:3])
-  print(sum(pct[1:2]))
+  # print(sum(pct[1:3]))
+  # print(sum(pct[1:2]))
+  # print(sum(pct[size]))
+  print(chisq.test(slices))
 }
-
-
-(ff <- list.files(path = 'results/marker_density', pattern = '_nonsyn_INS', full.names = TRUE))
+# if(!require(devtools)) install.packages("devtools")
+# devtools::install_github("cardiomoon/moonBook")
+# devtools::install_github("cardiomoon/webr")
+# require(ggplot2)
+# require(moonBook)
+# install.packages('webr')
+# library(webr)
+# PieDonut(acs,aes(pies=Dx,donuts=smoking))
+# 
+# 
+# 
+rm(list = ls())
+(ff <- list.files(path = 'results/marker_density', pattern = '_coding_INS', full.names = TRUE))
 for (i in 1:9) {
   dd <- read.table(file = ff[i], header = TRUE)
+  dd <- dd[dd$SIZE %in% c(1, 2, 3, 6), ]
+  # dd <- read.table(file = 'results/marker_density/MD_CZA_WAVE_LEFT_nonsyn_DEL_count.txt', header = TRUE)
+  # ggplot(data = rbind(dd,ii), aes(x = SIZE, fill = VTYPE)) +
+  #   geom_histogram(binwidth = 1, col = 'black', position = 'dodge')
   slices <- data.frame(table(dd$SIZE))[, 2]
   # lbls <- c("US", "UK", "Australia", "Germany", "France")
   # lbls <- c('SW','WS', 'WWSS')
   lbls <- data.frame(table(dd$SIZE))[, 1]
+  size <- as.character(lbls) %in% c("1", "2", "3", "6")
   pct <- round(slices/sum(slices)*100, digits = 1)
   lbls <- paste(lbls, pct) # add percents to labels
   lbls <- paste(lbls,"%",sep="") # ad % to labels
   pie(slices,labels = lbls, col=rainbow(length(lbls)),
       main='INS')
   # print(sum(pct[1:9]))
-  # print(sum(pct[1:6]))
+  # sum(pct[1:6])
   # print(sum(pct[1:3]))
-  print(sum(pct[1:2]))
+  # print(sum(pct[size]))
+  # print(sum(pct[1:2]))
+  # print(sum(pct[3:5]))
+  if (length(slices)==3) {
+    slices <- c(slices,0)
+  }
+  print(chisq.test(slices))
 }
 
 # 
@@ -677,11 +792,54 @@ ggplot(data = d2, aes(x = segsites.x, y = segsites.y, col = ANN, shape = Variant
 ggplot(data = d3, aes(x = segsites.x, y = segsites.y, col = ANN, shape = Variant_type)) +
   geom_abline(slope = 1) +
   geom_point(size = 3)
+# 
+# 
+# 
+# VCFTOOLS PI
+del <- read.csv(file = 'results/Lsax_short_DEL_czs_daf_inv_findv.csv')
+head(del)
+oo <- data.frame(cp=unique(del$cp))
+library(tidyr)
+oo <- separate(data = oo, col = cp, into = c('CHROM', 'POS'), sep = '_')
+head(oo)
+write.table(x = oo, file = 'test/DEL_list.txt', quote = FALSE, sep = '\t', row.names = FALSE, col.names = FALSE)
+# 
+# 
+# 
+# ANNOTATION
+rm(list = ls())
+ic <- unique(read.table(file = 'annotated/AN_CZD_INDEL.filt2.txt', header = TRUE))
+ic$SIZE <- nchar(as.character(ic$REF)) - nchar(as.character(ic$ALT))
+ic$SIZE <- abs(ic$SIZE)
+head(ic)
 
+# dt <- ic
+dtp <- ic[ic$SIZE <= 50, ]
+# dtp <- ic
+snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
+snpeff$impact <- as.character(snpeff$impact)
+imp <- as.character(snpeff$impact)
 
+dtp$IMP <- NA
+dtp$FUN <- NA
+dtp$CAT <- NA
+for (i in 1:nrow(dtp)) {
+  stsp <- strsplit(x = as.character(dtp$ANN[i]), split = '\\|')[[1]]
+  reg <- stsp[2]
+  fim <- stsp[3]
+  uim <- paste(unique(stsp[stsp %in% imp]), collapse = ':')
+  dtp$IMP[i] <- uim
+  dtp$FUN[i] <- reg
+  dtp$CAT[i] <- fim
+}
+head(dtp)
+table(dtp$IMP)
+table(dtp$CAT)
 
+dtp$COD <- ifelse(test = dtp$CAT=='HIGH' | dtp$CAT=='MODERATE', yes = 1, no = 0)
+table(dtp$COD)
 
-
-
+write.table(x = dtp, file = 'annotated/noncod_cod/AN_CZD_INDEL.filt2.txt', quote = FALSE, sep = '\t', row.names = FALSE,
+            col.names = TRUE)
 
 

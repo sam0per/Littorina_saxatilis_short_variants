@@ -9,7 +9,7 @@ do
 	ptb=$(echo $line | cut -d "," -f 2)
 	ptc=$(echo $line | cut -d "," -f 3)
 	# echo results/$ptc
-	Rscript ./Littorina_saxatilis/short_genetic_variants/scripts/summary_stats.R --rminv -i summary/allele_count/${pti} \
+	Rscript ./Littorina_saxatilis/short_genetic_variants/scripts/summary_stats.R --rminv -i summary/allele_count/N-3/${pti} \
 	--by ${ptb} -c results/${ptc}
 	
 	ecot=$(echo $pti | cut -d '_' -f 3)
@@ -24,12 +24,15 @@ do
 
 	# dhi_b=$(echo "$ptb" | tr : _)
 	dhi_b=$(echo "$ptb" | cut -d ':' -f 2)
-	dhi=$(echo HAP_${dhi_a}_${dhi_b}_SW_DH.txt)
+	dhi_c=$(echo "$ptc" | cut -d '_' -f 3)
+	dhi=$(echo HAP_${dhi_a}_${dhi_b}_${dhi_c}_DH.txt)
 
 	n2_dhi=$(( 2*${n_dhi} ))
+	
+	# echo $dhi
 
 	java -cp .:/Users/samuelperini/Documents/research/projects/3.indels/software/dh/dh.jar dh.Readms \
 	/Users/samuelperini/Documents/research/projects/3.indels/summary/haplotypes/${dhi} ${n2_dhi} > \
-	/Users/samuelperini/Documents/research/projects/3.indels/summary/DH/DH_${dhi_a}_${dhi_b}_SW_est.txt
+	/Users/samuelperini/Documents/research/projects/3.indels/summary/DH/DH_${dhi_a}_${dhi_b}_${dhi_c}_est.txt
 	
 done

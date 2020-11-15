@@ -37,7 +37,8 @@ if (is.null(opt$vone) | is.null(opt$by) | is.null(opt$csv)){
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_CRAB_SNP_filt2_66N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZB_WAVE_LEFT_SNP_filt2_42N.csv'))
 # ic <- unique(read.csv(file = 'summary/allele_count/AC_CZD_WAVE_RIGHT_INDEL_filt2_70N.csv'))
-# ic <- unique(read.csv(file = 'summary/allele_count/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/N-3/AC_CZA_WAVE_LEFT_INDEL_filt2_59N.csv'))
+# ic <- unique(read.csv(file = 'summary/allele_count/N-3/AC_CZA_WAVE_LEFT_SNP_filt2_59N.csv'))
 # head(ic)
 # sum(duplicated(ic))
 ic <- unique(read.csv(file = opt$vone))
@@ -50,6 +51,8 @@ ic <- unique(read.csv(file = opt$vone))
 # cnm <- 'ECOT'
 # cnm <- 'ANN'
 # cnm <- 'ANC'
+# cnm <- 'INDEL:noncoding'
+# cnm <- 'SNP:coding'
 cnm <- opt$by
 
 # tv <- strsplit(c('A:C'), split = ":")[[1]]
@@ -57,12 +60,15 @@ cnm <- opt$by
 # tv <- strsplit(c('INDEL:SNP'), split = ":")[[1]]
 tv <- strsplit(cnm, split = ":")[[1]]
 
-# dt <- unique(read.csv(file = 'results/Lsax_short_var_czs_daf_inv_findv.csv'))
-# dt <- unique(read.csv(file = 'results/Lsax_short_ins_del_czs_daf_inv_findv.csv'))
-# dt <- unique(read.csv(file = 'results/Lsax_short_del_czs_daf_inv_findv.csv'))
-# dt <- unique(read.csv(file = 'results/Lsax_short_snp_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_DEL_czs_daf_inv_findv.csv'))
+# dt <- unique(read.csv(file = 'results/Lsax_short_SNP_czs_daf_inv_findv.csv'))
+# nrow(dt)
 # dt <- unique(read.csv(file = 'results/Lsax_short_WWSS_czs_daf_inv_findv.csv'))
+# nrow(dt)
 # dt <- unique(read.csv(file = 'results/Lsax_short_SW_czs_daf_inv_findv.csv'))
+# nrow(dt)
+# dt <- unique(read.csv(file = 'results/Lsax_short_WS_czs_daf_inv_findv.csv'))
+# nrow(dt)
 # head(dt)
 dt <- unique(read.csv(file = opt$csv))
 
@@ -84,8 +90,8 @@ if (tv[1]=='DEL' | tv[1]=='INS') {
   
 } else {
   
-  ann_fl <- list.files(path = 'annotated', pattern = paste(levels(ic$ZONE), tv[1],
-                                                           sep = '_'), full.names = TRUE)
+  ann_fl <- list.files(path = 'annotated/noncod_cod', pattern = paste(levels(ic$ZONE), tv[1],
+                                                                      sep = '_'), full.names = TRUE)
   ann <- read.table(file = ann_fl, header = TRUE)
   
   ann$VTYPE <- tv[1]
@@ -138,33 +144,33 @@ dtp <- dtp[!duplicated(dtp$cp), ]
 # 
 
 ## READ TABLE WITH SNPEFF ANNOTATION CLASSES
-snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
-snpeff$impact <- as.character(snpeff$impact)
-# str(snpeff)
-# head(snpeff)
-imp <- as.character(snpeff$impact)
-# snpeff <- snpeff$impact[snpeff[, tv[2]]]
-
-dtp$IMP <- NA
-for (i in 1:nrow(dtp)) {
-  stsp <- strsplit(x = as.character(dtp$ANN[i]), split = '\\|')[[1]]
-  uim <- paste(unique(stsp[stsp %in% imp]), collapse = ':')
-  dtp$IMP[i] <- uim
-}
-# table(dtp$IMP)
-
-if (tv[2]=='syn') {
-  eff_tar <- c(paste('HIGH', snpeff$impact, sep = ':'),
-               paste(snpeff$impact, 'HIGH', sep = ':'), 'MODIFIER', 'HIGH')
-  dtp$CAT <- ifelse(test = dtp$IMP %in% eff_tar == TRUE, yes = FALSE, no = TRUE)
-} else if (tv[2]=='nonsyn') {
-  dtp$CAT <- ifelse(test = grepl(pattern = 'HIGH', x = dtp$IMP), yes = TRUE, no = FALSE)
-} else if (tv[2]=='nongenic') {
-  dtp$CAT <- ifelse(test = dtp$IMP %in% 'MODIFIER' == TRUE, yes = TRUE, no = FALSE)
-}
-# table(dtp$CAT)
-
-dtp <- dtp[dtp$CAT==TRUE, ]
+# snpeff <- read.csv(file = 'data/ANN_snpeff_classes.csv')
+# snpeff$impact <- as.character(snpeff$impact)
+# # str(snpeff)
+# # head(snpeff)
+# imp <- as.character(snpeff$impact)
+# # snpeff <- snpeff$impact[snpeff[, tv[2]]]
+# 
+# dtp$IMP <- NA
+# for (i in 1:nrow(dtp)) {
+#   stsp <- strsplit(x = as.character(dtp$ANN[i]), split = '\\|')[[1]]
+#   uim <- paste(unique(stsp[stsp %in% imp]), collapse = ':')
+#   dtp$IMP[i] <- uim
+# }
+# # table(dtp$IMP)
+# 
+# if (tv[2]=='syn') {
+#   eff_tar <- c(paste('HIGH', snpeff$impact, sep = ':'),
+#                paste(snpeff$impact, 'HIGH', sep = ':'), 'MODIFIER', 'HIGH')
+#   dtp$CAT <- ifelse(test = dtp$IMP %in% eff_tar == TRUE, yes = FALSE, no = TRUE)
+# } else if (tv[2]=='nonsyn') {
+#   dtp$CAT <- ifelse(test = grepl(pattern = 'HIGH', x = dtp$IMP), yes = TRUE, no = FALSE)
+# } else if (tv[2]=='nongenic') {
+#   dtp$CAT <- ifelse(test = dtp$IMP %in% 'MODIFIER' == TRUE, yes = TRUE, no = FALSE)
+# }
+# # table(dtp$CAT)
+# 
+# dtp <- dtp[dtp$CAT==TRUE, ]
 
 # if (tv[1] != tv[2]) {
 #   
@@ -250,7 +256,16 @@ dtp <- dtp[dtp$CAT==TRUE, ]
 #   }
 #   
 # }
+if (tv[2] == 'coding') {
+  dtp <- dtp[dtp$COD==1, ]
+} else {
+  dtp <- dtp[dtp$COD==0, ]
+}
+
 an_vt <- paste(tv[2], unique(dtn$VTYPE), sep = '_')
+if (length(an_vt) > 1) {
+  an_vt <- paste(tv[2], levels(dtn$VAR), sep = '_')
+}
 write.table(x = dtp, file = paste('results/marker_density/MD', unique(dtp$ZONE), levels(ic$ECOT),
                                   an_vt, 'count.txt', sep = '_'),
             quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
@@ -263,7 +278,9 @@ df <- data.frame(matrix(data = 0, nrow = unique(dtp$N)*2, ncol = length(dac),
 for (i in 1:ncol(df)) {
   df[, i] <- c(rep(1, dac[i]), rep(0, (unique(dtp$N)*2)-dac[i]))
 }
-# colSums(df)
+# data.frame(table(colSums(df)))
+# data.frame(table(dac))
+# identical(x = data.frame(table(colSums(df)))[,2], y = data.frame(table(dac))[,2])
 
 fileConn <- file(paste('summary/haplotypes/HAP', levels(ic$ZONE), levels(ic$ECOT),
                        an_vt, 'DH.txt', sep = '_'))

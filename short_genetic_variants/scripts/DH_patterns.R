@@ -15,8 +15,8 @@ levels(dh_res$ANN)
 # 
 # 
 vt <- c('DEL', 'INS')
-# vt <- c('INDEL', 'SNP')
-# vt <- c('SNP')
+vt <- c('INDEL', 'SNP')
+vt <- c('SNP')
 vt <- c('SW', 'WS', 'WWSS')
 
 library(RColorBrewer)
@@ -26,8 +26,8 @@ vpal <- brewer.pal(n = 6, name = "Dark2")[4:5]
 vpal <- brewer.pal(n = 3, name = "Dark2")
 # display.brewer.pal(n = 12, name = "Paired")
 # vpal <- brewer.pal(n = 12, name = "Paired")[5:8]
-an <- levels(dh_res$ANN)[1:6]
-an <- c('nongenic', 'nonsyn', 'syn')
+# an <- levels(dh_res$ANN)[1:6]
+an <- c('noncoding', 'coding')
 # an <- intersect(as.character(unique(dh_res[dh_res$Variant_type==vt[1], 'ANN'])),
 #                 as.character(unique(dh_res[dh_res$Variant_type==vt[2], 'ANN'])))
 # an <- levels(dh_res$ANN)[8:length(levels(dh_res$ANN))]
@@ -36,6 +36,7 @@ an <- c('nongenic', 'nonsyn', 'syn')
 
 dh_sub <- dh_res[dh_res$Variant_type %in% vt & dh_res$ANN %in% an, ]
 table(dh_sub$Variant_type)
+table(dh_sub$ANN)
 # dh_sub[dh_sub$ANN=='nongenic',]
 
 library(ggplot2)
@@ -55,23 +56,72 @@ DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type))
         panel.grid = element_line(colour = "gray70", size = 0.2))
 DHp
 # ggsave(filename = 'figures/DH_var_ann_czs.pdf', plot = DHp, width = 8, height = 6, dpi = "screen")
+dad <- dh_sub[, 1:6]
+colnames(dad)[length(colnames(dad))] <- "DH"
+dah <- dh_sub[, c(1:5,8)]
+colnames(dah)[length(colnames(dah))] <- "DH"
+da <- rbind(cbind(dad, S='D'),
+            cbind(dah, S='H'))
+da$ANN <- factor(x = da$ANN, levels = c('noncoding', 'coding'))
+da$ZE <- paste(da$ZONE, da$ECOT, da$Variant_type, sep = ' ')
+table(da$ZE)
+head(da)
 
-DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN)) +
-  facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
-  geom_point(size = 3) +
-  scale_color_manual(values = vpal) +
-  labs(col = '') +
-  theme(axis.text = element_text(size = 11),
-        axis.title = element_text(size = 14),
-        strip.text = element_text(size = 10),
+DHp <- ggplot(data = da, aes(x = ANN, y = DH, group = ZE, col = Variant_type)) +
+  facet_wrap(~S) +
+  # geom_point(aes(shape = ZE), size = 3) +
+  geom_point() +
+  geom_line() +
+  # geom_line(aes(linetype = ZE)) +
+  # scale_color_manual(values = vpal) +
+  labs(x = '') +
+  theme(axis.text = element_text(size = 17),
+        axis.title = element_text(size = 17),
+        strip.text = element_text(size = 15),
         panel.background = element_blank(),
-        strip.background = element_rect(fill = '#91bfdb', color = 'black'),
+        strip.background = element_rect(fill = 'white', color = 'black'),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2))
 DHp
-# ggsave(filename = 'figures/DH_SW_WS_czs.pdf', plot = DHp, width = 8, height = 6)
+da$ZE <- paste(da$ZONE, da$ECOT, da$ANN, sep = ' ')
+# da$Variant_type <- factor(x = da$Variant_type, levels = c("SW", "WWSS", "WS"))
+DHp <- ggplot(data = da, aes(x = Variant_type, y = DH, group = ZE, col = ANN)) +
+  facet_wrap(~S) +
+  # geom_point(aes(shape = ZE), size = 3) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_line(size = 2, alpha = 0.7) +
+  # geom_line(aes(linetype = ZE)) +
+  scale_color_manual(values = vpal) +
+  labs(x = '', y = '', col = '') +
+  theme(axis.text = element_text(size = 17),
+        legend.text = element_text(size = 15),
+        legend.position = 'top',
+        # axis.title = element_text(size = 17),
+        strip.text = element_text(size = 17),
+        panel.background = element_blank(),
+        strip.background = element_rect(fill = 'white', color = 'black'),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        axis.line = element_line(size = 0.2, linetype = "solid",
+                                 colour = "black"),
+        panel.grid = element_line(colour = "gray70", size = 0.2)) +
+  guides(col = guide_legend(override.aes = list(size = 4)))
+DHp
+ggsave(filename = paste('figures/DH', paste(an, collapse = '_'), paste(vt, collapse = '_'),'czs.pdf', sep = '_'),
+       plot = DHp, scale = 0.7, dpi = "screen")
+
+library(Rmisc)
+round(CI(da[da$Variant_type=='INDEL' & da$ANN=='coding' & da$S == 'D', 'DH']), 2)
+round(CI(da[da$Variant_type=='INDEL' & da$ANN=='noncoding' & da$S == 'D', 'DH']), 2)
+round(CI(da[da$Variant_type=='INDEL' & da$ANN=='coding' & da$S == 'H', 'DH']), 2)
+round(CI(da[da$Variant_type=='INDEL' & da$ANN=='noncoding' & da$S == 'H', 'DH']), 2)
+
+round(CI(da[da$Variant_type=='SNP' & da$ANN=='coding' & da$S == 'D', 'DH']), 2)
+round(CI(da[da$Variant_type=='SNP' & da$ANN=='noncoding' & da$S == 'D', 'DH']), 2)
+round(CI(da[da$Variant_type=='SNP' & da$ANN=='coding' & da$S == 'H', 'DH']), 2)
+round(CI(da[da$Variant_type=='SNP' & da$ANN=='noncoding' & da$S == 'H', 'DH']), 2)
+
 # ggsave(filename = 'figures/DH_gBGC_czs.pdf', plot = DHp, width = 8, height = 6)
 #
 # hist(dh_sub$D)
