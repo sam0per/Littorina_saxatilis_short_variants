@@ -46,6 +46,7 @@ dt <- dt[dt$SIZE <= 50, ]
 
 # head(dt)
 if (opt$rminv) {
+  cat('Variants inside inversions are being removed ...\n')
   dt <- dt[dt$invRui==FALSE, ]
 }
 
@@ -280,11 +281,14 @@ ggsave(filename = paste('figures/MD_lm', isl, eco, 'noinv_indel_snp_count.pdf', 
        plot = pcount, scale = 0.8, dpi = "screen")
 
 lms <- summary(lm(formula = x.x ~ x.y, data = tt[tt$invRui==FALSE, ]))
-lmsd <- data.frame(lms$coefficients)
+lmsd <- round(data.frame(lms$coefficients), 3)
 lmsd$Par <- row.names(lmsd)
 lmsd <- lmsd[, c(ncol(lmsd), 1:(ncol(lmsd)-1))]
+lmsd <- rbind(lmsd, data.frame(Par='Expected slope', Estimate=round(sl, 3), Std..Error=NA, t.value=NA, Pr...t..=NA))
 lmsd$ISL <- isl
 lmsd$ECOT <- eco
+write.table(x = lmsd, file = paste('results/marker_density/lm/MD_lm', isl, eco, 'noinv_indel_snp_count.txt', sep = "_"),
+            append = FALSE, quote = FALSE, sep = '\t', row.names = FALSE, col.names = TRUE)
 # tt <- mer
 # tt <- mer[mer$ISL=='CZA' & mer$ECOT=='WAVE_LEFT', ]
 # head(tt)
@@ -324,12 +328,12 @@ cm1 <- as.data.frame(t(coef(M1)))
 colnames(cm1) <- c('intercept', 'slope')
 cm1$cpal <- 'observation'
 
-ttf <- rbind(cm1, cexp)
-ttf$cpal <- factor(x = ttf$cpal, levels = c('observation', 'bootstrap'))
-g <- ggplot(data = cexp, aes(x = intercept, y = slope)) +
+# ttf <- rbind(cm1, cexp)
+# ttf$cpal <- factor(x = ttf$cpal, levels = c('observation', 'bootstrap'))
+g <- ggplot(data = cexp, aes(x = slope)) +
   facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
-  geom_point(size = 2, col = 'black', alpha = 0.8) +
-  geom_point(data = cm1, size = 2, col = 'red', alpha = 0.8) +
+  geom_histogram(bins = 20, fill = 'black', col = 'white') +
+  geom_vline(xintercept = cm1$slope, col = 'green', size = 1.5) +
   # labs(col = '', title = paste(isl, eco)) +
   # scale_color_manual(values = c('black', 'blue')) +
   theme(axis.text = element_text(size = 14),
@@ -346,7 +350,7 @@ g <- ggplot(data = cexp, aes(x = intercept, y = slope)) +
   # guides(col = guide_legend(override.aes = list(size=2)))
 # g
 
-ggsave(filename = paste('figures/MD_boot', isl, eco, 'noinv_slope_intercept.pdf', sep = "_"),
+ggsave(filename = paste('figures/MD_boot', isl, eco, 'noinv_slope.pdf', sep = "_"),
        plot = g, scale = 0.8, dpi = "screen")
 
-
+cat('\n...MISSION COMPLETE!...\n')
