@@ -1,4 +1,26 @@
-# TABLE Ya
+# TABLE Ya: proportions of unique variants in each population
+# INDEL
+rm(list = ls())
+(ff <- list.files(path = 'results/marker_density', pattern = 'coding', full.names = TRUE))
+(ff <- ff[grepl(pattern = "INDEL", x = ff)])
+(ff <- ff[grepl(pattern = "SNP", x = ff)])
+library(data.table)
+ucp <- rbindlist(lapply(X = ff, FUN = read.table, header = TRUE))[, 'cp']
+ucp <- as.character(ucp$cp)
+ccp <- data.frame(table(ucp))
+head(ccp)
+max(ccp$Freq)
+ccp <- as.character(ccp[ccp$Freq==9, 'ucp'])
+tt <- vector(mode = "integer", length = length(ff))
+tt
+for (i in seq(from = 1, to = length(ff), by = 2)) {
+  # i <- 1
+  dd <- read.table(file = ff[i], header = TRUE)
+  ee <- read.table(file = ff[i+1], header = TRUE)
+  oo <- unique(c(as.character(dd$cp), as.character(ee$cp)))
+  tt[i] <- paste(round(length(setdiff(oo, ccp))/(nrow(dd)+nrow(ee)) * 100), '%', sep = '')
+}
+tt[tt!="0"]
 # INDEL VS SNP COUNT
 rm(list = ls())
 (ff <- list.files(path = 'results/marker_density', pattern = 'noncoding', full.names = TRUE))
