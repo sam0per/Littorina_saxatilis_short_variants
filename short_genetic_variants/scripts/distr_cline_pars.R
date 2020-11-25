@@ -62,6 +62,34 @@ zs <- split(x = isl_dt, f = isl_dt$ZONE)
 lapply(zs, head)
 
 cpars <- c("Centre", "Width", "slope", "p_diff", "Var.Ex")
+vts <- unique(isl_dt$VT_sel)[c(1,3)]
+
+one_zs <- zs[[1]][zs[[1]]$VT_sel %in% vts, ]
+table(one_zs$VT_sel)
+head(one_zs)
+# d_comp <- as.data.frame(matrix(nrow = nrow(one_zs) * length(cpars), ncol = 5))
+# colnames(d_comp) <- c("cp", "est", "ZONE", "VT_sel", "par")
+d_comp <- vector(mode = "list", length = length(cpars))
+names(d_comp) <- cpars
+
+for (i in cpars) {
+  # i <- cpars[1]
+  one_p <- one_zs[, c("cp", i, "ZONE", "VT_sel")]
+  colnames(one_p) <- c("cp", "est", "ZONE", "VT_sel")
+  one_p$par <- i
+  # head(one_p)
+  d_comp[[i]] <- one_p
+  nna_p <- one_p[!is.na(one_p$est), ]
+  kt <- ks.test(x = nna_p[nna_p$VT_sel==vts[1], "est"],
+                y = nna_p[nna_p$VT_sel==vts[2], "est"])
+  print(kt)
+}
+lapply(d_comp, head)
+lapply(d_comp, nrow)
+
+ks.test(x = d_comp$Centre[d_comp$Centre$VT_sel==vts[1], "est"],
+        y = d_comp$Centre[d_comp$Centre$VT_sel==vts[2], "est"])
+
 np <- 1
 cpars[np]
 pzs <- merge(x = zs[[1]][, c('ZONE', 'cp', cpars[np], 'VTYPE', 'VT_sel', 'invRui', 'sel')],

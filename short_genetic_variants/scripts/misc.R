@@ -1390,3 +1390,39 @@ invisible(lapply(unique(mer$class), function(x) {
   # val <- sum(dt1$prop.x, dt1$prop.y)
   cat(x, round(val,3), '\n')
 }))
+# 
+# 
+# 
+# SFS COMP - FIND CELLS WITH 0 COUNT
+(fn <- list.files(path = "results/marker_density", pattern = "_coding_SNP", full.names = TRUE))
+# x <- 2
+fd <- lapply(X = seq_along(fn), FUN = function(x) {
+  sc <- read.table(file = fn[x], header = TRUE)
+  jsd <- merge(x = data.frame(Var1=1:((unique(sc$N)*2)-1)), y = data.frame(table(sc$DAC)),
+               by = 'Var1', all.x = TRUE)
+  
+  jsd$Freq <- ifelse(test = is.na(jsd$Freq), yes = 0, no = jsd$Freq)
+  
+  # ggplot(data = jsd, aes(x = Var1, y = Freq)) +
+  #   geom_col(col = 'white') +
+  #   labs(x = '', y = 'Derived allele count')
+  
+  # cat(basename(fn[x]), sum(jsd$Freq > 1), nrow(jsd)-sum(jsd$Freq > 1), "\n")
+  
+  lc <- which(!jsd$Freq>1)[1:10]
+  cat(basename(fn[x]), lc, "\n")
+  
+  # brk <- c(0:(which(!jsd$Freq>1)[1]-1), nrow(jsd))
+  # if (51>nrow(jsd)) {
+  #   brk <- c(0:nrow(jsd))
+  # } else {
+  #   brk <- c(0:51, nrow(jsd))
+  # }
+  # 
+  # bn <- cut(x = jsd$Var1, breaks = brk, include.lowest = TRUE)
+  # jsd$Bin <- bn
+  # 
+  # new_jsd <- aggregate(x = jsd$Freq, by = list(jsd$Bin), sum)
+  # 
+  # cat(basename(fn[x]), sum(new_jsd$x > 1), nrow(new_jsd), "\n")
+})
