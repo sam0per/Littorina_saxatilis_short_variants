@@ -46,16 +46,18 @@ cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
   odt <- mutate(cl_ls[[x]], ZONE = zone, VTYPE = vtype)
   return(odt)
 })))
-head(cl_dt)
+# head(cl_dt)
 
-table(cl_dt$sel)
-table(cl_dt$ZONE)
+# table(cl_dt$sel)
+# table(cl_dt$ZONE)
 cl_dt$VT_sel <- ifelse(test = cl_dt$sel==TRUE, yes = paste0('noneu_', cl_dt$VTYPE), no = paste0('neu_', cl_dt$VTYPE))
-table(cl_dt$VT_sel)
+# table(cl_dt$VT_sel)
 
 vtype_pal <- c(brewer.pal(n = 8, name = 'Set2')[c(5, 3)], "#1B9E77", "#666666")
 
 isl <- 'CZA'
+isl <- opt$island
+
 isl_dt <- cl_dt[grepl(pattern = isl, x = cl_dt$ZONE), ]
 table(isl_dt$ZONE)
 zs <- split(x = isl_dt, f = isl_dt$ZONE)
@@ -80,15 +82,15 @@ for (i in cpars) {
   # head(one_p)
   d_comp[[i]] <- one_p
   nna_p <- one_p[!is.na(one_p$est), ]
-  kt <- ks.test(x = nna_p[nna_p$VT_sel==vts[1], "est"],
-                y = nna_p[nna_p$VT_sel==vts[2], "est"])
+  kt <- ks.test(x = unique(nna_p[nna_p$VT_sel==vts[1], "est"]),
+                y = unique(nna_p[nna_p$VT_sel==vts[2], "est"]))
   print(kt)
 }
-lapply(d_comp, head)
-lapply(d_comp, nrow)
+# lapply(d_comp, head)
+# lapply(d_comp, nrow)
 
-ks.test(x = d_comp$Centre[d_comp$Centre$VT_sel==vts[1], "est"],
-        y = d_comp$Centre[d_comp$Centre$VT_sel==vts[2], "est"])
+# ks.test(x = d_comp$Centre[d_comp$Centre$VT_sel==vts[1], "est"],
+#         y = d_comp$Centre[d_comp$Centre$VT_sel==vts[2], "est"])
 
 np <- 1
 cpars[np]

@@ -22,7 +22,7 @@ vt <- c('SW', 'WS', 'WWSS')
 library(RColorBrewer)
 # vpal <- c("#1B9E77", "#666666")
 # display.brewer.pal(n = 8, name = "Dark2")
-vpal <- brewer.pal(n = 6, name = "Dark2")[4:5]
+# vpal <- brewer.pal(n = 6, name = "Dark2")[4:5]
 vpal <- brewer.pal(n = 3, name = "Dark2")
 # display.brewer.pal(n = 12, name = "Paired")
 # vpal <- brewer.pal(n = 12, name = "Paired")[5:8]
@@ -87,16 +87,24 @@ DHp <- ggplot(data = da, aes(x = ANN, y = DH, group = ZE, col = Variant_type)) +
 DHp
 da$ZE <- paste(da$ZONE, da$ECOT, da$ANN, sep = ' ')
 # da$Variant_type <- factor(x = da$Variant_type, levels = c("SW", "WWSS", "WS"))
+library(Rmisc)
+dm <- aggregate(x = da$DH, by = list(S = da$S, Variant_type = da$Variant_type, ANN = da$ANN), CI)
+dm <- as.data.frame(cbind(dm[,1:3], DH = dm$x[,2]))
+dm$ZE <- paste(dm$Variant_type, dm$ANN, sep = ' ')
+dm
+
 DHp <- ggplot(data = da, aes(x = Variant_type, y = DH, group = ZE, col = ANN)) +
   facet_wrap(~S) +
   # geom_point(aes(shape = ZE), size = 3) +
   geom_point(size = 3, alpha = 0.7) +
   geom_line(size = 2, alpha = 0.7) +
+  geom_point(data = dm, aes(x = Variant_type, y = DH), col = "black", size = 7) +
+  geom_point(data = dm, aes(x = Variant_type, y = DH, col = ANN), size = 5) +
   # geom_line(aes(linetype = ZE)) +
   scale_color_manual(values = vpal) +
   labs(x = '', y = '', col = '') +
   theme(axis.text = element_text(size = 17),
-        legend.text = element_text(size = 15),
+        legend.text = element_text(size = 17),
         legend.position = 'top',
         # axis.title = element_text(size = 17),
         strip.text = element_text(size = 17),
