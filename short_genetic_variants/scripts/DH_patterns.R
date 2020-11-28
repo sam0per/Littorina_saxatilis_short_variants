@@ -40,21 +40,21 @@ table(dh_sub$ANN)
 # dh_sub[dh_sub$ANN=='nongenic',]
 
 library(ggplot2)
-DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type)) +
-  facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
-  geom_point(size = 3) +
-  scale_color_manual(values = vpal) +
-  labs(col = '', shape = '') +
-  theme(axis.text = element_text(size = 11),
-        axis.title = element_text(size = 14),
-        strip.text = element_text(size = 10),
-        panel.background = element_blank(),
-        strip.background = element_rect(fill = '#91bfdb', color = 'black'),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        axis.line = element_line(size = 0.2, linetype = "solid",
-                                 colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2))
-DHp
+# DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type)) +
+#   facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +
+#   geom_point(size = 3) +
+#   scale_color_manual(values = vpal) +
+#   labs(col = '', shape = '') +
+#   theme(axis.text = element_text(size = 11),
+#         axis.title = element_text(size = 14),
+#         strip.text = element_text(size = 10),
+#         panel.background = element_blank(),
+#         strip.background = element_rect(fill = '#91bfdb', color = 'black'),
+#         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+#         axis.line = element_line(size = 0.2, linetype = "solid",
+#                                  colour = "black"),
+#         panel.grid = element_line(colour = "gray70", size = 0.2))
+# DHp
 # ggsave(filename = 'figures/DH_var_ann_czs.pdf', plot = DHp, width = 8, height = 6, dpi = "screen")
 dad <- dh_sub[, 1:6]
 colnames(dad)[length(colnames(dad))] <- "DH"
@@ -63,32 +63,33 @@ colnames(dah)[length(colnames(dah))] <- "DH"
 da <- rbind(cbind(dad, S='D'),
             cbind(dah, S='H'))
 da$ANN <- factor(x = da$ANN, levels = c('noncoding', 'coding'))
-da$ZE <- paste(da$ZONE, da$ECOT, da$Variant_type, sep = ' ')
-table(da$ZE)
-head(da)
+# da$ZE <- paste(da$ZONE, da$ECOT, da$Variant_type, sep = ' ')
+# table(da$ZE)
+# head(da)
 
-DHp <- ggplot(data = da, aes(x = ANN, y = DH, group = ZE, col = Variant_type)) +
-  facet_wrap(~S) +
-  # geom_point(aes(shape = ZE), size = 3) +
-  geom_point() +
-  geom_line() +
-  # geom_line(aes(linetype = ZE)) +
-  # scale_color_manual(values = vpal) +
-  labs(x = '') +
-  theme(axis.text = element_text(size = 17),
-        axis.title = element_text(size = 17),
-        strip.text = element_text(size = 15),
-        panel.background = element_blank(),
-        strip.background = element_rect(fill = 'white', color = 'black'),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        axis.line = element_line(size = 0.2, linetype = "solid",
-                                 colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2))
-DHp
+# DHp <- ggplot(data = da, aes(x = ANN, y = DH, group = ZE, col = Variant_type)) +
+#   facet_wrap(~S) +
+#   # geom_point(aes(shape = ZE), size = 3) +
+#   geom_point() +
+#   geom_line() +
+#   # geom_line(aes(linetype = ZE)) +
+#   # scale_color_manual(values = vpal) +
+#   labs(x = '') +
+#   theme(axis.text = element_text(size = 17),
+#         axis.title = element_text(size = 17),
+#         strip.text = element_text(size = 15),
+#         panel.background = element_blank(),
+#         strip.background = element_rect(fill = 'white', color = 'black'),
+#         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+#         axis.line = element_line(size = 0.2, linetype = "solid",
+#                                  colour = "black"),
+#         panel.grid = element_line(colour = "gray70", size = 0.2))
+# DHp
 da$ZE <- paste(da$ZONE, da$ECOT, da$ANN, sep = ' ')
 # da$Variant_type <- factor(x = da$Variant_type, levels = c("SW", "WWSS", "WS"))
 library(Rmisc)
-dm <- aggregate(x = da$DH, by = list(S = da$S, Variant_type = da$Variant_type, ANN = da$ANN), CI)
+dm <- aggregate(x = da$DH, by = list(S = da$S, Variant_type = da$Variant_type, ANN = da$ANN), function(x) round(CI(x),2))
+dm
 dm <- as.data.frame(cbind(dm[,1:3], DH = dm$x[,2]))
 dm$ZE <- paste(dm$Variant_type, dm$ANN, sep = ' ')
 dm

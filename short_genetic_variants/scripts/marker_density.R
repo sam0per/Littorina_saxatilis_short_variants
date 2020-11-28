@@ -277,7 +277,7 @@ pcount <- ggplot(data = tt, aes(x = x.y, y = x.x)) +
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
   guides(col = guide_legend(override.aes = list(size=3), nrow = 1))
-ggsave(filename = paste('figures/MD_lm', isl, eco, 'noinv_indel_snp_count.pdf', sep = "_"),
+ggsave(filename = paste('figures/marker_density/MD_lm', isl, eco, 'noinv_indel_snp_count.pdf', sep = "_"),
        plot = pcount, scale = 0.8, dpi = "screen")
 
 lms <- summary(lm(formula = x.x ~ x.y, data = tt[tt$invRui==FALSE, ]))
@@ -350,7 +350,7 @@ g <- ggplot(data = cexp, aes(x = slope)) +
   # guides(col = guide_legend(override.aes = list(size=2)))
 # g
 
-ggsave(filename = paste('figures/MD_boot', isl, eco, 'noinv_slope.pdf', sep = "_"),
+ggsave(filename = paste('figures/marker_density/MD_boot', isl, eco, 'noinv_slope.pdf', sep = "_"),
        plot = g, scale = 0.8, dpi = "screen")
 
 cat('\n...MISSION COMPLETE!...\n')

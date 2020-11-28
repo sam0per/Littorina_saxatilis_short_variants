@@ -13,7 +13,7 @@ option_list = list(
   make_option(c("-i", "--island"), type = "character", default = NULL,
               help = "Name of the island (CZA, CZB, CZD).", metavar = "character"),
   make_option(c("-v", "--variant-type"), type = "character", default = NULL,
-              help = "Names of the type of variants (neu_INDEL, noneu_INDEL, neu_SNP, noneu_SNP).",
+              help = "Names of the type of variants (INDEL:SNP, neu_INDEL:neu_SNP, noneu_INDEL:noneu_SNP).",
               metavar = "character"))
 
 opt_parser = OptionParser(usage = paste("Rscript scripts/cline_par_test.R",
