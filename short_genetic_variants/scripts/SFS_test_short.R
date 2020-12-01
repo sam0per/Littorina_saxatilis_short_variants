@@ -273,7 +273,8 @@ contr_p <- ggplot(data = contr_d) +
   # annotation_custom(tableGrob(round(chi_tb, 3), theme = mytheme.b, rows = NULL),
   #                   xmin=(unique(ic$N)*2)-(unique(ic$N)*2)*0.2, xmax=((unique(ic$N)*2)-(unique(ic$N)*2)*0.2),
   #                   ymin = max(mx$`Chi-squared`)-(max(mx$`Chi-squared`)*0.6), ymax=max(mx$`Chi-squared`)) +
-  annotate(geom="text", x=Nc*0.8, y=max(mx$`Chi-squared`)*0.8, label=paste0("p-value = ", round(pval, 2)), color="black") +
+  annotate(geom="text", x=Nc*0.9, y=max(mx$`Chi-squared`)*0.8, label=paste0("p-value = ", round(pval, 2)),
+           color="black", size=5) +
   geom_point(aes(x = N, y = `Chi-squared`), col = contr_d$pal)
 
 # plot(1:((unique(sc$N)*2)-1), class_contrib)
