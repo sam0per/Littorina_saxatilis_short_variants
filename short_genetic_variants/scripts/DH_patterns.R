@@ -39,6 +39,36 @@ table(dh_sub$Variant_type)
 table(dh_sub$ANN)
 # dh_sub[dh_sub$ANN=='nongenic',]
 
+head(dh_sub)
+aggregate(x = dh_sub$segsites, by = list(dh_sub$ZONE, dh_sub$ECOT, dh_sub$ANN), function(x) round(c(x[1], x[2], x[1]/x[2]), 2))
+id <- aggregate(x = dh_sub$segsites, by = list(dh_sub$ZONE, dh_sub$ECOT), function(x) c(x[1], x[2], x[3], x[4]))
+id <- data.frame(Population = paste(id$Group.1, id$Group.2), id$x)
+colnames(id) <- c("Population", "Coding deletions", "Coding insertions", "Non-coding deletions", "Non-coding insertions")
+colnames(id) <- c("Population", "Coding INDELs", "Coding SNPs", "Non-coding INDELs", "Non-coding SNPs")
+apply(X = aggregate(x = dh_sub$segsites, by = list(dh_sub$ZONE, dh_sub$ECOT), function(x) cbind(x[1], x[2], x[3], x[4]))$x,
+      MARGIN = 1, FUN = function(y) {
+        ct <- data.frame(rbind(y[1], y[2]), rbind(y[3], y[4]))
+        list(expected=round(chisq.test(ct)$expected),
+             observed=round(chisq.test(ct)$observed))
+      })
+cqt <- apply(X = id[,-1], MARGIN = 1, FUN = function(y) {
+  ct <- data.frame(rbind(y[1], y[2]), rbind(y[3], y[4]))
+  cq <- chisq.test(ct)
+  return(cq)
+})
+id
+# i <- 1
+for (i in seq_along(cqt)) {
+  id[i, -1] <- paste0(id[i, -1], " (", round(as.vector(cqt[[i]]$expected)), ")")
+  id[i, "X-squared"] <- round(cqt[[i]]$statistic, 3)
+}
+id
+
+dh_sub[dh_sub$segsites==32,]
+dh_sub[dh_sub$segsites==29,]
+dh_sub[dh_sub$segsites==1332,]
+dh_sub[dh_sub$segsites==1445,]
+
 library(ggplot2)
 # DHp <- ggplot(data = dh_sub, aes(x = H, y = D, col = ANN, shape = Variant_type)) +
 #   facet_grid(rows = vars(ZONE), cols = vars(ECOT)) +

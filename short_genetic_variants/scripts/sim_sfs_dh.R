@@ -12,7 +12,7 @@ sfs$E <- sfs$T/sfs$N
 barplot(sfs$E)
 
 # D > 0 - H < 0
-po_ac <- c(6,4,2,1,2,3,4,4,4)
+po_ac <- c(9,5,3,2,2,2,2,2,3)
 sum(po_ac)
 sfs <- data.frame(N=1:9, C=po_ac)
 barplot(sfs$C)
@@ -21,7 +21,7 @@ sfs$E <- sfs$T/sfs$N
 barplot(sfs$E)
 
 # D > 0 - H > 0
-ba_ac <- c(7,3,5,6,5,1,1,1,1)
+ba_ac <- c(9,5,3,4,4,2,1,1,1)
 sum(ba_ac)
 sfs <- data.frame(N=1:9, C=ba_ac)
 barplot(sfs$C)
@@ -54,25 +54,25 @@ sim_sfs
 ggsave(filename = 'figures/sim/DAC_sim_sfs_selection.pdf',
        plot = sim_sfs, height = 5, scale = 0.75, dpi = "screen")
 
-sim_sfs <- ggplot(data = sfs, aes(x = N, y = C)) +
-  facet_wrap(facets = ~S, nrow = 2) +
-  geom_col(aes(fill = S), col = 'black') +
-  scale_fill_manual(values = c("red", "green", "blue")) +
-  labs(x = 'Derived allele class', y = "count", fill = "") +
-  theme(legend.position = "top",
-        legend.title = element_text(size = 12), legend.text = element_text(size = 11),
-        axis.text = element_text(size = 11),
-        axis.title = element_text(size = 14),
-        strip.text = element_text(size = 12),
-        panel.background = element_blank(),
-        strip.background = element_rect(fill = 'white', color = "black"),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        axis.line = element_line(size = 0.2, linetype = "solid",
-                                 colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2))
-sim_sfs
+# sim_sfs <- ggplot(data = sfs, aes(x = N, y = C)) +
+#   facet_wrap(facets = ~S, nrow = 2) +
+#   geom_col(aes(fill = S), col = 'black') +
+#   scale_fill_manual(values = c("red", "green", "blue")) +
+#   labs(x = 'Derived allele class', y = "count", fill = "") +
+#   theme(legend.position = "top",
+#         legend.title = element_text(size = 12), legend.text = element_text(size = 11),
+#         axis.text = element_text(size = 11),
+#         axis.title = element_text(size = 14),
+#         strip.text = element_text(size = 12),
+#         panel.background = element_blank(),
+#         strip.background = element_rect(fill = 'white', color = "black"),
+#         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+#         axis.line = element_line(size = 0.2, linetype = "solid",
+#                                  colour = "black"),
+#         panel.grid = element_line(colour = "gray70", size = 0.2))
+# sim_sfs
 
-ddh <- data.frame(D=c(0.78, 0.13, -0.18), H=c(0.16, -2, 0.27), S=c("Balancing", " Positive", "Purifying"),
+ddh <- data.frame(D=c(0.37, -0.06, -0.18), H=c(0.11, -0.83, 0.27), S=c("Balancing", " Positive", "Purifying"),
                   A=rep("Summary statistics", 3))
 ddh <- ddh[order(ddh$S), ]
 sim_ss <- ggplot(data = ddh, aes(x = D, y = H, col = S)) +
