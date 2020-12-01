@@ -154,14 +154,15 @@ chi_app <- 2*(LL1-LL0)  # now with 16 df (I think)
 cat('Chi-square test statistic =', chi_app, '\n')
 # qchisq(p = 0.05, df = 260)
 ndf <- (length(iid)-1)*(length(unique(da$AV))-1)
-cat('Chi-square critical value at 0.01 with', ndf, 'df =', qchisq(p = 0.01, df = ndf), '\n')
-cat('Test statistic - critical value =', chi_app-qchisq(p = 0.01, df = ndf), '\n')
+pval <- pchisq(q = chi_app, df = ndf)
+# cat('Chi-square critical value at 0.01 with', ndf, 'df =', qchisq(p = 0.01, df = ndf), '\n')
+# cat('Test statistic - critical value =', chi_app-qchisq(p = 0.01, df = ndf), '\n')
 
-chi_tb <- data.frame(chi2_stat=chi_app,
-                     chi2_crit=qchisq(p = 0.01, df = ndf),
-                     diff=chi_app-qchisq(p = 0.01, df = ndf))
+# chi_tb <- data.frame(chi2_stat=chi_app,
+#                      chi2_crit=qchisq(p = 0.01, df = ndf),
+#                      diff=chi_app-qchisq(p = 0.01, df = ndf))
 # chi_tb
-colnames(chi_tb) <- c("x2 stat", "x2 crit", "x2 stat-crit")
+# colnames(chi_tb) <- c("x2 stat", "x2 crit", "x2 stat-crit")
 
 mytheme.b <- gridExtra::ttheme_default(
   core = list(fg_params=list(cex = 0.7)),
@@ -269,9 +270,10 @@ contr_p <- ggplot(data = contr_d) +
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
         panel.grid = element_line(colour = "gray70", size = 0.2)) +
-  annotation_custom(tableGrob(round(chi_tb, 3), theme = mytheme.b, rows = NULL),
-                    xmin=(unique(ic$N)*2)-(unique(ic$N)*2)*0.2, xmax=((unique(ic$N)*2)-(unique(ic$N)*2)*0.2),
-                    ymin = max(mx$`Chi-squared`)-(max(mx$`Chi-squared`)*0.6), ymax=max(mx$`Chi-squared`)) +
+  # annotation_custom(tableGrob(round(chi_tb, 3), theme = mytheme.b, rows = NULL),
+  #                   xmin=(unique(ic$N)*2)-(unique(ic$N)*2)*0.2, xmax=((unique(ic$N)*2)-(unique(ic$N)*2)*0.2),
+  #                   ymin = max(mx$`Chi-squared`)-(max(mx$`Chi-squared`)*0.6), ymax=max(mx$`Chi-squared`)) +
+  annotate(geom="text", x=Nc*0.8, y=max(mx$`Chi-squared`)*0.8, label=paste0("p-value = ", round(pval, 2)), color="black") +
   geom_point(aes(x = N, y = `Chi-squared`), col = contr_d$pal)
 
 # plot(1:((unique(sc$N)*2)-1), class_contrib)
