@@ -1426,3 +1426,16 @@ fd <- lapply(X = seq_along(fn), FUN = function(x) {
   # 
   # cat(basename(fn[x]), sum(new_jsd$x > 1), nrow(new_jsd), "\n")
 })
+
+(fn <- list.files(path = "results/SFS_comp", pattern = "_noncoding_INDEL", full.names = TRUE))
+# x <- 2
+lapply(X = seq_along(fn), FUN = function(x) {
+  sc <- read.csv(file = fn[x], header = TRUE)
+  ec1 <- which(!sc[, 9]>1)
+  ec2 <- which(!sc[, 10]>1)
+  # sc[ec1, 9]
+  range(ec1)
+  # brk <- c(0:8, seq(from = 8+5, to = nrow(sc), by = 5), nrow(sc))
+  # brk <- brk[brk<=nrow(sc)]
+})
+

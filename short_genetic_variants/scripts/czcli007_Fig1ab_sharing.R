@@ -1,15 +1,13 @@
 rm (list=ls())
-source(file = "/Users/samuelperini/Documents/research/projects/3.indels/Littorina_saxatilis/short_genetic_variants/scripts/colour_text_hadley.R")
+source(file = "Littorina_saxatilis/short_genetic_variants/scripts/colour_text_hadley.R")
 # setwd("/Users/samuelperini/Documents/research/projects/3.indels/Anja/Anja_results/20200115/")
 
-.packages = c("optparse", "dplyr")
-
+pkgs <- c("tools", "tidyr", "ggplot2", "data.table", "optparse", "dplyr", "patchwork", "gridExtra", "RColorBrewer")
 # Install CRAN packages (if not already installed)
-.inst <- .packages %in% installed.packages()
-if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
-
+# .inst <- .packages %in% installed.packages()
+# if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 # Load packages into session
-lapply(.packages, require, character.only=TRUE)
+invisible(lapply(pkgs, require, character.only=TRUE))
 
 
 option_list = list(
@@ -31,7 +29,7 @@ if (is.null(opt$variant)){
 ################################################################################################################
 # setwd("Anja/Anja_results/20200115/CZCLI006_comp/")
 liste = c("ANG_right", "CZA_left", "CZA_right", "CZB_left", "CZB_right", "CZD_left", "CZD_right")
-# vartype = "SNP"
+# vartype = "INDEL"
 vartype = opt$variant
 # YNinv = "NoInv"
 if (opt$inversion) {
@@ -41,15 +39,39 @@ if (opt$inversion) {
 }
 
 # Get cline fits
-# ANG_right = CZA_right
-ANG_right = read.table(paste0("CZCLI006_comp/CZCLI006_ANG_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZA_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZA_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
-CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+cl_fl <- list.files(path = "CZCLI006_comp", full.names = TRUE)
+cl_fl <- cl_fl[grep(pattern = "NoInv", x = cl_fl)]
 
+cl_ls <- lapply(cl_fl, read.table, header = TRUE)
+
+cl_dt <- lapply(seq_along(cl_fl), function(x) {
+  island <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][2]
+  side <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][3]
+  zone <- paste(island, side, sep = "_")
+  vtype <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][4]
+  # paste(zone, vtype)
+  thresh <- sort(cl_ls[[x]]$Var.Ex, decreasing=TRUE, na.last=TRUE)[round(length(cl_ls[[x]]$cp)*0.05)]
+  cl_ls[[x]]$sel = FALSE
+  cl_ls[[x]]$sel[cl_ls[[x]]$Var.Ex>=thresh & is.na(cl_ls[[x]]$Var.Ex)==FALSE] = TRUE
+  odt <- mutate(cl_ls[[x]], ZONE = zone, VTYPE = vtype)
+  return(odt)
+})
+# ANG_right = CZA_right
+# ANG_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+cl_fl
+ANG_right = cl_dt[[3]]
+# CZA_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZA_left = cl_dt[[1]]
+# CZA_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZA_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZA_right = cl_dt[[3]]
+# CZB_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZB_left = cl_dt[[5]]
+# CZB_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZB_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZB_right = cl_dt[[7]]
+# CZD_left = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_left", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZD_left = cl_dt[[9]]
+# CZD_right = read.table(paste0("CZCLI006_comp/CZCLI006_CZD_right", YNinv, "_", vartype, ".txt"), header=T, stringsAsFactors=F)
+CZD_right = cl_dt[[11]]
 
 
 ################################################################################################################
@@ -132,15 +154,17 @@ cat("\n")
 ################################################################################################################
 ???????
 # zone1 <- "CZA_left"
+# zone2 <- "CZB_left"
 cat(colourise(paste("Proportions of", vartype, YNinv, "outliers that are shared with any zone.", sep = " "), "blue"), "\n")
+liste <- liste[-1]
 for (zone1 in liste){
   out = get(zone1)
-  out = out$cp[out$sel==T]
+  out = as.character(out$cp[out$sel==T])
   others = liste[liste!=zone1]
   out_others = c()
   for (zone2 in others){
     out2 = get(zone2)
-    out2 = out2$cp[out2$sel==T]
+    out2 = as.character(out2$cp[out2$sel==T])
     out_others = append(out_others, out2)
   }
   print(paste(zone1, length(out[out %in% out_others == F]) / length(out)))

@@ -29,8 +29,8 @@ if (is.null(opt$vone) | is.null(opt$vtwo)){
   print_help(opt_parser)
   stop("All the arguments must be supplied.\n", call.=FALSE)
 }
-# ii <- "results/marker_density/MD_CZA_WAVE_RIGHT_noncoding_INDEL_count.txt"
-# jj <- "results/marker_density/MD_CZA_WAVE_RIGHT_noncoding_SNP_count.txt"
+# ii <- "results/marker_density/MD_CZB_WAVE_RIGHT_coding_INDEL_count.txt"
+# jj <- "results/marker_density/MD_CZB_WAVE_RIGHT_noncoding_INDEL_count.txt"
 ii <- opt$vone
 jj <- opt$vtwo
 ic <- unique(read.table(file = ii, header = TRUE))
@@ -76,13 +76,19 @@ if (grepl(pattern = "IN|DE", x = tv[4])) {
 } else {
   fac_pal[2] <- brewer.pal(n = 4, name = "Paired")[4]
 }
-
+xbrk <- seq(from = 0, to = 200, length.out = 11)
+xbrk[1] <- 1
+xbrk[which.min(abs(xbrk-length(iid)))] <- length(iid)
+# xbrk <- sort(x = c(xbrk, length(iid)), decreasing = FALSE)
+# xbrk <- xbrk[-(which(diff(xbrk)<10)+1)]
 DAC_h <- ggplot(data = da, aes(x = N, y = C)) +
   facet_wrap(facets = ~AV, nrow = 2, scales = 'free') +
   geom_col(aes(fill = AV), col = 'black', position = 'dodge') +
   # scale_fill_manual(values = c("#1B9E77", "#666666")) +
   scale_fill_manual(values = fac_pal) +
   labs(x = '', y = 'Derived allele count') +
+  scale_x_continuous(breaks = xbrk,
+                     limits = c(0, length(iid)+1)) +
   theme(legend.position = 'none',
         axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
@@ -106,6 +112,8 @@ dDAP_h <- ggplot(data = data.frame(N=1:length(iid_p), dP=iid_p-jsd_p), aes(x = N
   geom_point() +
   # labs(x = '', y = paste(tv[1], 'prop. -', tv[2], 'prop.')) +
   labs(x = '', y = 'Difference in proportion') +
+  scale_x_continuous(breaks = xbrk,
+                     limits = c(0, length(iid)+1)) +
   theme(legend.position = 'none',
         axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
@@ -154,7 +162,8 @@ chi_app <- 2*(LL1-LL0)  # now with 16 df (I think)
 cat('Chi-square test statistic =', chi_app, '\n')
 # qchisq(p = 0.05, df = 260)
 ndf <- (length(iid)-1)*(length(unique(da$AV))-1)
-pval <- pchisq(q = chi_app, df = ndf)
+pval <- pchisq(q = chi_app, df = ndf, lower.tail = FALSE)
+cat('p-value =', pval, '\n')
 # cat('Chi-square critical value at 0.01 with', ndf, 'df =', qchisq(p = 0.01, df = ndf), '\n')
 # cat('Test statistic - critical value =', chi_app-qchisq(p = 0.01, df = ndf), '\n')
 
@@ -181,25 +190,53 @@ Nc <- nrow(contr_d)
 iid <- da$C[1:Nc]
 jsd <- da$C[(Nc+1):nrow(da)]
 
-if (grepl(pattern = "noncoding_INDEL", x = jj)) {
+if (grepl(pattern = "_coding_INDEL", x = ii)) {
   
-  if (51<Nc) {
-    brk <- c(0:51, length(jsd))
-    bn <- cut(x = 1:Nc, breaks = brk, include.lowest = TRUE)
-    new_ij <- data.frame(iid, jsd, Bin=bn)
-    
-    iid <- aggregate(x = new_ij$iid, by = list(new_ij$Bin), sum)$x
-    jsd <- aggregate(x = new_ij$jsd, by = list(new_ij$Bin), sum)$x
-  }
-  
-} else if (grepl(pattern = "_coding_SNP", x = jj)) {
-  
-  brk <- c(0:18, 23, 28, 33, length(jsd))
+  brk <- c(0:8, 8+5, 8+10, 8+15, length(iid))
+  brk <- brk[brk<=length(iid)]
   bn <- cut(x = 1:Nc, breaks = brk, include.lowest = TRUE)
   new_ij <- data.frame(iid, jsd, Bin=bn)
   
   iid <- aggregate(x = new_ij$iid, by = list(new_ij$Bin), sum)$x
   jsd <- aggregate(x = new_ij$jsd, by = list(new_ij$Bin), sum)$x
+  
+  brk[length(brk)] <- round(brk[length(brk)]*0.7)
+  
+  # if (51<Nc) {
+  #   brk <- c(0:51, length(jsd))
+  #   bn <- cut(x = 1:Nc, breaks = brk, include.lowest = TRUE)
+  #   new_ij <- data.frame(iid, jsd, Bin=bn)
+  #   
+  #   iid <- aggregate(x = new_ij$iid, by = list(new_ij$Bin), sum)$x
+  #   jsd <- aggregate(x = new_ij$jsd, by = list(new_ij$Bin), sum)$x
+  # }
+  
+} else if (grepl(pattern = "_coding_SNP", x = ii)) {
+  
+  brk <- c(0:36, 36+5, 36+10, 36+15, 36+20, 36+25, 36+30, 36+35, 36+40, 36+45, 36+50, 36+55, 36+60, 36+65, length(iid))
+  # id_pal <- seq(from = 38, to = length(iid), by = 5)
+  brk <- brk[brk<=length(iid)]
+  
+  # brk <- c(0:18, 23, 28, 33, length(jsd))
+  bn <- cut(x = 1:Nc, breaks = brk, include.lowest = TRUE)
+  new_ij <- data.frame(iid, jsd, Bin=bn)
+  
+  iid <- aggregate(x = new_ij$iid, by = list(new_ij$Bin), sum)$x
+  jsd <- aggregate(x = new_ij$jsd, by = list(new_ij$Bin), sum)$x
+  
+} else if (grepl(pattern = "_noncoding_INDEL", x = ii)) {
+  
+  if (103<Nc) {
+    brk <- c(0:103, seq(from = 103+5, to = 103+40, by = 5), length(iid))
+    brk <- brk[brk<=length(iid)]
+    bn <- cut(x = 1:Nc, breaks = brk, include.lowest = TRUE)
+    new_ij <- data.frame(iid, jsd, Bin=bn)
+    
+    iid <- aggregate(x = new_ij$iid, by = list(new_ij$Bin), sum)$x
+    jsd <- aggregate(x = new_ij$jsd, by = list(new_ij$Bin), sum)$x
+    
+    # brk[length(brk)] <- round(brk[length(brk)]*0.7)
+  }
   
 }
 
@@ -233,10 +270,15 @@ for (i in 1:length(iid)) {
   mx[i,16] <- round(cs$residuals[2,2], 4)
 }
 mx <- as.data.frame(mx)
+mx[ ,9] <- as.numeric(as.character(mx[ ,9]))
+mx[ ,10] <- as.numeric(as.character(mx[ ,10]))
 mx$`p-value` <- as.numeric(as.character(mx$`p-value`))
 mx$`Chi-squared` <- as.numeric(as.character(mx$`Chi-squared`))
 mx$signif <- ifelse(test = mx$`p-value` < 0.05, yes = TRUE, no = FALSE)
-mx$pal <- ifelse(test = mx$signif == TRUE, yes = "red", no = "black")
+
+# Bonferroni correction
+bc <- 0.05/nrow(mx)
+mx$pal <- ifelse(test = mx$`p-value` < bc, yes = "red", no = "black")
 mx$N <- 1:nrow(mx)
 # colnames(contr_d)
 
@@ -246,6 +288,7 @@ if (exists("bn")) {
   mx$Bin <- unique(as.character(bn))
   contr_d <- merge(x = contr_d, y = mx[, c("Bin", "Chi-squared", "pal")], by = "Bin", all.x = TRUE)
   contr_d <- contr_d[order(contr_d$N),]
+  contr_d <- contr_d[brk, ]
   
 } else {
   
@@ -257,11 +300,16 @@ if (exists("bn")) {
 # table(mx$signif)
 # mx[mx$signif==TRUE,]
 
-write.table(x = mx, file = paste('results/SFS_comp/SFS', parts, paste(tv, collapse = '_'),
-                                 'chi_noinv.csv', sep = "_"), append = FALSE, quote = FALSE, sep = ",",
+write.table(x = mx[, -ncol(mx)], file = paste('results/SFS_comp/SFS', parts, paste(tv, collapse = '_'),
+                                              'chi_noinv.csv', sep = "_"), append = FALSE, quote = FALSE, sep = ",",
             row.names = FALSE, col.names = TRUE)
 
 contr_p <- ggplot(data = contr_d) +
+  annotate(geom="text", x=Nc*0.9, y=max(mx$`Chi-squared`)*0.8, label=paste0("p-value = ", round(pval, 2)),
+           color="black", size=5) +
+  geom_point(aes(x = N, y = `Chi-squared`), col = contr_d$pal) +
+  scale_x_continuous(breaks = xbrk,
+                     limits = c(0, Nc+1)) +
   labs(x = 'Derived allele class', y = 'Contribution') +
   theme(axis.text = element_text(size = 11),
         axis.title = element_text(size = 14),
@@ -269,13 +317,10 @@ contr_p <- ggplot(data = contr_d) +
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         axis.line = element_line(size = 0.2, linetype = "solid",
                                  colour = "black"),
-        panel.grid = element_line(colour = "gray70", size = 0.2)) +
+        panel.grid = element_line(colour = "gray70", size = 0.2))
   # annotation_custom(tableGrob(round(chi_tb, 3), theme = mytheme.b, rows = NULL),
   #                   xmin=(unique(ic$N)*2)-(unique(ic$N)*2)*0.2, xmax=((unique(ic$N)*2)-(unique(ic$N)*2)*0.2),
   #                   ymin = max(mx$`Chi-squared`)-(max(mx$`Chi-squared`)*0.6), ymax=max(mx$`Chi-squared`)) +
-  annotate(geom="text", x=Nc*0.9, y=max(mx$`Chi-squared`)*0.8, label=paste0("p-value = ", round(pval, 2)),
-           color="black", size=5) +
-  geom_point(aes(x = N, y = `Chi-squared`), col = contr_d$pal)
 
 # plot(1:((unique(sc$N)*2)-1), class_contrib)
 

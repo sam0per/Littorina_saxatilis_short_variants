@@ -14,7 +14,9 @@ option_list = list(
               help = "Name of the island (CZA, CZB, CZD).", metavar = "character"),
   make_option(c("-v", "--variant-type"), type = "character", default = NULL,
               help = "Names of the type of variants (INDEL:SNP, neu_INDEL:neu_SNP, noneu_INDEL:noneu_SNP).",
-              metavar = "character"))
+              metavar = "character"),
+  make_option(opt_str = "--cdf", action = 'store_true', default = FALSE,
+              help = "add this flag to plot empirical cumulative distribution."))
 
 opt_parser = OptionParser(usage = paste("Rscript scripts/cline_par_test.R",
                                         "-i CZA",
@@ -40,7 +42,9 @@ cl_dt <- as.data.frame(rbindlist(lapply(seq_along(cl_fl), function(x) {
   zone <- paste(island, side, sep = "_")
   vtype <- strsplit(file_path_sans_ext(basename(cl_fl[[x]])), split = "_")[[1]][4]
   # paste(zone, vtype)
-  
+  thresh <- sort(cl_ls[[x]]$Var.Ex, decreasing=TRUE, na.last=TRUE)[round(length(cl_ls[[x]]$cp)*0.05)]
+  cl_ls[[x]]$sel = FALSE
+  cl_ls[[x]]$sel[cl_ls[[x]]$Var.Ex>=thresh & is.na(cl_ls[[x]]$Var.Ex)==FALSE] = TRUE
   odt <- mutate(cl_ls[[x]], ZONE = zone, VTYPE = vtype)
   return(odt)
 })))
@@ -51,15 +55,90 @@ vtype_pal <- data.frame(pal = c(brewer.pal(n = 8, name = 'Set2')[c(5, 3)], "#1B9
                                 brewer.pal(n = 6, name = 'Paired')[c(6, 5)]),
                         vt = c(unique(cl_dt$VT_sel), unique(cl_dt$VTYPE)))
 
+# head(cl_dt)
+# data.frame(table(cl_dt$ZONE, cl_dt$VTYPE))
+# round(1178*0.05)
+# data.frame(table(cl_dt$ZONE, cl_dt$VTYPE, cl_dt$sel))
+# data.frame(table(cl_dt$ZONE, cl_dt$VT_sel))
+
+cl_dt <- separate(data = cl_dt, col = ZONE, into = c("ISL", "SIDE"), sep = "_", remove = FALSE)
+# cl_dt$av <- round(cl_dt$av)
+cl_dt$LGav <- paste(cl_dt$LG, cl_dt$av, sep = "_")
+# data.frame(table(cl_dt$LGav))
+ois <- cl_dt[cl_dt$sel, ]
+# head(ois)
+# table(ois$ZONE, ois$VT_sel)
+
+for (s in unique(ois$ISL)) {
+  ti <- ois[ois$ISL==s, ]
+  mp_indel <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_INDEL"]))
+  mp_snp <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_SNP"]))
+  # print(setdiff(mp_snp, mp_indel))
+  # print(setdiff(mp_indel, mp_snp))
+  cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(mp_indel), "\n")
+  cat(s, "% overlap", length(intersect(mp_snp, mp_indel))/length(mp_indel), "\n")
+  # cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(unique(ti$LGav)), "\n")
+  # cat(s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  # cat(s, "% overlap", length(intersect(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+}
+
 # isl <- 'CZA'
 isl <- opt$island
+oisi <- ois[ois$ISL==isl, ]
+
+# length(unique(oisi$LGav))
+for (s in unique(oisi$SIDE)) {
+  ti <- oisi[oisi$SIDE==s, ]
+  mp_indel <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_INDEL"]))
+  mp_snp <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_SNP"]))
+  # print(setdiff(mp_snp, mp_indel))
+  # print(setdiff(mp_indel, mp_snp))
+  cat(isl, s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(unique(ti$LGav)), "\n")
+  cat(isl, s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  cat(isl, s, "% overlap", length(intersect(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+}
+# oisi[oisi$LGav=="1_48.6", ]
+# oisi[oisi$LGav=="5_30.5", ]
+
+outl_c <- aggregate(x = cl_dt$cp, by = list(cl_dt$VT_sel, cl_dt$LGav), length)
+outl_v <- split(x = outl_c, f = outl_c$Group.1)
+
+mp_indel <- unique(outl_v$noneu_INDEL$Group.2)
+mp_snp <- unique(outl_v$noneu_SNP$Group.2)
+outl_indel <- cl_dt[cl_dt$LGav %in% setdiff(mp_indel, mp_snp), ]
+length(setdiff(mp_indel, mp_snp))
+# outl_indel <- cl_dt[cl_dt$LGav %in% setdiff(mp_snp, mp_indel), ]
+# outl_indel <- cl_dt[cl_dt$LGav %in% mp_indel, ]
+# outl_indel <- cl_dt[cl_dt$LGav %in% mp_snp, ]
+# data.frame(table(outl_indel$LGav))
+# table(outl_indel$VT_sel)
+oi <- outl_indel[outl_indel$VT_sel=="noneu_INDEL", ]
+# oi <- outl_indel[outl_indel$VT_sel=="noneu_SNP", ]
+sh <- data.frame(table(as.character(oi$cp)))
+sh <- data.frame(table(as.character(oi$LGav)))
+# nrow(sh[sh$Freq==max(sh$Freq), ])/nrow(sh)
+# nrow(sh[sh$Freq==(max(sh$Freq)-1), ])/nrow(sh)
+# nrow(sh[sh$Freq==(max(sh$Freq)-2), ])/nrow(sh)
+# nrow(sh[sh$Freq==(max(sh$Freq)-3), ])/nrow(sh)
+# nrow(sh[sh$Freq==(max(sh$Freq)-4), ])/nrow(sh)
+# nrow(sh[sh$Freq==(max(sh$Freq)-5), ])/nrow(sh)
+# oi[oi$cp=="Contig1481_48552",]
+# oi[oi$cp=="Contig21581_310",]
+# oi[oi$cp=="Contig4084_125665",]
+
+# mp_indel <- unique(outl_v$noneu_INDEL[outl_v$noneu_INDEL$Group.1==isl, 4])
+# mp_snp <- unique(outl_v$noneu_SNP[outl_v$noneu_SNP$Group.1==isl, 4])
+# outl_indel <- cl_dt[cl_dt$LGav %in% setdiff(mp_indel, mp_snp), ]
+# table(outl_indel$LGav)
+# table(outl_indel$VT_sel)
+# outl_indel[outl_indel$VT_sel=="noneu_SNP", ]
 
 isl_dt <- cl_dt[grepl(pattern = isl, x = cl_dt$ZONE), ]
 
 zs <- split(x = isl_dt, f = isl_dt$ZONE)
 
 # cpars <- c("Centre", "Width", "slope", "p_diff", "Var.Ex")
-cpars <- c("Centre", "p_diff", "Var.Ex")
+cpars <- c("Centre", "p_crab", "p_wave", "Var.Ex")
 
 # vts <- "INDEL:SNP"
 # vts <- "neu_INDEL:neu_SNP"
@@ -81,13 +160,14 @@ lapply(X = seq_along(zs), FUN = function(x) {
   names(d_comp) <- cpars
   
   for (i in cpars) {
-    # i <- cpars[1]
+    # i <- cpars[3]
     one_p <- one_zs[, c("cp", i, "ZONE", vcname)]
     colnames(one_p) <- c("cp", "est", "ZONE", vcname)
     one_p$par <- i
     # head(one_p)
     d_comp[[i]] <- one_p
     nna_p <- one_p[!is.na(one_p$est), ]
+    
     kt <- ks.test(x = unique(nna_p[nna_p[,vcname]==vts[1], "est"]),
                   y = unique(nna_p[nna_p[,vcname]==vts[2], "est"]))
     
@@ -105,22 +185,43 @@ lapply(X = seq_along(zs), FUN = function(x) {
   # table(dt_comp$par)
   # table(dt_comp$VT_sel)
   # head(dt_comp)
-  cpar_h <- ggplot(data = dt_comp, aes(x = est)) +
-    facet_wrap(facets = ~par, nrow = 2, scales = 'free') +
-    geom_histogram(aes_string(fill = vcname), bins = 25, col = 'black', position = 'dodge') +
-    scale_fill_manual(values = vtype_pal) +
-    labs(x = '', y = '', fill = unique(dt_comp$ZONE)) +
-    theme(legend.position = c(0.85,0.25),
-          legend.title = element_text(size = 12), legend.text = element_text(size = 11),
-          axis.text = element_text(size = 11),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 12),
-          panel.background = element_blank(),
-          strip.background = element_rect(fill = 'white', color = "black"),
-          panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-          axis.line = element_line(size = 0.2, linetype = "solid",
-                                   colour = "black"),
-          panel.grid = element_line(colour = "gray70", size = 0.2))
+  
+  if (opt$cdf) {
+    cpar_h <- ggplot(data = dt_comp, aes_string(x = "est", col = vcname)) +
+      facet_wrap(facets = ~par, nrow = 2, scales = 'free') +
+      stat_ecdf(geom = "step", pad = FALSE) +
+      scale_color_manual(values = vtype_pal) +
+      labs(x = '', y = '', col = unique(dt_comp$ZONE)) +
+      theme(legend.position = "top",
+            legend.title = element_text(size = 12), legend.text = element_text(size = 11),
+            axis.text = element_text(size = 11),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size = 12),
+            panel.background = element_blank(),
+            strip.background = element_rect(fill = 'white', color = "black"),
+            panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+            axis.line = element_line(size = 0.2, linetype = "solid",
+                                     colour = "black"),
+            panel.grid = element_line(colour = "gray70", size = 0.2))
+  } else {
+    cpar_h <- ggplot(data = dt_comp, aes(x = est)) +
+      facet_wrap(facets = ~par, nrow = 2, scales = 'free') +
+      geom_histogram(aes_string(fill = vcname), bins = 25, col = 'black', position = 'dodge') +
+      scale_fill_manual(values = vtype_pal) +
+      labs(x = '', y = '', fill = unique(dt_comp$ZONE)) +
+      theme(legend.position = c(0.85,0.25),
+            legend.title = element_text(size = 12), legend.text = element_text(size = 11),
+            axis.text = element_text(size = 11),
+            axis.title = element_text(size = 14),
+            strip.text = element_text(size = 12),
+            panel.background = element_blank(),
+            strip.background = element_rect(fill = 'white', color = "black"),
+            panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+            axis.line = element_line(size = 0.2, linetype = "solid",
+                                     colour = "black"),
+            panel.grid = element_line(colour = "gray70", size = 0.2))
+  }
+  
   # cpar_h
   ggsave(filename = paste('figures/CPAR_comp/HIST', unique(dt_comp$ZONE), paste(vts, collapse = "_"), "cpars.pdf", sep = "_"),
          plot = cpar_h, scale = 0.75, dpi = "screen")
