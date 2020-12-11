@@ -1438,4 +1438,57 @@ lapply(X = seq_along(fn), FUN = function(x) {
   # brk <- c(0:8, seq(from = 8+5, to = nrow(sc), by = 5), nrow(sc))
   # brk <- brk[brk<=nrow(sc)]
 })
+# 
+# 
+# 
+# DIFFERENCES IN DH
+dm
+-0.12-0.26
+(-0.12-1)/(0.26-1)
 
+(-0.30-1)/(0.15-1)
+-0.30-0.15
+
+-0.718-(-0.210)
+-1.208-(-0.868)
+
+
+0.45-0.4
+0.35-0.4
+0.3-0.4
+
+1.5-0.7
+0.9-0.7
+0.95-0.7
+
+
+(5.20*10^-5)/0.0017
+0.0017/30
+5.666667e-05/0.0017
+
+0.000154/30
+0.00333/2
+# 
+# 
+# 
+# ODDS RATIO
+library(epitools)
+treatments <- c("Treated", "Control")
+ae_present <- c("Dead", "Alive")
+
+dat <- matrix(c(5, 10, 95, 90), nrow = 2, ncol = 2, byrow = FALSE)
+dimnames(dat) <- list("Treatments" = treatments, "AE Present" = ae_present)
+
+# dt <- data.frame(Dead=c(5,10), Alive=c(95,90))
+
+or_fit <- oddsratio(dat)
+
+treatments <- c("Control", "Treated")
+ae_present <- c("Alive", "Dead")
+
+dat <- matrix(c(90, 95, 10, 5), nrow = 2, ncol = 2, byrow = FALSE)
+dimnames(dat) <- list("Treatments" = treatments, "AE Present" = ae_present)
+dat
+# dt <- data.frame(Dead=c(5,10), Alive=c(95,90))
+
+oddsratio(dat)

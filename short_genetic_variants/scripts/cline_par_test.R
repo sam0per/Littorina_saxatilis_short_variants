@@ -69,20 +69,54 @@ ois <- cl_dt[cl_dt$sel, ]
 # head(ois)
 # table(ois$ZONE, ois$VT_sel)
 
+mp_indel_snp <- vector(mode = "list", length = length(unique(ois$ISL)))
+names(mp_indel_snp) <- unique(ois$ISL)
 for (s in unique(ois$ISL)) {
   ti <- ois[ois$ISL==s, ]
   mp_indel <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_INDEL"]))
   mp_snp <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_SNP"]))
   # print(setdiff(mp_snp, mp_indel))
   # print(setdiff(mp_indel, mp_snp))
-  cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(mp_indel), "\n")
-  cat(s, "% overlap", length(intersect(mp_snp, mp_indel))/length(mp_indel), "\n")
-  # cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(unique(ti$LGav)), "\n")
-  # cat(s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
-  # cat(s, "% overlap", length(intersect(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  # cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(mp_indel), "\n")
+  # cat(s, "% overlap", length(intersect(mp_indel, mp_snp))/length(mp_indel), "\n")
+  cat(s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(unique(ti$LGav)), "\n")
+  cat(s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  cat(s, "% overlap", length(intersect(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  # mp_indel_snp[[s]] <- intersect(mp_snp, mp_indel)
+  mp_indel_snp[[s]] <- setdiff(mp_indel, mp_snp)
 }
+data.frame(table(unlist(mp_indel_snp)))
+ois[ois$LGav=="4_12.7", ]
+mp_indel_snp <- unique(as.character(unlist(mp_indel_snp)))
+ois[ois$LGav==mp_indel_snp[30], ]
+mp_ovar <- unique(as.character(ois[ois$LGav %in% mp_indel_snp, "cp"]))
+an_fl <- list.files(path = "/Volumes/Seagate Remote Backup/3.indels/annotated", full.names = TRUE)
+an_dt <- lapply(an_fl, read.table, header = TRUE)
+# lapply(an_dt, head)
+mp_an <- lapply(an_dt, function(x) {
+  ane <- mutate(x, cp=paste(CHROM, POS, sep = "_"))
+  ane <- ane[, (ncol(ane)-3):ncol(ane)]
+  ane_mp <- ane[ane$cp %in% mp_ovar, ]
+  return(ane_mp)
+})
+# lapply(mp_an, head)
+mp_cp <- as.data.frame(rbindlist(mp_an))
+# mp_cp[mp_cp$cp=="Contig884_193337", ]
+# ccp <- data.frame(table(mp_cp$cp))
+data.frame(table(mp_cp$FUN))
+himp <- mp_cp[mp_cp$CAT=="HIGH", ]
+unique(himp)
+# data.frame(table(ois[as.character(ois$cp) %in% himp$cp, "LGav"]))
+ois[ois$cp=="Contig2938_3409", ]
+ois[ois$cp=="Contig5500_56612", ]
+ois[ois$cp=="Contig2865_93430", ]
+ois[ois$cp=="Contig39720_47427", ]
+ois[ois$cp=="Contig41173_9942", ]
+ois[ois$LGav=="2_22.2", ]
+mp_indel_snp == "5_23.9"
+mp_indel_snp == "2_22.2"
 
-# isl <- 'CZA'
+# isl <- 'CZB'
 isl <- opt$island
 oisi <- ois[ois$ISL==isl, ]
 
@@ -93,9 +127,9 @@ for (s in unique(oisi$SIDE)) {
   mp_snp <- unique(as.character(ti$LGav[ti$VT_sel=="noneu_SNP"]))
   # print(setdiff(mp_snp, mp_indel))
   # print(setdiff(mp_indel, mp_snp))
-  cat(isl, s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(unique(ti$LGav)), "\n")
-  cat(isl, s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
-  cat(isl, s, "% overlap", length(intersect(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  cat(isl, s, "% unique INDELs", length(setdiff(mp_indel, mp_snp))/length(mp_indel), "\n")
+  # cat(isl, s, "% unique SNPs", length(setdiff(mp_snp, mp_indel))/length(unique(ti$LGav)), "\n")
+  cat(isl, s, "% overlap", length(intersect(mp_indel, mp_snp))/length(mp_indel), "\n")
 }
 # oisi[oisi$LGav=="1_48.6", ]
 # oisi[oisi$LGav=="5_30.5", ]
