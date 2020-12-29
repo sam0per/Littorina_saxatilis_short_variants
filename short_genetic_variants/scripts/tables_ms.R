@@ -9,18 +9,32 @@ ucp <- rbindlist(lapply(X = ff, FUN = read.table, header = TRUE))[, 'cp']
 ucp <- as.character(ucp$cp)
 ccp <- data.frame(table(ucp))
 head(ccp)
+
 max(ccp$Freq)
-ccp <- as.character(ccp[ccp$Freq==9, 'ucp'])
+sum(ccp$Freq)
+ccp <- as.character(ccp[ccp$Freq>1, 'ucp'])
 tt <- vector(mode = "integer", length = length(ff))
 tt
+pq <- matrix(nrow = length(ff), ncol = 2)
+pq
 for (i in seq(from = 1, to = length(ff), by = 2)) {
   # i <- 1
   dd <- read.table(file = ff[i], header = TRUE)
   ee <- read.table(file = ff[i+1], header = TRUE)
   oo <- unique(c(as.character(dd$cp), as.character(ee$cp)))
   tt[i] <- paste(round(length(setdiff(oo, ccp))/(nrow(dd)+nrow(ee)) * 100), '%', sep = '')
+  pq[i,] <- c(length(setdiff(oo, ccp)),(nrow(dd)+nrow(ee)))
 }
 tt[tt!="0"]
+pq <- pq[complete.cases(pq),]
+pqi <- pq
+pqi
+rm(list = setdiff(ls(), "pqi"))
+
+lapply(1:9, function(x) chisq.test(rbind(pqi[x,], pq[x,])))
+# chisq.test(rbind(pqi[1,], pq[1,]))
+# chisq.test(rbind(pqi[2,], pq[2,]))
+
 # INDEL VS SNP COUNT
 rm(list = ls())
 (ff <- list.files(path = 'results/marker_density', pattern = 'noncoding', full.names = TRUE))
