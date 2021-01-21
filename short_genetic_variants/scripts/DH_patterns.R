@@ -14,6 +14,9 @@ levels(dh_res$ANN)
 # 
 # 
 # 
+aggregate(x = dh_res[, c("D", "H")], by = list(dh_res$ZONE, dh_res$ECOT, dh_res$Variant_type, dh_res$ANN),
+          FUN = mean)
+
 vt <- c('DEL', 'INS')
 vt <- c('INDEL', 'SNP')
 vt <- c('SNP')

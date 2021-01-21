@@ -116,7 +116,7 @@ ois[ois$LGav=="2_22.2", ]
 mp_indel_snp == "5_23.9"
 mp_indel_snp == "2_22.2"
 
-# isl <- 'CZB'
+# isl <- 'CZD'
 isl <- opt$island
 oisi <- ois[ois$ISL==isl, ]
 
